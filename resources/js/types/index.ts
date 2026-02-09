@@ -1,6 +1,7 @@
 export type * from './auth';
 export type * from './navigation';
 export type * from './ui';
+export type * from './admin';
 
 import type { Auth } from './auth';
 
@@ -10,3 +11,4 @@ export type SharedData = {
     sidebarOpen: boolean;
     [key: string]: unknown;
 };
+

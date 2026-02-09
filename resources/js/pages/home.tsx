@@ -1,3 +1,15 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Zap, ShieldCheck, Brain, DollarSign, Clock, MapPin, Sparkles,
+  Car, Navigation, Wrench, MessageSquare, Phone, Star, CheckCircle,
+  Sun, Moon, Menu, X, Home, Mail, Briefcase, Users, BarChart3,
+  User, Send, Building, Clock as ClockIcon, ArrowUp
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+
 // Page d'accueil complète
 const HomePage = ({ onRoleSelect }) => {
   const [activeSlide, setActiveSlide] = useState(0);
@@ -6,16 +18,26 @@ const HomePage = ({ onRoleSelect }) => {
   const [darkMode, setDarkMode] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Contact form state
+  const [contactForm, setContactForm] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: ''
+  });
+  const [contactLoading, setContactLoading] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
   const slides = [
     {
       title: "Dépannage intelligent, partout.",
-      description: "L'assistance routière réinventée avec l'intelligence artificielle. Détection de pannes, dépannage en 15 min, et transparence totale sur les prix.",
+      description: "L'assistance routière réinventée: Détection de pannes, dépannage en 15 min, et transparence totale sur les prix.",
       image: "🚗",
       color: "from-amber-500 to-orange-500"
     },
     {
-      title: "IA Expert Mécanique",
-      description: "Notre intelligence artificielle analyse vos problèmes et vous guide vers la meilleure solution avec estimation de coût en temps réel.",
+      title: "Expertise Mécanique",
+      description: "Notre équipe d'experts analyse vos problèmes et vous guide vers la meilleure solution avec estimation de coût en temps réel.",
       image: "🤖",
       color: "from-blue-500 to-purple-500"
     },
@@ -40,10 +62,10 @@ const HomePage = ({ onRoleSelect }) => {
       description: "Paiements sécurisés et garantie",
       color: "blue"
     },
-    { 
-      icon: Brain, 
-      title: "Intelligent", 
-      description: "Diagnostic IA avancé",
+    {
+      icon: Brain,
+      title: "Intelligent",
+      description: "Diagnostic expert avancé",
       color: "purple"
     },
     { 
@@ -97,14 +119,14 @@ const HomePage = ({ onRoleSelect }) => {
     }
   ];
 
-  const pricingPlans = [
+const pricingPlans = [
     {
       name: "Basique",
       price: "Gratuit",
       description: "Parfait pour les besoins occasionnels",
       features: [
         "1 assistance gratuite/mois",
-        "Diagnostic IA standard",
+        "Diagnostic standard",
         "Paiement à l'usage",
         "Support par email"
       ],
@@ -130,7 +152,7 @@ const HomePage = ({ onRoleSelect }) => {
       description: "Pour les professionnels",
       features: [
         "Assistance illimitée",
-        "Diagnostic IA expert",
+        "Diagnostic expert",
         "Assistance VIP 24/7",
         "Couverture nationale",
         "Service de remorquage",
@@ -149,6 +171,33 @@ const HomePage = ({ onRoleSelect }) => {
     setEmail('');
     alert('Merci pour votre inscription !');
   };
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!contactForm.name || !contactForm.email || !contactForm.message) {
+      alert('Veuillez remplir tous les champs requis.');
+      return;
+    }
+    setContactLoading(true);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setContactLoading(false);
+    setContactForm({ name: '', email: '', subject: '', message: '' });
+    alert('Merci pour votre message ! Nous vous répondrons sous 24h.');
+  };
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -181,13 +230,11 @@ const HomePage = ({ onRoleSelect }) => {
               <a href="#how-it-works" className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-amber-500 dark:hover:text-amber-400 transition-colors">
                 Comment ça marche
               </a>
-              <a href="#pricing" className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-amber-500 dark:hover:text-amber-400 transition-colors">
-                Tarifs
-              </a>
+              
               <a href="#pro" className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-amber-500 dark:hover:text-amber-400 transition-colors">
                 Devenir Pro
               </a>
-              <a href="#contact" className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-amber-500 dark:hover:text-amber-400 transition-colors">
+              <a href="#contact-form" className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-amber-500 dark:hover:text-amber-400 transition-colors">
                 Contact
               </a>
               
@@ -201,8 +248,9 @@ const HomePage = ({ onRoleSelect }) => {
                 
                 <Button
                   variant="primary"
-                  onClick={() => onRoleSelect('client')}
-                  size="md"
+                  onClick={() => window.location.href = '/login'}
+                  size="lg"
+                  className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 border-2 border-amber-400"
                 >
                   Se connecter
                 </Button>
@@ -260,7 +308,7 @@ const HomePage = ({ onRoleSelect }) => {
                   Devenir Pro
                 </a>
                 <a 
-                  href="#contact" 
+                  href="#contact-form" 
                   className="block px-4 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -286,7 +334,7 @@ const HomePage = ({ onRoleSelect }) => {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-12 pb-20 lg:pt-20 lg:pb-32">
+      <section className="relative overflow-hidden pt-6 pb-20 lg:pt-12 lg:pb-32">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-20">
             {/* Left Column */}
@@ -303,14 +351,14 @@ const HomePage = ({ onRoleSelect }) => {
               </h1>
               
               <p className="text-lg lg:text-xl text-slate-600 dark:text-slate-400 mb-8 max-w-2xl leading-relaxed">
-                L'assistance routière réinventée avec l'intelligence artificielle. 
+                L'assistance routière réinventée: 
                 Détection de pannes, dépannage en 15 min, et transparence totale sur les prix.
               </p>
               
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
                 <Button
-                  variant="primary"
+                  variant="destructive"
                   size="lg"
                   icon={Navigation}
                   onClick={() => onRoleSelect('client')}
@@ -448,17 +496,26 @@ const HomePage = ({ onRoleSelect }) => {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-16 lg:py-24 bg-white dark:bg-slate-900 transition-colors duration-300">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="features" className="py-16 lg:py-24 bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-colors duration-300 relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-40 left-20 w-40 h-40 bg-amber-500 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-40 right-20 w-48 h-48 bg-blue-500 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="text-center mb-12 lg:mb-20">
-            <Badge variant="info" className="mb-4">
-              <Sparkles size={14} /> INNOVATION
+            <Badge variant="info" className="mb-6 animate-pulse">
+              <Sparkles size={16} className="mr-2" /> INNOVATION
             </Badge>
-            <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-              Une expérience d'assistance complète
+            <h2 className="text-4xl lg:text-5xl font-black text-slate-900 dark:text-white mb-6 leading-tight">
+              Une expérience d'assistance{' '}
+              <span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
+                complète
+              </span>
             </h2>
-            <p className="text-lg lg:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              Tout ce dont vous avez besoin pour une assistance routière sans souci
+            <p className="text-xl lg:text-2xl text-slate-600 dark:text-slate-400 max-w-3xl mx-auto leading-relaxed">
+              Tout ce dont vous avez besoin pour une assistance routière sans souci, à portée de main
             </p>
           </div>
           
@@ -466,16 +523,20 @@ const HomePage = ({ onRoleSelect }) => {
             {features.map((feature, index) => (
               <Card 
                 key={index} 
-                hover 
-                className="p-6 lg:p-8 transition-all duration-300 hover:-translate-y-1"
+                className="p-6 lg:p-8 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
               >
-                <div className={`w-14 h-14 rounded-2xl bg-${feature.color}-100 dark:bg-${feature.color}-900/30 text-${feature.color}-600 dark:text-${feature.color}-400 flex items-center justify-center mb-6`}>
-                  <feature.icon size={28} />
+                <div className="relative">
+                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color === 'amber' ? 'from-amber-500 to-orange-500' : feature.color === 'blue' ? 'from-blue-500 to-cyan-500' : feature.color === 'purple' ? 'from-purple-500 to-pink-500' : feature.color === 'emerald' ? 'from-emerald-500 to-teal-500' : feature.color === 'red' ? 'from-red-500 to-rose-500' : 'from-orange-500 to-amber-500'} flex items-center justify-center mb-6 shadow-lg`}>
+                    <feature.icon size={32} className="text-white" />
+                  </div>
+                  <div className={`absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-${feature.color}-100 dark:bg-${feature.color}-900/30 flex items-center justify-center`}>
+                    <CheckCircle size={16} className={`text-${feature.color}-600 dark:text-${feature.color}-400`} />
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
                   {feature.title}
                 </h3>
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-lg">
                   {feature.description}
                 </p>
               </Card>
@@ -485,27 +546,39 @@ const HomePage = ({ onRoleSelect }) => {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="py-16 lg:py-24 bg-slate-50 dark:bg-slate-800/50 transition-colors duration-300">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="how-it-works" className="py-16 lg:py-24 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-20 right-1/4 w-64 h-64 bg-amber-500 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 left-1/4 w-48 h-48 bg-blue-500 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="text-center mb-12 lg:mb-20">
-            <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-              Comment ça marche ?
+            <Badge variant="warning" className="mb-6">
+              <Sparkles size={16} className="mr-2" /> SIMPLICITÉ
+            </Badge>
+            <h2 className="text-4xl lg:text-5xl font-black mb-6 leading-tight">
+              Comment{' '}
+              <span className="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
+                ça marche ?
+              </span>
             </h2>
-            <p className="text-lg lg:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              En 3 étapes simples, obtenez l'assistance dont vous avez besoin
+            <p className="text-xl lg:text-2xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
+              En 3 étapes simples, obtenir l'assistance dont vous avez besoin en quelques minutes seulement
             </p>
           </div>
           
           <div className="relative">
             {/* Connection Line */}
-            <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-0.5 bg-slate-200 dark:bg-slate-700 -translate-y-1/2"></div>
+            <div className="hidden lg:block absolute top-24 left-0 right-0 h-1 bg-gradient-to-r from-amber-500/50 via-orange-500/50 to-blue-500/50 rounded-full"></div>
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 relative">
               {[
                 {
                   step: "01",
                   title: "Signalez votre problème",
-                  description: "Utilisez notre IA pour décrire les symptômes ou sélectionnez directement le type d'assistance.",
+                  description: "Indiquez les symptômes rencontrés ou sélectionnez directement le type d'assistance.",
                   icon: MessageSquare,
                   color: "amber"
                 },
@@ -524,21 +597,34 @@ const HomePage = ({ onRoleSelect }) => {
                   color: "emerald"
                 }
               ].map((step, index) => (
-                <div key={index} className="relative">
-                  <Card className="p-8 text-center hover:shadow-xl transition-shadow duration-300">
-                    <div className={`w-20 h-20 rounded-3xl bg-${step.color}-100 dark:bg-${step.color}-900/30 text-${step.color}-600 dark:text-${step.color}-400 flex items-center justify-center mx-auto mb-6 relative`}>
-                      <div className="absolute -top-3 -left-3 w-10 h-10 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center text-slate-900 dark:text-white font-black text-lg border-4 border-slate-50 dark:border-slate-800">
+                <div key={index} className="relative group">
+                  <Card className="p-8 lg:p-10 bg-white/10 backdrop-blur-sm border border-white/10 hover:bg-white/20 transition-all duration-300 hover:-translate-y-2">
+                    <div className="relative mb-8">
+                      <div className={`w-24 h-24 rounded-3xl bg-gradient-to-br ${step.color === 'amber' ? 'from-amber-500 to-orange-500' : step.color === 'blue' ? 'from-blue-500 to-cyan-500' : 'from-emerald-500 to-teal-500'} flex items-center justify-center mx-auto shadow-xl group-hover:shadow-2xl transition-shadow duration-300`}>
+                        <step.icon size={40} className="text-white" />
+                      </div>
+                      <div className="absolute -top-2 -right-2 w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg border-4 border-slate-900">
                         {step.step}
                       </div>
-                      <step.icon size={32} />
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
+                    <h3 className="text-2xl font-bold text-white mb-4 text-center">
                       {step.title}
                     </h3>
-                    <p className="text-slate-600 dark:text-slate-400">
+                    <p className="text-slate-300 text-center text-lg leading-relaxed">
                       {step.description}
                     </p>
                   </Card>
+                  
+                  {/* Step Arrow */}
+                  {index < 2 && (
+                    <div className="hidden lg:block absolute top-1/2 -right-6 transform -translate-y-1/2 z-10">
+                      <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -582,73 +668,6 @@ const HomePage = ({ onRoleSelect }) => {
                 <p className="text-slate-600 dark:text-slate-400 italic">
                   "{testimonial.content}"
                 </p>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing */}
-      <section id="pricing" className="py-16 lg:py-24 bg-gradient-to-b from-slate-50 to-white dark:from-slate-800/50 dark:to-slate-900 transition-colors duration-300">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12 lg:mb-20">
-            <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-              Choisissez votre formule
-            </h2>
-            <p className="text-lg lg:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              Une solution adaptée à chaque besoin
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {pricingPlans.map((plan, index) => (
-              <Card 
-                key={index} 
-                className={`p-8 relative ${plan.popular ? 'border-2 border-amber-500 shadow-2xl shadow-amber-500/10' : ''}`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge variant="warning" size="lg" className="px-4 py-1.5">
-                      LE PLUS POPULAIRE
-                    </Badge>
-                  </div>
-                )}
-                
-                <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-                    {plan.name}
-                  </h3>
-                  <div className="flex items-baseline justify-center gap-1 mb-4">
-                    <span className="text-4xl lg:text-5xl font-black text-slate-900 dark:text-white">
-                      {plan.price}
-                    </span>
-                    {plan.price !== "Gratuit" && (
-                      <span className="text-slate-600 dark:text-slate-400">/mois</span>
-                    )}
-                  </div>
-                  <p className="text-slate-600 dark:text-slate-400">
-                    {plan.description}
-                  </p>
-                </div>
-                
-                <div className="space-y-4 mb-8">
-                  {plan.features.map((feature, featureIndex) => (
-                    <div key={featureIndex} className="flex items-center gap-3">
-                      <CheckCircle size={18} className="text-emerald-500 flex-shrink-0" />
-                      <span className="text-slate-700 dark:text-slate-300">
-                        {feature}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                
-                <Button
-                  variant={plan.popular ? "primary" : "secondary"}
-                  className="w-full"
-                  onClick={() => onRoleSelect('client')}
-                >
-                  {plan.price === "Gratuit" ? "Commencer gratuitement" : "Choisir cette formule"}
-                </Button>
               </Card>
             ))}
           </div>
@@ -779,54 +798,213 @@ const HomePage = ({ onRoleSelect }) => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 lg:py-24 bg-white dark:bg-slate-900 transition-colors duration-300">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto">
-            <Card className="bg-gradient-to-br from-slate-900 to-slate-800 border-0 overflow-hidden">
-              <div className="p-8 lg:p-12 text-center text-white">
-                <Badge variant="warning" className="mb-6">
-                  <Sparkles size={14} /> ESSAYEZ GRATUITEMENT
-                </Badge>
-                
-                <h2 className="text-3xl lg:text-4xl font-bold mb-6">
-                  Prêt à essayer AutoAssist ?
-                </h2>
-                
-                <p className="text-lg lg:text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
-                  Inscrivez-vous maintenant et bénéficiez de votre première assistance gratuite
-                </p>
-                
-                <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Votre adresse email"
-                    className="flex-1 px-6 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    loading={loading}
-                    onClick={handleNewsletter}
-                    className="whitespace-nowrap bg-white text-slate-900 hover:bg-slate-100"
-                  >
-                    Commencer gratuitement
-                  </Button>
-                </div>
-                
-                <p className="text-sm text-slate-400 mt-6">
-                  Déjà 50 000+ utilisateurs satisfaits • Aucune carte requise
-                </p>
+      {/* Contact Section */}
+      <section id="contact-form" className="py-16 lg:py-24 bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-colors duration-300 relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-20 left-10 w-32 h-32 bg-amber-500 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 right-10 w-40 h-40 bg-blue-500 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-12 lg:mb-20">
+              <Badge variant="info" className="mb-6 animate-pulse">
+                <Mail size={16} className="mr-2" /> CONTACTEZ-NOUS
+              </Badge>
+              <h2 className="text-4xl lg:text-5xl font-black text-slate-900 dark:text-white mb-6 leading-tight">
+                Parlons de votre{' '}
+                <span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
+                  projet
+                </span>
+              </h2>
+              <p className="text-xl lg:text-2xl text-slate-600 dark:text-slate-400 max-w-3xl mx-auto leading-relaxed">
+                Notre équipe d'experts est là pour répondre à toutes vos questions et vous accompagner dans vos besoins d'assistance routière.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+              {/* Contact Info Cards */}
+              <div className="lg:col-span-1 space-y-6">
+                <Card className="p-6 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <Phone size={24} className="text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2">
+                        Téléphone
+                      </h3>
+                      <p className="text-slate-600 dark:text-slate-400 mb-1">
+                        +229 01 69 16 21 07
+                      </p>
+                      <p className="text-sm text-slate-500 dark:text-slate-500">
+                        Disponible 24/7
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+
+                <Card className="p-6 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <Mail size={24} className="text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2">
+                        Email
+                      </h3>
+                      <p className="text-slate-600 dark:text-slate-400 mb-1">
+                        support@autoassist.bj
+                      </p>
+                      <p className="text-sm text-slate-500 dark:text-slate-500">
+                        Réponse sous 2h
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+
+                <Card className="p-6 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <Building size={24} className="text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2">
+                        Bureau
+                      </h3>
+                      <p className="text-slate-600 dark:text-slate-400 mb-1">
+                        Cotonou, Bénin
+                      </p>
+                      <p className="text-sm text-slate-500 dark:text-slate-500">
+                        Zone industrielle
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+
+                <Card className="p-6 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <ClockIcon size={24} className="text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2">
+                        Horaires
+                      </h3>
+                      <p className="text-slate-600 dark:text-slate-400 mb-1">
+                        Lun - Dim: 24/7
+                      </p>
+                      <p className="text-sm text-slate-500 dark:text-slate-500">
+                        Support technique
+                      </p>
+                    </div>
+                  </div>
+                </Card>
               </div>
-            </Card>
+
+              {/* Contact Form */}
+              <div className="lg:col-span-2">
+                <Card className="p-8 lg:p-12 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border-0 shadow-2xl">
+                  <div className="mb-8">
+                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
+                      Envoyez-nous un message
+                    </h3>
+                    <p className="text-slate-600 dark:text-slate-400">
+                      Remplissez le formulaire ci-dessous et nous vous répondrons dans les plus brefs délais.
+                    </p>
+                  </div>
+
+                  <form onSubmit={handleContactSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="relative">
+                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                          <User size={16} className="inline mr-2" />
+                          Nom complet *
+                        </label>
+                        <input
+                          type="text"
+                          value={contactForm.name}
+                          onChange={(e) => setContactForm({...contactForm, name: e.target.value})}
+                          className="w-full px-4 py-4 pl-12 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                          placeholder="Votre nom complet"
+                          required
+                        />
+                        <User size={20} className="absolute left-4 top-11 text-slate-400" />
+                      </div>
+                      <div className="relative">
+                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                          <Mail size={16} className="inline mr-2" />
+                          Email *
+                        </label>
+                        <input
+                          type="email"
+                          value={contactForm.email}
+                          onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
+                          className="w-full px-4 py-4 pl-12 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                          placeholder="votre@email.com"
+                          required
+                        />
+                        <Mail size={20} className="absolute left-4 top-11 text-slate-400" />
+                      </div>
+                    </div>
+
+                    <div className="relative">
+                      <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                        <MessageSquare size={16} className="inline mr-2" />
+                        Sujet
+                      </label>
+                      <input
+                        type="text"
+                        value={contactForm.subject}
+                        onChange={(e) => setContactForm({...contactForm, subject: e.target.value})}
+                        className="w-full px-4 py-4 pl-12 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                        placeholder="Objet de votre message"
+                      />
+                      <MessageSquare size={20} className="absolute left-4 top-11 text-slate-400" />
+                    </div>
+
+                    <div className="relative">
+                      <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                        <Send size={16} className="inline mr-2" />
+                        Message *
+                      </label>
+                      <Textarea
+                        value={contactForm.message}
+                        onChange={(e) => setContactForm({...contactForm, message: e.target.value})}
+                        className="w-full px-4 py-4 pl-12 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-none transition-all duration-200"
+                        placeholder="Décrivez votre demande en détail..."
+                        rows={6}
+                        required
+                      />
+                      <Send size={20} className="absolute left-4 top-11 text-slate-400" />
+                    </div>
+
+                    <div className="text-center pt-4">
+                      <Button
+                        type="submit"
+                        variant="primary"
+                        size="lg"
+                        loading={contactLoading}
+                        className="px-12 py-4 text-lg font-semibold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
+                      >
+                        <Send size={20} className="mr-2" />
+                        Envoyer le message
+                      </Button>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-4">
+                        Nous respectons votre confidentialité et ne partageons jamais vos informations.
+                      </p>
+                    </div>
+                  </form>
+                </Card>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer id="contact" className="bg-slate-900 text-white pt-16 pb-8">
+      <footer className="bg-slate-900 text-white pt-16 pb-8">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 lg:gap-12 mb-12">
             {/* Company Info */}
@@ -861,7 +1039,6 @@ const HomePage = ({ onRoleSelect }) => {
               <ul className="space-y-3">
                 <li><a href="#features" className="text-slate-400 hover:text-amber-400 transition-colors">Fonctionnalités</a></li>
                 <li><a href="#how-it-works" className="text-slate-400 hover:text-amber-400 transition-colors">Comment ça marche</a></li>
-                <li><a href="#pricing" className="text-slate-400 hover:text-amber-400 transition-colors">Tarifs</a></li>
                 <li><a href="#pro" className="text-slate-400 hover:text-amber-400 transition-colors">Devenir Pro</a></li>
               </ul>
             </div>
@@ -883,7 +1060,7 @@ const HomePage = ({ onRoleSelect }) => {
               <ul className="space-y-3">
                 <li className="flex items-center gap-2 text-slate-400">
                   <Phone size={16} />
-                  <span>+229 01 23 45 67</span>
+                  <span>+229 01 69 16 21 07</span>
                 </li>
                 <li className="flex items-center gap-2 text-slate-400">
                   <Mail size={16} />
@@ -907,6 +1084,17 @@ const HomePage = ({ onRoleSelect }) => {
           </div>
         </div>
       </footer>
+
+      {/* Scroll to Top Button */}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-6 right-6 z-50 p-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-amber-400"
+          aria-label="Retour en haut"
+        >
+          <ArrowUp size={24} />
+        </button>
+      )}
     </div>
   );
 };
@@ -916,7 +1104,7 @@ export default function App() {
   const [currentView, setCurrentView] = useState('home');
   const [userRole, setUserRole] = useState(null);
 
-  const handleRoleSelect = (role) => {
+  const handleRoleSelect = (role: string) => {
     setUserRole(role);
     if (role === 'client') {
       setCurrentView('client-dashboard');

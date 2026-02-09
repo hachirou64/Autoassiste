@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Users, Wrench, MapPin, FileText, Hammer, DollarSign, BarChart3, Settings, Home } from 'lucide-react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -12,19 +12,70 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
+import { dashboard, home, meca } from '@/routes';
 import type { NavItem } from '@/types';
 import AppLogo from './app-logo';
 
-const mainNavItems: NavItem[] = [
+// Navigation pour le dashboard admin
+const adminNavItems: NavItem[] = [
     {
         title: 'Dashboard',
-        href: dashboard(),
+        href: dashboard().url,
         icon: LayoutGrid,
+    },
+    {
+        title: 'Clients',
+        href: '/admin/clients',
+        icon: Users,
+    },
+    {
+        title: 'Dépanneurs',
+        href: '/admin/depanneurs',
+        icon: Wrench,
+    },
+    {
+        title: 'Zones',
+        href: '/admin/zones',
+        icon: MapPin,
+    },
+    {
+        title: 'Demandes',
+        href: '/admin/demandes',
+        icon: FileText,
+    },
+    {
+        title: 'Interventions',
+        href: '/admin/interventions',
+        icon: Hammer,
+    },
+    {
+        title: 'Finances',
+        href: '/admin/factures',
+        icon: DollarSign,
+    },
+    {
+        title: 'Analytiques',
+        href: '/admin/analytics',
+        icon: BarChart3,
+    },
+    {
+        title: 'Paramètres',
+        href: '/admin/settings',
+        icon: Settings,
     },
 ];
 
 const footerNavItems: NavItem[] = [
+    {
+        title: 'Accueil',
+        href: home().url,
+        icon: Home,
+    },
+    {
+        title: 'MECA',
+        href: meca().url,
+        icon: Hammer,
+    },
     {
         title: 'Repository',
         href: 'https://github.com/laravel/react-starter-kit',
@@ -53,7 +104,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain items={adminNavItems} />
             </SidebarContent>
 
             <SidebarFooter>

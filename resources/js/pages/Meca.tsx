@@ -1,19 +1,19 @@
 "use client";
 
-import React, { useState, useCallback } from 'react';
 import { Head } from '@inertiajs/react';
+import React, { useState, useCallback } from 'react';
 
 // Import Components
-import { Sidebar } from '@/components/meca/sidebar';
-import { Header } from '@/components/meca/header';
 import { DashboardTab } from '@/components/meca/dashboard-tab';
+import { Header } from '@/components/meca/header';
 import { NewRequestTab } from '@/components/meca/request-tab';
-import { TrackingTab } from '@/components/meca/tracking-tab';
-import { VehiclesTab } from '@/components/meca/vehicles-tab';
 import { SettingsTab } from '@/components/meca/settings-tab';
+import { Sidebar } from '@/components/meca/sidebar';
+import { TrackingTab } from '@/components/meca/tracking-tab';
 
 // Import Types
 import type { UserData, Vehicle, AiDiagnosis, ServiceRequest } from '@/components/meca/types';
+import { VehiclesTab } from '@/components/meca/vehicles-tab';
 
 // Configuration
 const API_KEY = "";

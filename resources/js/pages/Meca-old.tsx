@@ -1,38 +1,39 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Head } from '@inertiajs/react';
+import { Car } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 // Import Components
-import { Sidebar } from '@/components/meca/sidebar';
-import { Header } from '@/components/meca/header';
 import { DashboardTab } from '@/components/meca/dashboard-tab';
-import { NewRequestTab } from '@/components/meca/request-tab';
-import { TrackingTab } from '@/components/meca/tracking-tab';
-import { VehiclesTab } from '@/components/meca/vehicles-tab';
-import { SettingsTab } from '@/components/meca/settings-tab';
+import { Header } from '@/components/meca/header';
 import { MechanicDashboard } from '@/components/meca/mechanic-dashboard';
+import { NewRequestTab } from '@/components/meca/request-tab';
+import { SettingsTab } from '@/components/meca/settings-tab';
+import { Sidebar } from '@/components/meca/sidebar';
+import { TrackingTab } from '@/components/meca/tracking-tab';
+import type { UserData, Vehicle, AiDiagnosis, ServiceRequest } from '@/components/meca/types';
+import { VehiclesTab } from '@/components/meca/vehicles-tab';
 
 // Import Types
-import type { UserData, Vehicle, AiDiagnosis, ServiceRequest } from '@/components/meca/types';
 
 // Icons
-import { Car } from 'lucide-react';
 
 // Configuration
 const API_KEY = "";
 const APP_NAME = "AutoAssist Pro";
 const APP_VERSION = "2.0.0";
-  location: {
-    lat: number;
-    lng: number;
-    address: string;
+  {
+    number;
+    number;
+    string;
   };
-  estimatedTime: number;
-  estimatedCost: number;
-  assignedMechanic: Mechanic | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
+  {
+  number;
+  number;
+  Mechanic | null;
+  Date;
+  Date;
+};
 
 interface Mechanic {
   id: string;

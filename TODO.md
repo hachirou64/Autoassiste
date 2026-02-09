@@ -1,0 +1,2 @@
+- [ ] Fix null auth.user error in app-header.tsx by adding optional chaining
+- [ ] Test dashboard access to ensure error is resolved

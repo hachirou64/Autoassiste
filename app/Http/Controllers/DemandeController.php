@@ -21,6 +21,95 @@ class DemandeController extends Controller
     protected int $maxDepanneursToNotify = 5;
 
     
+    /**
+     * API: Créer une demande et retourner du JSON
+     */
+    public function storeApi(Request $request)
+    {
+        // Vérifier que l'utilisateur est un client
+        if (!Auth::check() || !$request->user()->isClient()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vous devez être connecté en tant que client pour créer une demande.'
+            ], 403);
+        }
+
+        // Validation des données
+        $validated = $request->validate([
+            'vehicleType' => 'required|string|in:voiture,moto,camion,utilitaire',
+            'typePanne' => 'required|string',
+            'description' => 'nullable|string|max:500',
+            'localisation' => 'required|string',
+        ]);
+
+        // Parser la localisation (format: "lat,lng")
+        $coords = explode(',', $validated['localisation']);
+        $latitude = trim($coords[0]);
+        $longitude = isset($coords[1]) ? trim($coords[1]) : '';
+
+        if (empty($latitude) || empty($longitude)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Coordonnées GPS invalides.'
+            ], 400);
+        }
+
+        try {
+            // Créer la demande
+            $demande = Demande::create([
+                'localisation' => $validated['localisation'],
+                'descriptionProbleme' => $validated['description'] ?? '',
+                'vehicle_type' => $validated['vehicleType'],
+                'typePanne' => $validated['typePanne'],
+                'status' => 'en_attente',
+                'id_client' => $request->user()->client->id,
+            ]);
+
+            // Trouver les dépanneurs à proximité
+            $depanneursDisponibles = $this->findNearbyDepanneurs(
+                (float)$latitude,
+                (float)$longitude,
+                $this->defaultRadius,
+                $validated['vehicleType']
+            );
+
+            //Notifier les dépanneurs
+            foreach ($depanneursDisponibles as $depanneur) {
+                Notification::create([
+                    'message' => 'Nouvelle demande: ' . $demande->codeDemande,
+                    'type' => 'nouvelle_demande',
+                    'id_depanneur' => $depanneur->id,
+                    'id_demande' => $demande->id,
+                ]);
+            }
+
+            // Notifier le client
+            Notification::create([
+                'message' => 'Votre demande a été enregistrée. Code: ' . $demande->codeDemande,
+                'type' => 'demande_recue',
+                'id_client' => $request->user()->client->id,
+                'id_demande' => $demande->id,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Demande créée avec succès',
+                'demande' => [
+                    'id' => $demande->id,
+                    'codeDemande' => $demande->codeDemande,
+                    'status' => $demande->status,
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la création de la demande: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    
     public function index()
     {
         // Récupérer l'utilisateur connecté

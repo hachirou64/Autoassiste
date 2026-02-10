@@ -117,7 +117,9 @@ export default function AdminDashboard() {
         clients: dynamicClients = [], 
         pagination: clientsPagination,
         loading: loadingClients,
-        refresh: refreshClients 
+        refresh: refreshClients,
+        setSearch,
+        onPageChange
     } = useAdminClients({ per_page: 10 });
     
     // Données pour les depanneurs (dynamiques avec pagination)
@@ -138,7 +140,15 @@ export default function AdminDashboard() {
     const renderTabContent = () => {
         switch (activeTab) {
             case 'overview': return <OverviewTab stats={stats} alerts={dynamicAlerts} activities={dynamicActivities} />;
-            case 'clients': return <ClientsTab clients={dynamicClients} pagination={clientsPagination} isLoading={loadingClients} />;
+            case 'clients': return (
+                <ClientsTab 
+                    clients={dynamicClients} 
+                    pagination={clientsPagination} 
+                    isLoading={loadingClients}
+                    onSearch={setSearch}
+                    onPageChange={onPageChange}
+                />
+            );
             case 'depanneurs': return <DepanneursTab depanneurs={dynamicDepanneurs} pagination={depanneursPagination} isLoading={loadingDepanneurs} />;
             case 'zones': return <ZonesTab />;
             case 'demandes': return <DemandesTab />;
@@ -274,14 +284,18 @@ interface ClientsTabProps {
         per_page: number;
     };
     isLoading: boolean;
+    onSearch?: (query: string) => void;
+    onPageChange?: (page: number) => void;
 }
 
-function ClientsTab({ clients, pagination, isLoading }: ClientsTabProps) {
+function ClientsTab({ clients, pagination, isLoading, onSearch, onPageChange }: ClientsTabProps) {
     return (
         <ClientsTable 
             clients={clients} 
             pagination={pagination}
             isLoading={isLoading}
+            onSearch={onSearch}
+            onPageChange={onPageChange}
         />
     );
 }

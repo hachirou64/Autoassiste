@@ -67,7 +67,7 @@ export function ClientsTable({
                 <CardHeader>
                 <CardTitle className="text-white flex items-center justify-between">
                     <span>Clients</span>
-                    <Link href="/register/client">
+                    <Link href="/register">
                         <Button variant="outline" size="sm" className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600">
                             <Plus className="h-4 w-4 mr-2" />
                             Ajouter
@@ -89,7 +89,7 @@ export function ClientsTable({
             <CardHeader>
                 <CardTitle className="text-white flex items-center justify-between">
                     <span>Clients</span>
-                    <Link href="/register/client">
+                    <Link href="/register">
                         <Button variant="outline" size="sm" className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600">
                             <Plus className="h-4 w-4 mr-2" />
                             Ajouter
@@ -110,7 +110,7 @@ export function ClientsTable({
                         />
                     </div>
                     <span className="text-sm text-slate-400">
-                        {pagination?.total || clients.length} client(s)
+                        {(pagination?.total || clients.length)} client(s)
                     </span>
                 </div>
 

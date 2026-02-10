@@ -22,7 +22,22 @@ class DepanneurController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'fullName' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email',
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                function ($attribute, $value, $fail) {
+                    // Check if email exists in depanneurs table
+                    if (\App\Models\Depanneur::where('email', $value)->exists()) {
+                        $fail('Un compte avec cet email existe déjà en tant que dépanneur.');
+                        return;
+                    }
+                    // Check if email exists in utilisateurs table
+                    if (\App\Models\Utilisateur::where('email', $value)->exists()) {
+                        $fail('Un compte avec cet email existe déjà.');
+                    }
+                },
+            ],
             'phone' => 'required|string|max:20',
             'promoteur_name' => 'required|string|max:255',
             'etablissement_name' => 'required|string|max:255',

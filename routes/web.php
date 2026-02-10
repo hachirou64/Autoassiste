@@ -8,6 +8,11 @@ Route::get('/', function () {
     return Inertia::render('home');
 })->name('home');
 
+// Route Connexion (Inertia)
+Route::get('/login', function () {
+    return Inertia::render('login');
+})->name('login');
+
 // Routes Admin - Accessible sans authentification
 Route::prefix('admin')->group(function () {
     // Dashboard Admin - utilise la page React admin-dashboard
@@ -20,10 +25,10 @@ Route::prefix('admin')->group(function () {
     Route::get('/api/recent-activities', [App\Http\Controllers\DashboardController::class, 'getRecentActivitiesApi'])->name('admin.api.recent-activities');
     
     // Clients API
-    Route::get('/api/clients', [App\Http\Controllers\DashboardController::class, 'clients'])->name('admin.api.clients');
+    Route::get('/api/clients', [App\Http\Controllers\DashboardController::class, 'clientsApi'])->name('admin.api.clients');
     
     // Dépanneurs API
-    Route::get('/api/depanneurs', [App\Http\Controllers\DashboardController::class, 'depanneurs'])->name('admin.api.depanneurs');
+    Route::get('/api/depanneurs', [App\Http\Controllers\DashboardController::class, 'depanneursApi'])->name('admin.api.depanneurs');
     Route::get('/api/depanneurs/pending', [App\Http\Controllers\DashboardController::class, 'depanneursEnAttente'])->name('admin.api.depanneurs.pending');
     
     // Zones API
@@ -55,9 +60,9 @@ Route::get('/register/depanneur', function () {
     return Inertia::render('depanneur-register');
 })->name('register.depanneur');
 
-// Route Inscription Client (simple)
+// Ancien lien d'inscription client - redirige vers /register
 Route::get('/register/client', function () {
-    return Inertia::render('client-register');
+    return redirect()->route('register');
 })->name('register.client');
 
 // Route POST Inscription Dépanneur (avec redirection vers dashboard)
@@ -83,13 +88,27 @@ Route::get('/client/dashboard', function () {
     return Inertia::render('client-dashboard');
 })->name('client.dashboard');
 
+// Route Dashboard (alias for client dashboard)
+Route::get('/dashboard', function () {
+    return Inertia::render('client-dashboard');
+})->name('dashboard');
+
+// Route Nouvelle Demande (protégée - nécessite authentification)
+Route::get('/demande/nouvelle', function () {
+    return Inertia::render('nouvelle-demande');
+})->name('demande.nouvelle')->middleware('auth');
+
 // API Routes pour l'inscription client (simple)
 Route::prefix('api/client')->group(function () {
     Route::post('/register', [App\Http\Controllers\Api\ClientRegistrationController::class, 'register'])->name('client.register');
+    Route::get('/check-auth', [App\Http\Controllers\Api\ClientRegistrationController::class, 'checkAuth'])->name('client.check-auth');
 });
 
 // API Route pour les données du dashboard client
 Route::get('/api/client/dashboard', [App\Http\Controllers\DashboardController::class, 'getClientDashboardData'])->name('api.client.dashboard');
+
+// API Route pour créer une demande (JSON)
+Route::post('/api/demandes', [App\Http\Controllers\DemandeController::class, 'storeApi'])->name('api.demandes.store');
 
 // Route Dépanneur Dashboard
 Route::get('/depanneur/dashboard', [App\Http\Controllers\DashboardController::class, 'depanneurDashboard'])->name('depanneur.dashboard');

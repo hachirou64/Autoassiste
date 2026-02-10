@@ -360,6 +360,53 @@ class DashboardController extends Controller
     }
 
     /**
+     * API: Récupérer la liste des clients (JSON)
+     */
+    public function clientsApi()
+    {
+        $perPage = request()->input('per_page', 15);
+        $page = request()->input('page', 1);
+        $search = request()->input('search', '');
+
+        $query = Client::withCount('demandes')
+            ->withSum('demandes as total_depenses', 'coutTotal');
+
+        // Filtre par recherche
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('fullName', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        // Trier par date de création (plus récent en premier)
+        $clients = $query->orderBy('createdAt', 'desc')
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        // Transformer les données pour le frontend
+        $transformedData = collect($clients->items())->map(function($client) {
+            return [
+                'id' => $client->id,
+                'fullName' => $client->fullName,
+                'email' => $client->email,
+                'phone' => $client->phone,
+                'createdAt' => $client->createdAt,
+                'demandes_count' => $client->demandes_count ?? 0,
+                'total_depenses' => $client->total_depenses ?? 0,
+            ];
+        });
+
+        return response()->json([
+            'data' => $transformedData,
+            'current_page' => $clients->currentPage(),
+            'last_page' => $clients->lastPage(),
+            'total' => $clients->total(),
+            'per_page' => $clients->perPage(),
+        ]);
+    }
+
+    /**
      * Récupérer les données du dashboard client (API)
      */
     public function getClientDashboardData()
@@ -391,20 +438,23 @@ class DashboardController extends Controller
             'demandes_en_cours' => $client->demandes()->whereIn('status', ['en_attente', 'acceptee', 'en_cours'])->count(),
             'demandes_terminees' => $client->demandes()->where('status', 'terminee')->count(),
             'montant_total_depense' => $client->demandes()
-                ->whereHas('intervention', function($q) {
+                ->whereHas('interventions', function($q) {
                     $q->whereHas('facture', function($q2) {
                         $q2->where('status', 'payee');
                     });
                 })
-                ->with('intervention.facture')
+                ->with('interventions.facture')
                 ->get()
-                ->sum(fn($d) => $d->intervention->facture->montant ?? 0),
+                ->sum(function($d) {
+                    $intervention = $d->interventions->first();
+                    return $intervention?->facture?->montant ?? 0;
+                }),
         ];
 
         // Demande active
         $demandeActive = $client->demandes()
             ->whereIn('status', ['en_attente', 'acceptee', 'en_cours'])
-            ->with(['depanneur', 'vehicle'])
+            ->with(['depanneur'])
             ->orderBy('createdAt', 'desc')
             ->first();
 
@@ -437,7 +487,7 @@ class DashboardController extends Controller
 
         // Dernières demandes
         $dernieresDemandes = $client->demandes()
-            ->with(['depanneur', 'vehicle'])
+            ->with(['depanneur'])
             ->orderBy('createdAt', 'desc')
             ->limit(10)
             ->get()
@@ -464,7 +514,7 @@ class DashboardController extends Controller
         // Historique des interventions
         $history = $client->demandes()
             ->where('status', 'terminee')
-            ->with(['depanneur', 'vehicle', 'interventions.facture'])
+            ->with(['depanneur', 'interventions.facture'])
             ->orderBy('createdAt', 'desc')
             ->limit(20)
             ->get()
@@ -854,7 +904,7 @@ class DashboardController extends Controller
         $zoneIds = $depanneur->zones()->pluck('zones.id')->toArray();
         $demandes = Demande::enAttente()
             ->whereIn('id_zone', $zoneIds)
-            ->with(['client', 'vehicle'])
+            ->with(['client'])
             ->orderBy('createdAt', 'desc')
             ->limit(20)
             ->get()
@@ -863,7 +913,7 @@ class DashboardController extends Controller
         // Intervention en cours
         $interventionEnCours = $depanneur->interventions()
             ->whereIn('status', ['acceptee', 'en_cours'])
-            ->with(['demande.client', 'demande.vehicle'])
+            ->with(['demande.client'])
             ->first();
 
         $interventionData = null;
@@ -1009,12 +1059,9 @@ class DashboardController extends Controller
                 'fullName' => $demande->client->fullName,
                 'phone' => $demande->client->phone,
             ],
-            'vehicle' => $demande->vehicle ? [
-                'brand' => $demande->vehicle->marque,
-                'model' => $demande->vehicle->modele,
-                'color' => $demande->vehicle->couleur,
-                'plate' => $demande->vehicle->immatriculation,
-            ] : null,
+            'vehicle' => [
+                'type' => $demande->vehicle_type,
+            ],
         ];
     }
 
@@ -1101,7 +1148,7 @@ class DashboardController extends Controller
 
         $demandes = Demande::enAttente()
             ->whereIn('id_zone', $zoneIds)
-            ->with(['client', 'vehicle'])
+            ->with(['client'])
             ->orderBy('createdAt', 'desc')
             ->limit(20)
             ->get()

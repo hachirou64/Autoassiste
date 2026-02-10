@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { AdminStats, AdminAlert, RecentActivity, Client, Depanneur, PaginationParams, TableResponse } from '@/types';
 
 // Types pour les données admin
@@ -97,6 +97,8 @@ export function useAdminClients(initialParams: Partial<PaginationParams> = {}) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState('');
+    const searchRef = useRef(search);
+    const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     const fetchClients = useCallback(async (params: Partial<PaginationParams> = {}) => {
         setLoading(true);
@@ -107,7 +109,8 @@ export function useAdminClients(initialParams: Partial<PaginationParams> = {}) {
         queryParams.set('per_page', String(params.per_page || 15));
         if (params.sort_by) queryParams.set('sort_by', params.sort_by);
         if (params.sort_order) queryParams.set('sort_order', params.sort_order);
-        if (search) queryParams.set('search', search);
+        // Utiliser searchRef pour éviter les problèmes de closure
+        if (searchRef.current) queryParams.set('search', searchRef.current);
 
         try {
             const response = await fetch(`/admin/api/clients?${queryParams}`);
@@ -146,19 +149,40 @@ export function useAdminClients(initialParams: Partial<PaginationParams> = {}) {
         } finally {
             setLoading(false);
         }
-    }, [search]);
+    }, []); // Pas de dépendances - utilise searchRef
 
+    // Effect pour charger les données au montage
     useEffect(() => {
         fetchClients();
     }, [fetchClients]);
 
     const handleSearch = (query: string) => {
+        // Mettre à jour la ref immédiatement
+        searchRef.current = query;
+        // Mettre à jour l'état pour l'UI
         setSearch(query);
+
+        // Debounce: attendre 300ms avant de refetch
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+        }
+        debounceTimerRef.current = setTimeout(() => {
+            fetchClients({ page: 1 }); // Retour à la première page lors d'une recherche
+        }, 300);
     };
 
     const handlePageChange = (page: number) => {
         fetchClients({ page });
     };
+
+    // Cleanup du timer
+    useEffect(() => {
+        return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, []);
 
     return {
         ...clientsData,

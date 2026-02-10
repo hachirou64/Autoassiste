@@ -9,11 +9,13 @@ use App\Models\TypeCompte;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class ClientRegistrationController extends Controller
 {
     /**
      * Inscrire un nouveau client (simple)
+     * Retourne JSON avec redirect_url pour gestion côté frontend
      */
     public function register(Request $request)
     {
@@ -48,11 +50,19 @@ class ClientRegistrationController extends Controller
                 'email_verified' => false,
             ]);
 
+            // Connecter automatiquement l'utilisateur après inscription
+            Auth::login($utilisateur);
+            
+            // Régénérer la session pour sécurité
+            $request->session()->regenerate();
+
             DB::commit();
 
+            // Retourner réponse JSON avec redirect_url
             return response()->json([
                 'success' => true,
-                'message' => 'Inscription réussie !',
+                'message' => 'Inscription réussie ! Bienvenue sur GoAssist.',
+                'redirect_url' => route('demande.nouvelle'),
                 'user' => [
                     'id' => $utilisateur->id,
                     'fullName' => $utilisateur->fullName,
@@ -68,6 +78,29 @@ class ClientRegistrationController extends Controller
                 'message' => 'Erreur lors de l\'inscription : ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Vérifier si l'utilisateur est connecté
+     * Utile pour le frontend pour éviter les requêtes inutiles
+     */
+    public function checkAuth(Request $request)
+    {
+        if ($request->user()) {
+            return response()->json([
+                'authenticated' => true,
+                'user' => [
+                    'id' => $request->user()->id,
+                    'fullName' => $request->user()->fullName,
+                    'email' => $request->user()->email,
+                    'type' => $request->user()->typeCompte->name ?? 'unknown',
+                ],
+            ]);
+        }
+
+        return response()->json([
+            'authenticated' => false,
+        ]);
     }
 }
 

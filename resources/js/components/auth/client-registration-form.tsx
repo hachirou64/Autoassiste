@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { Car, Mail, Phone, User, Lock, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -93,32 +93,32 @@ export default function ClientRegistrationForm() {
         setIsLoading(true);
         setErrors({});
 
-        try {
-            const response = await fetch('/api/client/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify(formData),
-            });
-
-            const data = await response.json();
-
-            if (response.ok && data.success) {
+        router.post('/api/client/register', {
+            fullName: formData.fullName,
+            email: formData.email,
+            phone: formData.phone,
+            password: formData.password,
+            password_confirmation: formData.password_confirmation,
+        }, {
+            onSuccess: () => {
                 setIsSuccess(true);
-            } else {
-                setErrors({
-                    general: data.message || 'Une erreur est survenue lors de l\'inscription',
-                });
-            }
-        } catch (error) {
-            setErrors({
-                general: 'Impossible de se connecter au serveur. Veuillez réessayer.',
-            });
-        } finally {
-            setIsLoading(false);
-        }
+            },
+            onError: (errors) => {
+                // Handle Laravel validation errors
+                if (errors.email) {
+                    setErrors({ email: errors.email });
+                } else if (errors.general) {
+                    setErrors({ general: errors.general });
+                } else {
+                    setErrors({
+                        general: 'Une erreur est survenue lors de l\'inscription',
+                    });
+                }
+            },
+            onFinish: () => {
+                setIsLoading(false);
+            },
+        });
     };
 
     if (isSuccess) {

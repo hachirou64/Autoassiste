@@ -1,16 +1,56 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Head, usePage } from '@inertiajs/react';
 import AppHeaderLayout from '@/layouts/app/app-header-layout';
-import { EmailRegistrationForm } from '@/components/auth/email-registration-form';
+import { QuickRegistrationForm } from '@/components/auth/quick-registration-form';
 import { Card, CardContent } from '@/components/ui/card';
 import { Car, Phone, MapPin, Clock, Shield } from 'lucide-react';
+import type { SharedData } from '@/types';
 
 export default function RegisterPage() {
     const { ziggy } = usePage().props;
+    const { auth } = usePage<SharedData>().props;
+    const [mounted, setMounted] = useState(false);
+    const [redirecting, setRedirecting] = useState(false);
 
+    console.log('[RegisterPage] Rendu initial - auth:', auth?.user);
+
+    // Attendre que le composant soit mounted (côté client) avant de vérifier l'auth
+    useEffect(() => {
+        console.log('[RegisterPage] Component mounted');
+        setMounted(true);
+    }, []);
+
+    // Vérifier si l'utilisateur est déjà connecté (seulement après mount)
+    useEffect(() => {
+        if (!mounted) {
+            console.log('[RegisterPage] Pas encore mounted');
+            return;
+        }
+        
+        console.log('[RegisterPage] Vérification auth - auth.user:', auth?.user);
+        
+        // Si l'utilisateur est déjà connecté et n'a pas de pending_demande, rediriger
+        if (auth?.user && !sessionStorage.getItem('pending_demande')) {
+            console.log('[RegisterPage] Utilisateur connecté, pas de pending_demande, redirection vers dashboard');
+            setRedirecting(true);
+            window.location.href = '/client/dashboard';
+            return;
+        }
+        
+        // Si pending_demande existe, c'est qu'il vient du bouton SOS
+        // On garde le pending_demande et on affiche le formulaire
+        if (sessionStorage.getItem('pending_demande')) {
+            console.log('[RegisterPage] pending_demande existe, on affiche le formulaire');
+        } else {
+            console.log('[RegisterPage] Pas de pending_demande, nouvel utilisateur, on affiche le formulaire');
+        }
+    }, [auth, mounted]);
+
+    // Fonction appelée après inscription réussie
     const handleSuccess = () => {
-        // Rediriger vers le dashboard client après inscription réussie
-        window.location.href = '/client/dashboard';
+        console.log('[RegisterPage] Inscription réussie!');
+        // Utiliser router.visit pour naviguer (préserve la session Inertia)
+        window.location.href = '/demande/nouvelle';
     };
 
     const features = [
@@ -96,7 +136,7 @@ export default function RegisterPage() {
 
                         {/* Right: Registration Form */}
                         <div className="lg:pl-8">
-                            <EmailRegistrationForm
+                            <QuickRegistrationForm
                                 onSuccess={handleSuccess}
                                 onLoginClick={() => {
                                     window.location.href = '/login';

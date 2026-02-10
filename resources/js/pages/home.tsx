@@ -367,7 +367,7 @@ const pricingPlans = [
                     if (isAuthenticated) {
                       window.location.href = '/client/dashboard';
                     } else {
-                      window.location.href = '/register?role=client';
+                      window.location.href = '/register';
                     }
                   }}
                   className="text-lg px-8 py-4"

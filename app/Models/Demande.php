@@ -55,6 +55,7 @@ class Demande extends Model
         'localisation',        // Position GPS au format "lat,lng"
         'descriptionProbleme', // Description du problème
         'vehicle_type',       // Type de véhicule (voiture, moto)
+        'typePanne',          // Type de panne
         'status',              // Statut de la demande
         'acceptedAt',          // Date d'acceptation
         'completedAt',         // Date de completion
@@ -322,6 +323,16 @@ class Demande extends Model
     }
 
     public function getLongitude(): float
+    {
+        return $this->coordinates['lng'];
+    }
+
+    public function getLatitudeAttribute(): float
+    {
+        return $this->coordinates['lat'];
+    }
+
+    public function getLongitudeAttribute(): float
     {
         return $this->coordinates['lng'];
     }

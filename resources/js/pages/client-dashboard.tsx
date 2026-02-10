@@ -116,6 +116,18 @@ export default function ClientDashboard() {
     const [data, setData] = useState<DashboardData | null>(null);
     const [error, setError] = useState<string | null>(null);
 
+    // Vérifier si l'utilisateur vient du bouton SOS avec une demande en attente
+    // et automatiquement afficher le formulaire de demande
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('new-demande') === 'true') {
+            // Activer l'onglet nouvelle demande
+            setActiveTab('new-demande');
+            // Nettoyer l'URL pour éviter que le paramètre revienne après refresh
+            window.history.replaceState({}, '', '/client/dashboard');
+        }
+    }, []);
+
     // Fonction pour charger les données du dashboard
     const fetchDashboardData = useCallback(async () => {
         setLoading(true);
@@ -429,9 +441,15 @@ function HomeTab({ data }: { data: DashboardData }) {
             <ClientStatsCards stats={data.stats} />
             <div className="grid gap-6 lg:grid-cols-2">
                 <GMapComponent demandeActive={data.stats.demande_active} />
-                <InterventionTracker 
+                <InterventionTracker
                     demandeActive={data.stats.demande_active}
-                    onContactDepanneur={() => window.open('tel:+22990001111')}
+                    onContactDepanneur={() => {
+                        if (data.stats.demande_active?.depanneur?.phone) {
+                            window.open(`tel:${data.stats.demande_active.depanneur.phone}`);
+                        } else {
+                            console.log('Aucun numéro de téléphone disponible');
+                        }
+                    }}
                     onAnnuler={() => console.log('Annuler')}
                 />
             </div>

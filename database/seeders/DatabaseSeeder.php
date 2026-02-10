@@ -22,5 +22,8 @@ class DatabaseSeeder extends Seeder
 
         // Exécuter le seeder des types de comptes et zones
         $this->call(TypeCompteSeeder::class);
+
+        // Exécuter le seeder des données de démonstration
+        $this->call(DemoDataSeeder::class);
     }
 }

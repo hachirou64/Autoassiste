@@ -95,12 +95,36 @@ export function SosButton({ variant = 'floating', showLocation = true, onClick }
         setIsOpen(false);
     };
 
-    const handlePrimaryAction = () => {
-        if (isAuthenticated) {
-            // Redirect to new demande page
-            window.location.href = '/client/dashboard?new-demande=true';
-        } else {
-            // Redirect to register page
+    const handlePrimaryAction = async () => {
+        // Vérifier si l'utilisateur est déjà connecté
+        try {
+            const response = await fetch('/api/client/check-auth', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                credentials: 'include', // Important pour les cookies de session
+            });
+
+            const data = await response.json();
+
+            if (data.authenticated) {
+                // Utilisateur déjà connecté - aller directement à nouvelle demande
+                window.location.href = '/demande/nouvelle';
+            } else {
+                // Non connecté - stocker l'intention et rediriger vers inscription
+                if (typeof window !== 'undefined' && window.sessionStorage) {
+                    sessionStorage.setItem('pending_demande', 'true');
+                }
+                window.location.href = '/register';
+            }
+        } catch (error) {
+            // En cas d'erreur, rediriger vers inscription par défaut
+            console.error('Erreur lors de la vérification auth:', error);
+            if (typeof window !== 'undefined' && window.sessionStorage) {
+                sessionStorage.setItem('pending_demande', 'true');
+            }
             window.location.href = '/register';
         }
     };

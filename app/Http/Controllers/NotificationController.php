@@ -11,7 +11,7 @@ class NotificationController extends Controller
   // Récupérer les notifications pour l'utilisateur connecté
     public function index()
     {
-        $utilisateur = Auth::utilisateur();
+        $utilisateur = Auth::user();
 
         // Récupérer les notifications selon le type d'utilisateur
         if ($utilisateur->isClient()) {
@@ -35,7 +35,7 @@ class NotificationController extends Controller
     public function markAsRead(Notification $notification)
     {
         // Vérifier que la notification appartient à l'utilisateur
-        $utilisateur = Auth::utilisateur();
+        $utilisateur = Auth::user();
         
         if (($utilisateur->isClient() && $notification->id_client !== $utilisateur->client->id) ||
             ($utilisateur->isDepanneur() && $notification->id_depanneur !== $utilisateur->depanneur->id)) {
@@ -49,7 +49,7 @@ class NotificationController extends Controller
 // Marquer toutes les notifications comme lues
     public function markAllAsRead()
     {
-        $utilisateur = Auth::utilisateur();
+        $utilisateur = Auth::user();
 
         if ($utilisateur->isClient()) {
             Notification::where('id_client', $utilisateur->client->id)
@@ -82,7 +82,7 @@ class NotificationController extends Controller
     // Obtenir le nombre de notifications non lues pour l'utilisateur connecté
     public function unreadCount()
     {
-        $utilisateur = Auth::utilisateur();
+        $utilisateur = Auth::user();
 
         if ($utilisateur->isClient()) {
             $count = Notification::where('id_client', $utilisateur->client->id)

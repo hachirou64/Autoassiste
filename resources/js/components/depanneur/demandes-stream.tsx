@@ -7,6 +7,7 @@ import {
     Clock, 
     Phone, 
     Car, 
+    Bike,
     X, 
     Check, 
     Volume2,
@@ -18,6 +19,7 @@ import {
 import type { DemandeAvailable, DemandeFilters, TypePanne } from '@/types/depanneur';
 import { TYPES_PANNE_DEPANNAGE } from '@/types/depanneur';
 import { DEMANDE_STATUS_COLORS } from '@/types/client';
+import { VEHICLE_TYPES, type VehicleType } from '@/types/vehicle';
 
 interface DemandesStreamProps {
     demandes: DemandeAvailable[];
@@ -223,8 +225,8 @@ export function DemandesStream({
                 </CardHeader>
                 
                 <CardContent className="pb-3">
-                    {/* Filtres par rayon */}
-                    <div className="flex flex-wrap gap-2">
+                    {/* Filtres par rayon et type de véhicule */}
+                    <div className="flex flex-wrap gap-2 mb-3">
                         <span className="text-sm text-slate-400 flex items-center">
                             <Navigation className="h-4 w-4 mr-1" />
                             Rayon:
@@ -242,6 +244,47 @@ export function DemandesStream({
                                 }
                             >
                                 {rayon} km
+                            </Button>
+                        ))}
+                    </div>
+                    
+                    {/* Filtre par type de véhicule */}
+                    <div className="flex flex-wrap gap-2">
+                        <span className="text-sm text-slate-400 flex items-center">
+                            {filters.vehicleType === 'voiture' ? (
+                                <Car className="h-4 w-4 mr-1" />
+                            ) : filters.vehicleType === 'moto' ? (
+                                <Bike className="h-4 w-4 mr-1" />
+                            ) : (
+                                <Car className="h-4 w-4 mr-1" />
+                            )}
+                            Type:
+                        </span>
+                        <Button
+                            variant={filters.vehicleType === undefined || filters.vehicleType === 'all' ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => onFiltersChange({ ...filters, vehicleType: 'all' })}
+                            className={
+                                filters.vehicleType === undefined || filters.vehicleType === 'all'
+                                    ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                                    : 'bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600'
+                            }
+                        >
+                            Tous
+                        </Button>
+                        {VEHICLE_TYPES.map((type) => (
+                            <Button
+                                key={type.value}
+                                variant={filters.vehicleType === type.value ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => onFiltersChange({ ...filters, vehicleType: type.value })}
+                                className={
+                                    filters.vehicleType === type.value
+                                        ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                                        : 'bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600'
+                                }
+                            >
+                                {type.icon} {type.label}
                             </Button>
                         ))}
                     </div>

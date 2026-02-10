@@ -18,7 +18,7 @@ class InterventionController extends Controller
    
     public function index()
     {
-        $utilisateur = Auth::utilisateur();
+        $utilisateur = Auth::user();
 
         if ($utilisateur->isDepanneur()) {
             // Dépanneur: voir ses propres interventions
@@ -58,7 +58,7 @@ class InterventionController extends Controller
    
     public function start(Demande $demande)
     {
-        $utilisateur = Auth::utilisateur();
+        $utilisateur = Auth::user();
 
         
         if (!$utilisateur->isDepanneur()) {
@@ -184,7 +184,7 @@ class InterventionController extends Controller
    // Afficher les interventions en cours du dépanneur
     public function enCours()
     {
-        $utilisateur = Auth::utilisateur();
+        $utilisateur = Auth::user();
 
         if (!$utilisateur->isDepanneur()) {
             abort(403, 'Seuls les dépanneurs peuvent accéder à cette page.');
@@ -202,7 +202,7 @@ class InterventionController extends Controller
    // 
     public function historique()
     {
-        $utilisateur= Auth::utilisateur();
+        $utilisateur= Auth::user();
 
         if (!$utilisateur->isDepanneur()) {
             abort(403, 'Seuls les dépanneurs peuvent accéder à cette page.');

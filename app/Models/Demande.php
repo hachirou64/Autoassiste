@@ -49,10 +49,12 @@ class Demande extends Model
     public $timestamps = false;
 
     
+    
     protected $fillable = [
         'codeDemande',         // Code unique généré automatiquement
         'localisation',        // Position GPS au format "lat,lng"
         'descriptionProbleme', // Description du problème
+        'vehicle_type',       // Type de véhicule (voiture, moto)
         'status',              // Statut de la demande
         'acceptedAt',          // Date d'acceptation
         'completedAt',         // Date de completion
@@ -72,6 +74,7 @@ class Demande extends Model
     const UPDATED_AT = 'updatedAt';
 
     
+    
     const STATUS_EN_ATTENTE = 'en_attente';
 
     
@@ -83,6 +86,11 @@ class Demande extends Model
     const STATUS_TERMINEE = 'terminee';
 
     const STATUS_ANNULEE = 'annulee';
+
+    
+    // Types de véhicules
+    const VEHICULE_VOITURE = 'voiture';
+    const VEHICULE_MOTO = 'moto';
 
     
     protected static function boot()
@@ -222,6 +230,18 @@ class Demande extends Model
     {
         return $this->status === self::STATUS_EN_ATTENTE;
     }
+
+    
+    public function getVehicleTypeLabelAttribute(): string
+    {
+        $labels = [
+            self::VEHICULE_VOITURE => 'Voiture',
+            self::VEHICULE_MOTO => 'Moto',
+        ];
+        return $labels[$this->vehicle_type] ?? 'Non spécifié';
+    }
+
+    
     public function getDureeEstimeeAttribute(): ?int
     {
         if (!$this->acceptedAt || !$this->completedAt) {

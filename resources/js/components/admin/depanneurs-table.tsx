@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -86,12 +87,14 @@ export function DepanneursTable({
         return (
             <Card className="bg-slate-800/50 border-slate-700">
                 <CardHeader>
-                    <CardTitle className="text-white flex items-center justify-between">
+                <CardTitle className="text-white flex items-center justify-between">
                         <span>Depanneurs</span>
-                        <Button variant="outline" size="sm" disabled>
-                            <Plus className="h-4 w-4 mr-2" />
-                            Ajouter
-                        </Button>
+                        <Link href="/register/depanneur">
+                            <Button variant="outline" size="sm" className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600">
+                                <Plus className="h-4 w-4 mr-2" />
+                                Ajouter
+                            </Button>
+                        </Link>
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -108,10 +111,12 @@ export function DepanneursTable({
             <CardHeader>
                 <CardTitle className="text-white flex items-center justify-between">
                     <span>Depanneurs</span>
-                    <Button variant="outline" size="sm" className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Ajouter
-                    </Button>
+                    <Link href="/register/depanneur">
+                        <Button variant="outline" size="sm" className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Ajouter
+                        </Button>
+                    </Link>
                 </CardTitle>
             </CardHeader>
             <CardContent>

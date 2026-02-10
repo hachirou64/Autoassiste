@@ -60,6 +60,7 @@ export const TYPES_PANNE: { value: TypePanne; label: string; icon: string }[] = 
 
 // Formulaire de demande
 export interface DemandeFormData {
+    vehicleType: 'voiture' | 'moto';
     typePanne: TypePanne;
     description: string;
     localisation: string;

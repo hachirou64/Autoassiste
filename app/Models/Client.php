@@ -40,7 +40,7 @@ class Client extends Model
     
     public function user(): HasOne
     {
-        return $this->hasOne(User::class, 'id_client');
+        return $this->hasOne(Utilisateur::class, 'id_client');
     }
 
     

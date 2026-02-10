@@ -117,18 +117,82 @@ export default function ClientDashboard() {
     const [error, setError] = useState<string | null>(null);
 
     // Fonction pour charger les données du dashboard
-    // NOTE: Cette fonction peut être facilement modifiée pour appeler une vraie API
-    // Pour l'instant, elle simule un appel API avec les données mockées
     const fetchDashboardData = useCallback(async () => {
         setLoading(true);
         setError(null);
         
         try {
-            // Simuler un appel API (à remplacer par un vrai fetch plus tard)
-            // Pour l'instant, on utilise setTimeout pour simuler le délai réseau
-            await new Promise(resolve => setTimeout(resolve, 800));
-            
-            // Les données mockées (à remplacer par await fetch('/api/client/dashboard'))
+            // Appel API réel pour récupérer les données du dashboard
+            const response = await fetch('/api/client/dashboard', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                credentials: 'include', // Pour inclure les cookies d'authentification
+            });
+
+            if (!response.ok) {
+                throw new Error('Erreur lors du chargement des données');
+            }
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Transformer les données API au format attendu par le composant
+                const apiData = result;
+                
+                const dashboardData: DashboardData = {
+                    stats: {
+                        total_demandes: apiData.stats.total_demandes,
+                        demandes_en_cours: apiData.stats.demandes_en_cours,
+                        demandes_terminees: apiData.stats.demandes_terminees,
+                        montant_total_depense: apiData.stats.montant_total_depense,
+                        demande_active: apiData.demande_active ? {
+                            id: apiData.demande_active.id,
+                            codeDemande: apiData.demande_active.codeDemande,
+                            status: apiData.demande_active.status,
+                            typePanne: apiData.demande_active.typePanne,
+                            localisation: apiData.demande_active.localisation,
+                            latitude: apiData.demande_active.latitude,
+                            longitude: apiData.demande_active.longitude,
+                            estimated_arrival: apiData.demande_active.estimated_arrival,
+                            distance: apiData.demande_active.distance,
+                            depanneur: apiData.demande_active.depanneur,
+                        } : undefined,
+                    },
+                    notifications: apiData.notifications.map((n: any) => ({
+                        id: n.id,
+                        type: n.type,
+                        titre: n.titre,
+                        message: n.message,
+                        isRead: n.isRead,
+                        createdAt: n.createdAt,
+                    })),
+                    history: apiData.history.map((h: any) => ({
+                        id: h.id,
+                        codeDemande: h.codeDemande,
+                        date: h.date,
+                        typePanne: h.typePanne,
+                        status: h.status,
+                        depanneur: h.depanneur,
+                        montant: h.montant,
+                        duree: h.duree,
+                        evaluation: h.evaluation,
+                        facture: h.facture,
+                    })),
+                    profile: apiData.profile,
+                    profileStats: apiData.profileStats,
+                };
+                
+                setData(dashboardData);
+            } else {
+                throw new Error(result.error || 'Erreur lors du chargement');
+            }
+        } catch (err) {
+            setError('Erreur lors du chargement des données. Veuillez réessayer.');
+            console.error('Error fetching dashboard data:', err);
+            // En cas d'erreur, utiliser les données mockées comme fallback
             const dashboardData: DashboardData = {
                 stats: mockStats,
                 notifications: mockNotifications,
@@ -136,11 +200,7 @@ export default function ClientDashboard() {
                 profile: mockProfile,
                 profileStats: mockProfileStats,
             };
-            
             setData(dashboardData);
-        } catch (err) {
-            setError('Erreur lors du chargement des données. Veuillez réessayer.');
-            console.error('Error fetching dashboard data:', err);
         } finally {
             setLoading(false);
         }

@@ -19,5 +19,8 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
+
+        // Exécuter le seeder des types de comptes et zones
+        $this->call(TypeCompteSeeder::class);
     }
 }

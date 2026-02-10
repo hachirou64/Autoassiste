@@ -7,12 +7,17 @@ import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { AlertTriangle, MapPin, Clock } from 'lucide-react';
-import { TYPES_PANNE, type TypePanne } from '@/types/client';
+import { AlertTriangle, MapPin, Clock, Car, Bike } from 'lucide-react';
+import { 
+    VEHICLE_TYPES, 
+    type VehicleType, 
+    getTypesPanneByVehicleType 
+} from '@/types/vehicle';
 
 interface DemandeFormProps {
     onSubmit: (data: {
-        typePanne: TypePanne;
+        vehicleType: VehicleType;
+        typePanne: string;
         description: string;
         localisation: string;
     }) => void;
@@ -20,9 +25,13 @@ interface DemandeFormProps {
 }
 
 export function DemandeForm({ onSubmit, isLoading = false }: DemandeFormProps) {
-    const [typePanne, setTypePanne] = useState<TypePanne>('panne_seche');
+    const [vehicleType, setVehicleType] = useState<VehicleType>('voiture');
+    const [typePanne, setTypePanne] = useState<string>('panne_seche');
     const [description, setDescription] = useState('');
     const [localisation, setLocalisation] = useState('');
+
+    // Récupérer les types de panne selon le véhicule sélectionné
+    const typesPanne = getTypesPanneByVehicleType(vehicleType);
 
     const handleDetectLocation = () => {
         if (navigator.geolocation) {
@@ -41,7 +50,7 @@ export function DemandeForm({ onSubmit, isLoading = false }: DemandeFormProps) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit({ typePanne, description, localisation });
+        onSubmit({ vehicleType, typePanne, description, localisation });
     };
 
     return (
@@ -54,15 +63,41 @@ export function DemandeForm({ onSubmit, isLoading = false }: DemandeFormProps) {
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Type de véhicule */}
+                    <div className="space-y-2">
+                        <Label className="text-slate-300">Type de véhicule *</Label>
+                        <div className="grid grid-cols-2 gap-4">
+                            {VEHICLE_TYPES.map((type) => (
+                                <button
+                                    key={type.value}
+                                    type="button"
+                                    onClick={() => {
+                                        setVehicleType(type.value);
+                                        // Réinitialiser le type de panne
+                                        setTypePanne(getTypesPanneByVehicleType(type.value)[0]?.value || '');
+                                    }}
+                                    className={`flex items-center justify-center gap-2 p-4 rounded-lg border-2 transition-all ${
+                                        vehicleType === type.value
+                                            ? 'border-amber-500 bg-amber-500/10 text-white'
+                                            : 'border-slate-600 bg-slate-700/50 text-slate-400 hover:border-slate-500'
+                                    }`}
+                                >
+                                    <span className="text-2xl">{type.icon}</span>
+                                    <span className="font-medium">{type.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     {/* Type de panne */}
                     <div className="space-y-2">
                         <Label className="text-slate-300">Type de panne *</Label>
-                        <Select value={typePanne} onValueChange={(v) => setTypePanne(v as TypePanne)}>
+                        <Select value={typePanne} onValueChange={setTypePanne}>
                             <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                {TYPES_PANNE.map((type) => (
+                                {typesPanne.map((type) => (
                                     <SelectItem key={type.value} value={type.value}>
                                         {type.icon} {type.label}
                                     </SelectItem>

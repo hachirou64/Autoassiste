@@ -16,6 +16,7 @@ class Notification extends Model
     
     protected $fillable = [
         'message',       // Texte de la notification
+        'titre',         // Titre de la notification
         'type',          // Type de notification
         'isRead',        // Statut lu/non lu
         'id_client',     // FK client (optionnel)

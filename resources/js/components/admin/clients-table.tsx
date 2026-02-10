@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -64,13 +65,15 @@ export function ClientsTable({
         return (
             <Card className="bg-slate-800/50 border-slate-700">
                 <CardHeader>
-                    <CardTitle className="text-white flex items-center justify-between">
-                        <span>Clients</span>
-                        <Button variant="outline" size="sm" disabled>
+                <CardTitle className="text-white flex items-center justify-between">
+                    <span>Clients</span>
+                    <Link href="/register/client">
+                        <Button variant="outline" size="sm" className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600">
                             <Plus className="h-4 w-4 mr-2" />
                             Ajouter
                         </Button>
-                    </CardTitle>
+                    </Link>
+                </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="flex items-center justify-center py-8">
@@ -86,10 +89,12 @@ export function ClientsTable({
             <CardHeader>
                 <CardTitle className="text-white flex items-center justify-between">
                     <span>Clients</span>
-                    <Button variant="outline" size="sm" className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Ajouter
-                    </Button>
+                    <Link href="/register/client">
+                        <Button variant="outline" size="sm" className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Ajouter
+                        </Button>
+                    </Link>
                 </CardTitle>
             </CardHeader>
             <CardContent>

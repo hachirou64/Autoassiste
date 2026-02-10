@@ -12,7 +12,8 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard, home, meca } from '@/routes';
+import { home } from '@/routes';
+import admin from '@/routes/admin';
 import type { NavItem } from '@/types';
 import AppLogo from './app-logo';
 
@@ -20,7 +21,7 @@ import AppLogo from './app-logo';
 const adminNavItems: NavItem[] = [
     {
         title: 'Dashboard',
-        href: dashboard().url,
+        href: admin.dashboard().url,
         icon: LayoutGrid,
     },
     {
@@ -72,11 +73,6 @@ const footerNavItems: NavItem[] = [
         icon: Home,
     },
     {
-        title: 'MECA',
-        href: meca().url,
-        icon: Hammer,
-    },
-    {
         title: 'Repository',
         href: 'https://github.com/laravel/react-starter-kit',
         icon: Folder,
@@ -95,7 +91,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch>
+                            <Link href={admin.dashboard()} prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>

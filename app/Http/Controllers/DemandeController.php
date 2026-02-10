@@ -1,7 +1,5 @@
 <?php
 
-
-
 namespace App\Http\Controllers;
 
 use App\Models\Demande;
@@ -26,9 +24,8 @@ class DemandeController extends Controller
     public function index()
     {
         // Récupérer l'utilisateur connecté
-        $user = Auth::utilisateur();
+        $utilisateur = Auth::user();
 
-    
        
         if ($utilisateur->isClient()) {
             $demandes = Demande::where('id_client', $utilisateur->client->id)
@@ -60,7 +57,7 @@ class DemandeController extends Controller
     public function create()
     {
         
-        if (!Auth::utilisateur()->isClient()) {
+        if (!Auth::user()->isClient()) {
             // Si ce n'est pas un client, retourner une erreur 403
             abort(403, 'Action non autorisée. Seul un client peut créer une demande.');
         }
@@ -70,6 +67,7 @@ class DemandeController extends Controller
     }
 
    
+   
     public function store(Request $request)
     {
        // validation des données
@@ -77,6 +75,7 @@ class DemandeController extends Controller
             'latitude' => 'required|numeric',           // Latitude obligatoire
             'longitude' => 'required|numeric',          // Longitude obligatoire
             'descriptionProbleme' => 'required|string|min:10', // Description min 10 caractères
+            'vehicle_type' => 'required|in:voiture,moto', // Type de véhicule obligatoire
         ]);
 
        
@@ -87,22 +86,25 @@ class DemandeController extends Controller
         $demande = Demande::create([
             'localisation' => $localisation,
             'descriptionProbleme' => $validated['descriptionProbleme'],
+            'vehicle_type' => $validated['vehicle_type'],
             'status' => 'en_attente',  // Statut initial
-            'id_client' => Auth::utilisateur()->client->id,  // ID du client connecté
+            'id_client' => Auth::user()->client->id,  // ID du client connecté
         ]);
 
        
         // Utilise une méthode helper qui calcule la distance avec Haversine
+        // Filtre par type de véhicule du dépanneur
         $depanneursDisponibles = $this->findNearbyDepanneurs(
             $validated['latitude'],
             $validated['longitude'],
-            $this->defaultRadius
+            $this->defaultRadius,
+            $validated['vehicle_type']
         );
 
         
         foreach ($depanneursDisponibles as $depanneur) {
             Notification::create([
-                'message' => 'Nouvelle demande d\'assistance disponible : ' . $demande->codeDemande,
+                'message' => 'Nouvelle demande d\'assistance disponible : ' . $demande->codeDemande . ' (' . $demande->vehicle_type_label . ')',
                 'type' => 'nouvelle_demande',
                 'id_depanneur' => $depanneur->id,
                 'id_demande' => $demande->id,
@@ -111,9 +113,9 @@ class DemandeController extends Controller
 
         
         Notification::create([
-            'message' => 'Votre demande a été enregistrée. Code : ' . $demande->codeDemande,
+            'message' => 'Votre demande a été enregistrée. Code : ' . $demande->codeDemande . ' - ' . ucfirst($demande->vehicle_type),
             'type' => 'nouvelle_demande',
-            'id_client' => Auth::utilisateur()->client->id,
+            'id_client' => Auth::user()->client->id,
             'id_demande' => $demande->id,
         ]);
 
@@ -141,10 +143,10 @@ class DemandeController extends Controller
     public function accepter(Demande $demande)
     {
         // Récupérer l'utilisateur connecté
-        $utilisateur = Auth::utilisateur();
+        $utilisateur = Auth::user();
 
         
-        if (!$user->isDepanneur()) {
+        if (!$utilisateur->isDepanneur()) {
             abort(403, 'Seuls les dépanneurs peuvent accepter des demandes.');
         }
 
@@ -197,7 +199,7 @@ class DemandeController extends Controller
     public function annuler(Demande $demande)
     {
         
-        if (Auth::utilisateur()->client->id !== $demande->id_client) {
+        if (Auth::user()->client->id !== $demande->id_client) {
             abort(403, 'Action non autorisée. Vous n\'êtes pas le propriétaire de cette demande.');
         }
 
@@ -221,6 +223,7 @@ class DemandeController extends Controller
             'codeDemande' => $demande->codeDemande,
             'status' => $demande->status,
             'statutLabel' => $demande->statut_label,
+            'vehicleType' => $demande->vehicle_type,
             'depanneur' => $demande->depanneur ? [
                 'etablissement' => $demande->depanneur->etablissement_name,
             ] : null,
@@ -228,11 +231,12 @@ class DemandeController extends Controller
         ]);
     }
 
-    private function findNearbyDepanneurs(float $latitude, float $longitude, int $radius = 10)
+    private function findNearbyDepanneurs(float $latitude, float $longitude, int $radius = 10, string $vehicleType = 'voiture')
     {
         
-        // Scope: status = disponible ET isActive = true
+        // Scope: status = disponible ET isActive = true ET type_vehicule compatible
         return Depanneur::disponible() 
+            ->forVehicleType($vehicleType)  // Filtrer par type de véhicule
             ->select('depanneurs.*')
             ->selectRaw(
                 // Calcul de la distance en km avec la formule de Haversine

@@ -67,9 +67,39 @@ export interface DemandeFilters {
     rayon: number; // 5, 10, 20 km
     typePanne?: string;
     statut?: string;
+    vehicleType?: 'voiture' | 'moto' | 'all';
 }
 
 // ==================== INTERVENTION EN COURS ====================
+
+// Type simplifié pour les interventions actives (sans les champs de facturation)
+export interface ActiveIntervention {
+    id: number;
+    codeIntervention?: string;
+    status: 'acceptee' | 'en_cours';
+    demande: {
+        id: number;
+        codeDemande: string;
+        typePanne: string;
+        localisation: string;
+        latitude: number;
+        longitude: number;
+        descriptionProbleme?: string;
+    };
+    client: {
+        id: number;
+        fullName: string;
+        phone: string;
+        photo?: string;
+    };
+    vehicle?: {
+        brand: string;
+        model: string;
+        color: string;
+        plate: string;
+    } | null;
+    startedAt?: string;
+}
 
 export interface InterventionEnCours {
     id: number;
@@ -130,21 +160,22 @@ export interface InterventionFormData {
 export interface DepanneurProfile {
     id: number;
     promoteur_name: string;
+    fullName?: string; // Alias pour promoteur_name (pour compatibilité)
     etablissement_name: string;
-    IFU: string;
+    IFU?: string;
     email: string;
     phone: string;
     photo?: string;
     logo?: string;
     status: 'disponible' | 'occupe' | 'hors_service';
     isActive: boolean;
-    createdAt: string;
+    createdAt?: string;
     
-    zones: ZoneIntervention[];
+    zones?: ZoneIntervention[];
     
-    horaires: HorairesDisponibilite[];
+    horaires?: HorairesDisponibilite[];
     
-    preferences: {
+    preferences?: {
         notifications_sonores: boolean;
         notifications_sms: boolean;
         notifications_email: boolean;
@@ -152,11 +183,15 @@ export interface DepanneurProfile {
         rayon_prefere: number;
     };
     
-    statistiques: {
+    statistiques?: {
         total_interventions: number;
         note_moyenne: number;
         depuis: string;
     };
+    
+    // Pour les données API
+    type_vehicule?: string;
+    localisation_actuelle?: string;
 }
 
 export interface ZoneIntervention {

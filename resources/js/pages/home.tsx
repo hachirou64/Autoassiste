@@ -361,7 +361,15 @@ const pricingPlans = [
                   variant="destructive"
                   size="lg"
                   icon={Navigation}
-                  onClick={() => onRoleSelect('client')}
+                  onClick={() => {
+                    // Vérifier si l'utilisateur est connecté
+                    const isAuthenticated = document.cookie.includes('auth_token') || localStorage.getItem('auth_token');
+                    if (isAuthenticated) {
+                      window.location.href = '/client/dashboard';
+                    } else {
+                      window.location.href = '/register?role=client';
+                    }
+                  }}
                   className="text-lg px-8 py-4"
                 >
                   J'ai besoin d'aide
@@ -370,7 +378,15 @@ const pricingPlans = [
                   variant="outline"
                   size="lg"
                   icon={Wrench}
-                  onClick={() => onRoleSelect('pro')}
+                  onClick={() => {
+                    // Vérifier si l'utilisateur est connecté
+                    const isAuthenticated = document.cookie.includes('auth_token') || localStorage.getItem('auth_token');
+                    if (isAuthenticated) {
+                      window.location.href = '/depanneur/dashboard';
+                    } else {
+                      window.location.href = '/register/depanneur';
+                    }
+                  }}
                   className="text-lg px-8 py-4"
                 >
                   Je suis dépanneur
@@ -730,10 +746,18 @@ const pricingPlans = [
               </div>
               
               <Button
-                variant="primary"
+                variant="destructive"
                 size="lg"
                 icon={Wrench}
-                onClick={() => onRoleSelect('pro')}
+                onClick={() => {
+                    // Vérifier si l'utilisateur est connecté
+                    const isAuthenticated = document.cookie.includes('auth_token') || localStorage.getItem('auth_token');
+                    if (isAuthenticated) {
+                      window.location.href = '/depanneur/dashboard';
+                    } else {
+                      window.location.href = '/register/depanneur';
+                    }
+                  }}
                 className="bg-white text-slate-900 hover:bg-slate-100"
               >
                 Devenir partenaire

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import AppHeaderLayout from '@/layouts/app/app-header-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -29,7 +29,6 @@ import {
     Menu,
     X,
     ChevronRight,
-    BarChart3,
     AlertCircle
 } from 'lucide-react';
 
@@ -37,89 +36,48 @@ import {
 import type { 
     DepanneurStats, 
     DemandeAvailable, 
-    InterventionEnCours,
+    ActiveIntervention,
     DemandeFilters,
     StatusDisponibilite,
-    DepanneurProfile as DepanneurProfileType 
+    DepanneurProfile as DepanneurProfileType,
+    DepanneurNotification
 } from '@/types/depanneur';
 
-// Données mockées
-const mockStats: DepanneurStats = {
-    interventions_aujourdhui: 3,
-    revenus_aujourdhui: 105000,
-    demandes_acceptees_aujourdhui: 4,
-    note_moyenne_aujourdhui: 4.8,
-    interventions_mois: 28,
-    revenus_mois: 720000,
-    demandes_acceptees_mois: 32,
-    note_moyenne_mois: 4.7,
-    total_interventions: 156,
-    total_revenus: 2450000,
-    note_moyenne: 4.7,
-    total_clients: 89,
-    status: 'disponible',
-    zones_count: 4,
-};
-
-const mockDemandes: DemandeAvailable[] = [
-    {
-        id: 1,
-        codeDemande: 'DEM-2024-001',
-        typePanne: 'batterie',
-        descriptionProbleme: 'Véhicule qui ne démarre pas, batterie HS',
-        localisation: 'Cotonou, Rue de la Paix',
-        latitude: 6.366,
-        longitude: 2.433,
-        distance: 2.5,
-        createdAt: new Date().toISOString(),
-        tempsRestant: 180,
+// Types pour les données Inertia
+interface DepanneurDashboardProps {
+    stats: DepanneurStats | null;
+    profile: DepanneurProfileType | null;
+    demandes: DemandeAvailable[];
+    interventionEnCours: {
+        id: number;
+        codeIntervention: string;
+        status: 'acceptee' | 'en_cours';
+        demande: {
+            id: number;
+            codeDemande: string;
+            typePanne: string;
+            localisation: string;
+            latitude: number;
+            longitude: number;
+            descriptionProbleme: string;
+        };
         client: {
-            id: 1,
-            fullName: 'Jean Dupont',
-            phone: '+229 90 00 00 01',
-        },
-        vehicle: {
-            brand: 'Toyota',
-            model: 'Corolla',
-            color: 'Gris',
-            plate: 'ABC-123',
-        },
-    },
-    {
-        id: 2,
-        codeDemande: 'DEM-2024-002',
-        typePanne: 'panne_seche',
-        descriptionProbleme: 'Panne de carburant en route',
-        localisation: 'Cotonou, Avenue de la Liberté',
-        latitude: 6.370,
-        longitude: 2.440,
-        distance: 5.2,
-        createdAt: new Date(Date.now() - 120000).toISOString(),
-        tempsRestant: 300,
-        client: {
-            id: 2,
-            fullName: 'Marie Kouami',
-            phone: '+229 90 00 00 02',
-        },
-    },
-    {
-        id: 3,
-        codeDemande: 'DEM-2024-003',
-        typePanne: 'creaison',
-        descriptionProbleme: 'Pneu crevé sur la route',
-        localisation: 'Cotonou, Boulevard Saint-Michel',
-        latitude: 6.360,
-        longitude: 2.435,
-        distance: 8.1,
-        createdAt: new Date(Date.now() - 60000).toISOString(),
-        tempsRestant: 420,
-        client: {
-            id: 3,
-            fullName: 'Paul Agossou',
-            phone: '+229 90 00 00 03',
-        },
-    },
-];
+            id: number;
+            fullName: string;
+            phone: string;
+        };
+        vehicle?: {
+            brand: string;
+            model: string;
+            color: string;
+            plate: string;
+        } | null;
+        startedAt?: string;
+    } | null;
+    notifications: DepanneurNotification[];
+    currentStatus: string;
+    error?: string;
+}
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
@@ -140,58 +98,167 @@ const navItems = [
 type TabType = 'overview' | 'demandes' | 'intervention' | 'history' | 'finances' | 'profile';
 
 export default function DepanneurDashboard() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { props } = usePage<any>();
     const [activeTab, setActiveTab] = useState<TabType>('overview');
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     
     // États pour les données
     const [loading, setLoading] = useState(true);
-    const [stats, setStats] = useState<DepanneurStats>(mockStats);
-    const [demandes, setDemandes] = useState<DemandeAvailable[]>(mockDemandes);
+    const [stats, setStats] = useState<DepanneurStats | null>(props.stats);
+    const [demandes, setDemandes] = useState<DemandeAvailable[]>(props.demandes || []);
     const [filters, setFilters] = useState<DemandeFilters>({ rayon: 10 });
     const [soundEnabled, setSoundEnabled] = useState(true);
-    const [currentStatus, setCurrentStatus] = useState<StatusDisponibilite>('disponible');
-    const [interventionStatus, setInterventionStatus] = useState<'aucune' | 'acceptee' | 'en_cours'>('aucune');
+    const [currentStatus, setCurrentStatus] = useState<StatusDisponibilite>((props.currentStatus as StatusDisponibilite) || 'disponible');
+    const [interventionStatus, setInterventionStatus] = useState<'aucune' | 'acceptee' | 'en_cours'>(
+        props.interventionEnCours ? (props.interventionEnCours.status === 'acceptee' ? 'acceptee' : 'en_cours') : 'aucune'
+    );
 
-    // Simuler le chargement
+    // Charger les données initiales
     useEffect(() => {
-        const timer = setTimeout(() => setLoading(false), 800);
+        if (props.error) {
+            console.error('Erreur:', props.error);
+        }
+        setStats(props.stats);
+        setDemandes(props.demandes);
+        setCurrentStatus((props.currentStatus as StatusDisponibilite) || 'disponible');
+        if (props.interventionEnCours) {
+            setInterventionStatus(props.interventionEnCours.status === 'acceptee' ? 'acceptee' : 'en_cours');
+        }
+        
+        // Simuler un léger délai pour l'effet de chargement
+        const timer = setTimeout(() => setLoading(false), 500);
         return () => clearTimeout(timer);
+    }, [props]);
+
+    // Handlers pour les actions API
+    const handleAcceptDemande = useCallback(async (demandeId: number) => {
+        try {
+            const response = await fetch(`/api/depanneur/demandes/${demandeId}/accepter`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Retirer la demande de la liste
+                setDemandes(prev => prev.filter(d => d.id !== demandeId));
+                setInterventionStatus('acceptee');
+                setCurrentStatus('occupe');
+            } else {
+                alert(data.error || 'Erreur lors de l\'acceptation');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            alert('Erreur de connexion');
+        }
     }, []);
 
-    // Handlers
-    const handleAcceptDemande = useCallback((demandeId: number) => {
-        console.log('Accepter demande:', demandeId);
-        setDemandes(prev => prev.filter(d => d.id !== demandeId));
-        setInterventionStatus('acceptee');
+    const handleRefuseDemande = useCallback(async (demandeId: number) => {
+        try {
+            const response = await fetch(`/api/depanneur/demandes/${demandeId}/refuser`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Retirer la demande de la liste
+                setDemandes(prev => prev.filter(d => d.id !== demandeId));
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+        }
     }, []);
 
-    const handleRefuseDemande = useCallback((demandeId: number) => {
-        console.log('Refuser demande:', demandeId);
-        setDemandes(prev => prev.filter(d => d.id !== demandeId));
+    const handleStatusChange = useCallback(async (newStatus: StatusDisponibilite) => {
+        try {
+            const response = await fetch('/api/depanneur/status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({ status: newStatus }),
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                setCurrentStatus(newStatus);
+            } else {
+                alert(data.error || 'Erreur lors du changement de statut');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            alert('Erreur de connexion');
+        }
     }, []);
 
-    const handleStatusChange = useCallback((newStatus: StatusDisponibilite) => {
-        setCurrentStatus(newStatus);
-        console.log('Changer statut vers:', newStatus);
-    }, []);
+    const handleStartIntervention = useCallback(async () => {
+        if (!props.interventionEnCours) return;
+        
+        try {
+            const response = await fetch(`/api/depanneur/interventions/${props.interventionEnCours?.id}/start`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                setInterventionStatus('en_cours');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            alert('Erreur de connexion');
+        }
+    }, [props.interventionEnCours]);
 
-    const handleStartIntervention = useCallback(() => {
-        setInterventionStatus('en_cours');
-        setCurrentStatus('occupe');
-    }, []);
-
-    const handleEndIntervention = useCallback((data: any) => {
-        console.log('Terminer intervention:', data);
-        setInterventionStatus('aucune');
-        setCurrentStatus('disponible');
-        // Rafraîchir les stats
-        setStats(prev => ({
-            ...prev,
-            interventions_aujourdhui: prev.interventions_aujourdhui + 1,
-            revenus_aujourdhui: prev.revenus_aujourdhui + (data.coutPiece + data.coutMainOeuvre),
-        }));
-    }, []);
+    const handleEndIntervention = useCallback(async (data: any) => {
+        if (!props.interventionEnCours) return;
+        
+        try {
+            const response = await fetch(`/api/depanneur/interventions/${props.interventionEnCours?.id}/end`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify(data),
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                setInterventionStatus('aucune');
+                setCurrentStatus('disponible');
+                // Rafraîchir les stats
+                setStats(prev => prev ? ({
+                    ...prev,
+                    interventions_aujourdhui: prev.interventions_aujourdhui + 1,
+                    revenus_aujourdhui: prev.revenus_aujourdhui + (data.coutPiece + data.coutMainOeuvre),
+                }) : null);
+            } else {
+                alert(result.error || 'Erreur lors de la fin de l\'intervention');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            alert('Erreur de connexion');
+        }
+    }, [props.interventionEnCours]);
 
     const handleCancelIntervention = useCallback(() => {
         setInterventionStatus('aucune');
@@ -199,16 +266,33 @@ export default function DepanneurDashboard() {
     }, []);
 
     const handleCallClient = useCallback(() => {
-        window.open('tel:+22990000001');
-    }, []);
+        if (props.interventionEnCours?.client.phone) {
+            window.open(`tel:${props.interventionEnCours.client.phone}`);
+        }
+    }, [props.interventionEnCours]);
 
     const handleOpenMaps = useCallback(() => {
-        window.open('https://maps.google.com', '_blank');
-    }, []);
+        if (props.interventionEnCours?.demande.latitude && props.interventionEnCours?.demande.longitude) {
+            window.open(`https://maps.google.com/?q=${props.interventionEnCours.demande.latitude},${props.interventionEnCours.demande.longitude}`, '_blank');
+        }
+    }, [props.interventionEnCours]);
 
     const renderTabContent = () => {
         if (loading) {
             return <LoadingPage text="Chargement de votre espace..." />;
+        }
+
+        // Afficher un message d'erreur si pas de profil
+        if (!props.profile && !props.error) {
+            return (
+                <div className="flex flex-col items-center justify-center h-64 text-center">
+                    <AlertCircle className="h-12 w-12 text-yellow-500 mb-4" />
+                    <h2 className="text-xl font-semibold text-white mb-2">Compte non configuré</h2>
+                    <p className="text-slate-400">
+                        Vous n'avez pas encore de compte dépanneur lié à votre profil.
+                    </p>
+                </div>
+            );
         }
 
         switch (activeTab) {
@@ -225,6 +309,7 @@ export default function DepanneurDashboard() {
                     soundEnabled={soundEnabled}
                     onToggleSound={() => setSoundEnabled(!soundEnabled)}
                     interventionStatus={interventionStatus}
+                    profile={props.profile}
                 />;
             case 'demandes':
                 return (
@@ -253,6 +338,15 @@ export default function DepanneurDashboard() {
                     <div className="grid gap-6 lg:grid-cols-2">
                         <CurrentIntervention
                             status={interventionStatus}
+                            intervention={props.interventionEnCours ? {
+                                id: props.interventionEnCours.id,
+                                codeIntervention: props.interventionEnCours.codeIntervention,
+                                status: props.interventionEnCours.status,
+                                demande: props.interventionEnCours.demande,
+                                client: props.interventionEnCours.client,
+                                vehicle: props.interventionEnCours.vehicle || undefined,
+                                startedAt: props.interventionEnCours.startedAt,
+                            } : undefined}
                             onStart={handleStartIntervention}
                             onEnd={handleEndIntervention}
                             onCancel={handleCancelIntervention}
@@ -263,6 +357,13 @@ export default function DepanneurDashboard() {
                             currentLocation={{ lat: 6.366, lng: 2.433 }}
                             rayon={filters.rayon}
                             onRayonChange={(rayon) => setFilters({ ...filters, rayon })}
+                            interventionEnCours={props.interventionEnCours ? {
+                                latitude: props.interventionEnCours.demande.latitude,
+                                longitude: props.interventionEnCours.demande.longitude,
+                                adresse: props.interventionEnCours.demande.localisation,
+                                distance: 3.5,
+                                dureeEstimee: 15,
+                            } : undefined}
                         />
                     </div>
                 );
@@ -271,7 +372,7 @@ export default function DepanneurDashboard() {
             case 'finances':
                 return <FinancialDashboard />;
             case 'profile':
-                return <DepanneurProfile />;
+                return <DepanneurProfile profile={props.profile || undefined} />;
             default:
                 return <OverviewTab 
                     stats={stats} 
@@ -285,6 +386,7 @@ export default function DepanneurDashboard() {
                     soundEnabled={soundEnabled}
                     onToggleSound={() => setSoundEnabled(!soundEnabled)}
                     interventionStatus={interventionStatus}
+                    profile={props.profile}
                 />;
         }
     };
@@ -441,7 +543,9 @@ export default function DepanneurDashboard() {
                             <div>
                                 <h1 className="text-2xl font-bold text-white">{getPageTitle()}</h1>
                                 <p className="text-slate-400 mt-1">
-                                    Bienvenue sur votre espace dépanneur
+                                    {props.profile 
+                                        ? `Bienvenue, ${props.profile.etablissement_name || props.profile.fullName}`
+                                        : 'Bienvenue sur votre espace dépanneur'}
                                 </p>
                             </div>
                             
@@ -449,7 +553,9 @@ export default function DepanneurDashboard() {
                             <div className="flex items-center gap-2">
                                 <button className="relative p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg">
                                     <Bell className="h-5 w-5" />
-                                    <span className="absolute top-1 right-1 w-2 h-2 bg-amber-500 rounded-full" />
+                                    {props.notifications.length > 0 && (
+                                        <span className="absolute top-1 right-1 w-2 h-2 bg-amber-500 rounded-full" />
+                                    )}
                                 </button>
                             </div>
                         </div>
@@ -465,7 +571,7 @@ export default function DepanneurDashboard() {
 
 // Sous-composant: Vue d'ensemble
 interface OverviewTabProps {
-    stats: DepanneurStats;
+    stats: DepanneurStats | null;
     currentStatus: StatusDisponibilite;
     onStatusChange: (status: StatusDisponibilite) => void;
     demandes: DemandeAvailable[];
@@ -476,6 +582,7 @@ interface OverviewTabProps {
     soundEnabled: boolean;
     onToggleSound: () => void;
     interventionStatus: 'aucune' | 'acceptee' | 'en_cours';
+    profile?: DepanneurProfileType;
 }
 
 function OverviewTab({
@@ -490,6 +597,7 @@ function OverviewTab({
     soundEnabled,
     onToggleSound,
     interventionStatus,
+    profile,
 }: OverviewTabProps) {
     return (
         <div className="space-y-6">
@@ -501,7 +609,7 @@ function OverviewTab({
             />
 
             {/* Stats */}
-            <DepanneurStatsCards stats={stats} />
+            {stats && <DepanneurStatsCards stats={stats} />}
 
             {/* Demandes et Map */}
             <div className="grid gap-6 lg:grid-cols-2">
@@ -542,7 +650,7 @@ function OverviewTab({
                     onOpenMaps={() => window.open('https://maps.google.com', '_blank')}
                 />
             ) : (
-                <DepanneurNotifications />
+                <DepanneurNotifications notifications={[]} />
             )}
         </div>
     );

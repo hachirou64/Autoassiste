@@ -150,7 +150,7 @@ class AuthController extends Controller
             $request->session()->regenerate();
 
             // Récupérer l'utilisateur connecté
-            $utilisateur = Auth::utilisateur();
+            $utilisateur = Auth::user();
 
             //redirection selon le role après 
             // la connexion, ou vers le dashboard par défaut

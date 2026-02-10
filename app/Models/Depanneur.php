@@ -27,6 +27,7 @@ class Depanneur extends Model
         'phone',               // Numéro de téléphone
         'status',              // Statut actuel
         'isActive',            // Si le compte est activé
+        'type_vehicule',       // Type de véhicule (voiture, moto, les_deux)
         'localisation_actuelle', // Position GPS actuelle
     ];
 
@@ -37,6 +38,7 @@ class Depanneur extends Model
         'updatedAt' => 'datetime',   // Cast en objet Carbon
     ];
 
+    
     
     const CREATED_AT = 'createdAt';
     const UPDATED_AT = 'updatedAt';
@@ -54,9 +56,15 @@ class Depanneur extends Model
     const STATUS_HORS_SERVICE = 'hors_service';
 
     
+    // Types de véhicules
+    const VEHICULE_VOITURE = 'voiture';
+    const VEHICULE_MOTO = 'moto';
+    const VEHICULE_LES_DEUX = 'les_deux';
+
+    
     public function utilisateur(): HasOne
     {
-        return $this->hasOne(User::class, 'id_depanneur');
+        return $this->hasOne(Utilisateur::class, 'id_depanneur');
     }
 
   
@@ -88,10 +96,17 @@ class Depanneur extends Model
     }
 
    
+   
     public function scopeDisponible($query)
     {
         return $query->where('status', self::STATUS_DISPONIBLE)
                      ->where('isActive', true);
+    }
+
+    
+    public function scopeForVehicleType($query, string $vehicleType)
+    {
+        return $query->whereIn('type_vehicule', [$vehicleType, self::VEHICULE_LES_DEUX]);
     }
 
    
@@ -134,6 +149,17 @@ class Depanneur extends Model
             self::STATUS_HORS_SERVICE => 'Hors service',
         ];
         return $labels[$this->status] ?? 'Inconnu';
+    }
+
+    
+    public function getTypeVehiculeLabelAttribute(): string
+    {
+        $labels = [
+            self::VEHICULE_VOITURE => 'Voiture',
+            self::VEHICULE_MOTO => 'Moto',
+            self::VEHICULE_LES_DEUX => 'Voiture & Moto',
+        ];
+        return $labels[$this->type_vehicule] ?? 'Non défini';
     }
 
 

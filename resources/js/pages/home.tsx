@@ -362,13 +362,10 @@ const pricingPlans = [
                   size="lg"
                   icon={Navigation}
                   onClick={() => {
-                    // Vérifier si l'utilisateur est connecté
-                    const isAuthenticated = document.cookie.includes('auth_token') || localStorage.getItem('auth_token');
-                    if (isAuthenticated) {
-                      window.location.href = '/client/dashboard';
-                    } else {
-                      window.location.href = '/register';
-                    }
+                    // Rediriger vers la page de connexion
+                    // Le middleware Laravel vérifiera l'authentification
+                    // et redirigera vers le dashboard approprié après connexion
+                    window.location.href = '/login';
                   }}
                   className="text-lg px-8 py-4"
                 >
@@ -379,13 +376,9 @@ const pricingPlans = [
                   size="lg"
                   icon={Wrench}
                   onClick={() => {
-                    // Vérifier si l'utilisateur est connecté
-                    const isAuthenticated = document.cookie.includes('auth_token') || localStorage.getItem('auth_token');
-                    if (isAuthenticated) {
-                      window.location.href = '/depanneur/dashboard';
-                    } else {
-                      window.location.href = '/register/depanneur';
-                    }
+                    // Rediriger vers la page de connexion
+                    // Après connexion, l'utilisateur sera redirigé vers le dashboard approprié
+                    window.location.href = '/login';
                   }}
                   className="text-lg px-8 py-4"
                 >
@@ -748,16 +741,11 @@ const pricingPlans = [
               <Button
                 variant="destructive"
                 size="lg"
-                icon={Wrench}
                 onClick={() => {
-                    // Vérifier si l'utilisateur est connecté
-                    const isAuthenticated = document.cookie.includes('auth_token') || localStorage.getItem('auth_token');
-                    if (isAuthenticated) {
-                      window.location.href = '/depanneur/dashboard';
-                    } else {
-                      window.location.href = '/register/depanneur';
-                    }
-                  }}
+                  // Rediriger vers la page de connexion
+                  // Après connexion, l'utilisateur sera redirigé vers le dashboard approprié
+                  window.location.href = '/login';
+                }}
                 className="bg-white text-slate-900 hover:bg-slate-100"
               >
                 Devenir partenaire

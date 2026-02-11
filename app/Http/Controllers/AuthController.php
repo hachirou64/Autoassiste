@@ -137,38 +137,71 @@ class AuthController extends Controller
     
     public function login(Request $request)
     {
-        // validation des données du formulaire
+        // Validation des données du formulaire
+        // Accepter email OU téléphone comme identifiant
         $credentials = $request->validate([
-            'email' => 'required|email',
+            'login' => 'required|string', // email ou téléphone
             'password' => 'required',
+            'remember' => 'boolean',
         ]);
 
-        // tentative de connexion avec les credentials fournis
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
-            
-            // La régénération de la session empêche les attaques de fixation de session
-            $request->session()->regenerate();
+        // Déterminer si login est un email ou un téléphone
+        $loginField = $this->detectLoginField($credentials['login']);
+        
+        // Vérifier si l'utilisateur existe par email ou téléphone
+        $user = Utilisateur::where('email', $credentials['login'])
+                    ->orWhereHas('client', function ($query) use ($credentials) {
+                        $query->where('phone', $credentials['login']);
+                    })
+                    ->first();
 
-            // Récupérer l'utilisateur connecté
-            $utilisateur = Auth::user();
-
-            //redirection selon le role après 
-            // la connexion, ou vers le dashboard par défaut
-            if ($utilisateur->isAdmin()) {
-                return redirect()->intended(route('admin.dashboard'));
-            } elseif ($utilisateur->isClient()) {
-                return redirect()->intended(route('client.dashboard'));
-            } else {
-                return redirect()->intended(route('depanneur.dashboard'));
-            }
+        if (!$user) {
+            // Tentative avec le champ détecté (email)
+            $user = Utilisateur::where($loginField, $credentials['login'])->first();
         }
 
+        // Vérifier les credentials
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+            return back()->withErrors([
+                'login' => 'Les identifiants sont incorrects.',
+            ])->onlyInput('login');
+        }
+
+        // Connecter l'utilisateur
+        Auth::login($user, $request->boolean('remember'));
+
+        // Régénérer la session pour sécurité
+        $request->session()->regenerate();
+
+        // Redirection selon le type de compte
+        if ($user->isAdmin()) {
+            return redirect()->intended(route('admin.dashboard'));
+        } elseif ($user->isClient()) {
+            return redirect()->intended(route('client.dashboard'));
+        } else {
+            return redirect()->intended(route('depanneur.dashboard'));
+        }
+    }
+
+    /**
+     * Détecter si l'input est un email ou un téléphone.
+     */
+    protected function detectLoginField(string $login): string
+    {
+        // Vérifier si c'est un email (contient @)
+        if (filter_var($login, FILTER_VALIDATE_EMAIL)) {
+            return 'email';
+        }
         
-        // Si les credentials sont incorrects, retourner au formulaire
-        // avec un message d'erreur (sans révéler quelle information est incorrecte)
-        return back()->withErrors([
-            'email' => 'Les identifiants sont incorrects.',
-        ])->onlyInput('email');
+        // Vérifier si c'est un téléphone (contient principalement des chiffres)
+        // Accepte les formats: +229XXXXXXXX, 00229XXXXXXXX, XXXXXXXXXX
+        $phonePattern = '/^(\+229|00229)?[0-9]{8,10}$/';
+        if (preg_match($phonePattern, preg_replace('/[\s\-\.]/', '', $login))) {
+            return 'phone';
+        }
+
+        // Par défaut, traiter comme email
+        return 'email';
     }
 
    

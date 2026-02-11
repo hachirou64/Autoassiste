@@ -13,6 +13,13 @@ Route::get('/login', function () {
     return Inertia::render('login');
 })->name('login');
 
+// Routes d'authentification sociale (Google, Facebook)
+Route::prefix('auth')->group(function () {
+    // Routes OAuth génériques avec paramètre provider
+    Route::get('/{provider}', [App\Http\Controllers\SocialAuthController::class, 'redirectToProvider'])->name('auth.social');
+    Route::get('/{provider}/callback', [App\Http\Controllers\SocialAuthController::class, 'handleProviderCallback'])->name('auth.social.callback');
+});
+
 // Routes Admin - Accessible sans authentification
 Route::prefix('admin')->group(function () {
     // Dashboard Admin - utilise la page React admin-dashboard
@@ -30,9 +37,6 @@ Route::prefix('admin')->group(function () {
     // Dépanneurs API
     Route::get('/api/depanneurs', [App\Http\Controllers\DashboardController::class, 'depanneursApi'])->name('admin.api.depanneurs');
     Route::get('/api/depanneurs/pending', [App\Http\Controllers\DashboardController::class, 'depanneursEnAttente'])->name('admin.api.depanneurs.pending');
-    
-    // Zones API
-    Route::get('/api/zones', [App\Http\Controllers\DashboardController::class, 'zones'])->name('admin.api.zones');
     
     // Demandes API
     Route::get('/api/demandes', [App\Http\Controllers\DashboardController::class, 'demandes'])->name('admin.api.demandes');

@@ -43,7 +43,38 @@ export default function LoginPage() {
     // Function called after successful login
     const handleSuccess = () => {
         console.log('[LoginPage] Connexion réussie!');
-        // Redirect will be handled by Inertia/Laravel based on user type
+        console.log('[LoginPage] Auth data:', auth);
+        
+        // Vérifier si l'utilisateur venait du bouton SOS (pending_demande)
+        const hasPendingDemande = sessionStorage.getItem('pending_demande');
+        
+        // Déterminer où rediriger basé sur le type de compte
+        // TypeCompte: 1 = Admin, 2 = Client, 3 = Depanneur
+        let redirectUrl = '/client/dashboard'; // Par défaut
+        
+        if (auth?.user?.id_type_compte === 1) {
+            redirectUrl = '/admin/dashboard';
+        } else if (auth?.user?.id_type_compte === 2) {
+            redirectUrl = '/client/dashboard';
+        } else if (auth?.user?.id_type_compte === 3) {
+            redirectUrl = '/depanneur/dashboard';
+        } else {
+            // Fallback: vérifier via l'API si le type n'est pas déterminé
+            // Rediriger vers le dashboard client par défaut
+            redirectUrl = '/client/dashboard';
+        }
+        
+        console.log('[LoginPage] Redirection vers:', redirectUrl);
+        
+        if (hasPendingDemande) {
+            // Nettoyer pending_demande
+            sessionStorage.removeItem('pending_demande');
+            // Rediriger vers nouvelle-demande comme demandé
+            window.location.href = '/demande/nouvelle';
+        } else {
+            // Rediriger vers le dashboard approprié
+            window.location.href = redirectUrl;
+        }
     };
 
     // Function called when user wants to register

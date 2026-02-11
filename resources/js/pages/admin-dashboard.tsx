@@ -7,7 +7,6 @@ import { AlertsPanel } from '@/components/admin/alerts-panel';
 import { RecentActivities } from '@/components/admin/recent-activities';
 import { ClientsTable } from '@/components/admin/clients-table';
 import { DepanneursTable } from '@/components/admin/depanneurs-table';
-import { ZonesManagement } from '@/components/admin/zones-management';
 import { DemandesTracking } from '@/components/admin/demandes-tracking';
 import { InterventionsTracking } from '@/components/admin/interventions-tracking';
 import { FinancialReports } from '@/components/admin/financial-reports';
@@ -17,7 +16,7 @@ import {
     DollarSign, BarChart3, Settings, ChevronRight, Hammer, RefreshCw
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import type { AdminStats, AdminAlert, RecentActivity, TrendsData, Zone, Demande, Intervention, Facture } from '@/types';
+import type { AdminStats, AdminAlert, RecentActivity, TrendsData, Demande, Intervention, Facture } from '@/types';
 import { useAdminData, useAdminClients, useAdminDepanneurs } from '@/hooks/use-admin-data';
 import { useApi } from '@/hooks/use-admin-data';
 
@@ -36,7 +35,6 @@ const localNavItems: LocalNavItem[] = [
     { title: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
     { title: 'Clients', href: '/admin/clients', icon: Users },
     { title: 'Depanneurs', href: '/admin/depanneurs', icon: Wrench },
-    { title: 'Zones', href: '/admin/zones', icon: MapPin },
     { title: 'Demandes', href: '/admin/demandes', icon: FileText },
     { title: 'Interventions', href: '/admin/interventions', icon: Hammer },
     { title: 'Factures', href: '/admin/factures', icon: DollarSign },
@@ -81,7 +79,6 @@ const defaultTrends: TrendsData = {
     revenusParMois: [],
 };
 
-const defaultZones: Zone[] = [];
 const defaultDemandes: Demande[] = [];
 const defaultInterventions: Intervention[] = [];
 const defaultFactures: Facture[] = [];
@@ -93,7 +90,7 @@ const defaultPagination = {
     per_page: 10,
 };
 
-type TabType = 'overview' | 'clients' | 'depanneurs' | 'zones' | 'demandes' | 'interventions' | 'financial' | 'analytics';
+type TabType = 'overview' | 'clients' | 'depanneurs' | 'demandes' | 'interventions' | 'financial' | 'analytics';
 
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState<TabType>('overview');
@@ -150,7 +147,6 @@ export default function AdminDashboard() {
                 />
             );
             case 'depanneurs': return <DepanneursTab depanneurs={dynamicDepanneurs} pagination={depanneursPagination} isLoading={loadingDepanneurs} />;
-            case 'zones': return <ZonesTab />;
             case 'demandes': return <DemandesTab />;
             case 'interventions': return <InterventionsTab />;
             case 'financial': return <FinancialTab />;
@@ -164,7 +160,6 @@ export default function AdminDashboard() {
             overview: 'Vue d\'ensemble',
             clients: 'Gestion des clients',
             depanneurs: 'Gestion des depanneurs',
-            zones: 'Gestion des zones',
             demandes: 'Suivi des demandes',
             interventions: 'Suivi des interventions',
             financial: 'Rapports financiers',
@@ -176,7 +171,6 @@ export default function AdminDashboard() {
     const getTabFromHref = (href: string): TabType => {
         if (href.includes('clients')) return 'clients';
         if (href.includes('depanneurs')) return 'depanneurs';
-        if (href.includes('zones')) return 'zones';
         if (href.includes('demandes')) return 'demandes';
         if (href.includes('interventions')) return 'interventions';
         if (href.includes('factures') || href.includes('financial')) return 'financial';
@@ -319,10 +313,6 @@ function DepanneursTab({ depanneurs, pagination, isLoading }: DepanneursTabProps
             isLoading={isLoading}
         />
     );
-}
-
-function ZonesTab() {
-    return <ZonesManagement zones={defaultZones} pagination={defaultPagination} />;
 }
 
 function DemandesTab() {

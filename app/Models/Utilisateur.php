@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Socialite\Contracts\User as SocialUser;
 
 
 class Utilisateur extends Authenticatable
@@ -68,6 +69,14 @@ class Utilisateur extends Authenticatable
         return $this->belongsTo(Depanneur::class, 'id_depanneur');
     }
 
+    /**
+     * Relation avec les comptes sociaux.
+     */
+    public function socialAccounts()
+    {
+        return $this->hasMany(SocialAccount::class);
+    }
+
     
     public function isAdmin()
     {
@@ -84,5 +93,34 @@ class Utilisateur extends Authenticatable
     public function isDepanneur()
     {
         return $this->typeCompte->name === 'Depanneur';
+    }
+
+    /**
+     * Créer ou récupérer un utilisateur via OAuth social.
+     */
+    public static function findOrCreateFromSocial(SocialUser $socialUser, string $provider): self
+    {
+        // Chercher par email ou par compte social
+        $user = static::where('email', $socialUser->getEmail())->first();
+        
+        if ($user) {
+            // Mettre à jour le nom si nécessaire
+            if (!$user->fullName && $socialUser->getName()) {
+                $user->fullName = $socialUser->getName();
+                $user->save();
+            }
+            return $user;
+        }
+
+        // Créer un nouvel utilisateur
+        $user = static::create([
+            'fullName' => $socialUser->getName() ?? $socialUser->getEmail(),
+            'email' => $socialUser->getEmail(),
+            'password' => bcrypt(str_random(16)), // Mot de passe aléatoire
+            'email_verified' => true, // Considéré comme vérifié par le provider
+            'id_type_compte' => 2, // Type Client par défaut
+        ]);
+
+        return $user;
     }
 }

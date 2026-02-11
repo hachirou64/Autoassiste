@@ -116,10 +116,11 @@ export function useAdminClients(initialParams: Partial<PaginationParams> = {}) {
             const response = await fetch(`/admin/api/clients?${queryParams}`);
 
             if (!response.ok) {
-                throw new Error('Erreur lors du chargement des clients');
+                throw new Error(`Erreur ${response.status}: Erreur lors du chargement des clients`);
             }
 
             const result = await response.json();
+            console.log('[useAdminClients] API Response:', result);
 
             // Adapter le format selon la réponse de l'API
             if (result.data) {
@@ -153,8 +154,9 @@ export function useAdminClients(initialParams: Partial<PaginationParams> = {}) {
 
     // Effect pour charger les données au montage
     useEffect(() => {
+        console.log('[useAdminClients] Composant monté, chargement initial des clients');
         fetchClients();
-    }, [fetchClients]);
+    }, []); // Vide pour éviter les re-fetches inutiles
 
     const handleSearch = (query: string) => {
         // Mettre à jour la ref immédiatement

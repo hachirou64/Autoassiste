@@ -98,6 +98,11 @@ Route::get('/demande/nouvelle', function () {
     return Inertia::render('nouvelle-demande');
 })->name('demande.nouvelle')->middleware('auth');
 
+// Route Contact
+Route::get('/contact', function () {
+    return Inertia::render('contact');
+})->name('contact');
+
 // API Routes pour l'inscription client (simple)
 Route::prefix('api/client')->group(function () {
     Route::post('/register', [App\Http\Controllers\Api\ClientRegistrationController::class, 'register'])->name('client.register');
@@ -137,6 +142,14 @@ Route::prefix('api/depanneur')->middleware(['auth'])->group(function () {
     // Statistiques
     Route::get('/stats', [App\Http\Controllers\DashboardController::class, 'getDepanneurStats'])->name('depanneur.api.stats');
 });
+
+// Logout Route
+Route::post('/logout', function () {
+    Auth::logout();
+    request()->session()->invalidate();
+    request()->session()->regenerateToken();
+    return redirect('/');
+})->name('logout');
 
 require __DIR__.'/settings.php';
 

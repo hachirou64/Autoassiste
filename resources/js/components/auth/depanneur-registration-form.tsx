@@ -20,10 +20,9 @@ import {
 
 interface DepanneurRegistrationFormProps {
     onSuccess?: () => void;
-    onLoginClick?: () => void;
 }
 
-export function DepanneurRegistrationForm({ onSuccess, onLoginClick }: DepanneurRegistrationFormProps) {
+export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFormProps) {
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState<DepanneurRegistrationData>({
         fullName: '',
@@ -351,7 +350,7 @@ export function DepanneurRegistrationForm({ onSuccess, onLoginClick }: Depanneur
                                 {[
                                     { value: 'voiture', label: 'Voiture', icon: '🚗' },
                                     { value: 'moto', label: 'Moto', icon: '🏍️' },
-                                    { value: 'tous', label: 'Tous', icon: '🚗' },
+                                    { value: 'les_deux', label: 'Tous', icon: '🚗' },
                                 ].map((type) => (
                                     <button
                                         key={type.value}
@@ -618,12 +617,12 @@ export function DepanneurRegistrationForm({ onSuccess, onLoginClick }: Depanneur
                 {/* Lien vers connexion */}
                 <p className="text-center text-sm text-slate-400">
                     Déjà un compte dépanneur ?{' '}
-                    <button
-                        onClick={onLoginClick}
+                    <a
+                        href="/login"
                         className="text-amber-400 hover:text-amber-300 font-medium"
                     >
                         Se connecter
-                    </button>
+                    </a>
                 </p>
             </CardContent>
         </Card>

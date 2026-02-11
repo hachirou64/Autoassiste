@@ -24,7 +24,8 @@ export function DepanneurStatsCards({ stats }: DepanneurStatsCardsProps) {
         }).format(amount);
     };
 
-    const formatNote = (note: number) => {
+    const formatNote = (note: number | undefined) => {
+        if (!note && note !== 0) return '0.0';
         return note.toFixed(1);
     };
 

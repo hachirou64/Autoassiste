@@ -44,7 +44,7 @@ class DepanneurController extends Controller
             'IFU' => 'required|string|max:50',
             'adresse' => 'required|string|max:500',
             'localisation_actuelle' => 'required|string|max:100',
-            'type_vehicule' => 'required|in:voiture,moto,tous',
+            'type_vehicule' => 'required|in:voiture,moto,les_deux',
             'services' => 'required|array|min:1',
             'methode_payement' => 'required|array|min:1',
             'disponibilite' => 'required|string',
@@ -97,15 +97,20 @@ class DepanneurController extends Controller
                 ]);
             }
 
-            // Connecter automatiquement l'utilisateur
-            Auth::login($user);
+            // Connecter automatiquement l'utilisateur avec regeneration de session
+            Auth::login($user, true);
+            $request->session()->regenerate();
 
             // Rediriger vers le dashboard dépanneur
             return redirect(route('depanneur.dashboard'))
                 ->with('success', 'Compte créé avec succès ! Bienvenue ' . $user->fullName);
 
+        } catch (\Illuminate\Database\QueryException $e) {
+            \Log::error('Erreur DB inscription dépanneur: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Erreur de base de données: Email déjà utilisé ou données invalides.'])->withInput();
         } catch (\Exception $e) {
-            return back()->withErrors(['email' => 'Erreur lors de la création du compte: ' . $e->getMessage()])->withInput();
+            \Log::error('Erreur inscription dépanneur: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Erreur lors de la création du compte: ' . $e->getMessage()])->withInput();
         }
     }
 

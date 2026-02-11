@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, usePage, router } from '@inertiajs/react';
 import AppHeaderLayout from '@/layouts/app/app-header-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -277,6 +277,10 @@ export default function DepanneurDashboard() {
         }
     }, [props.interventionEnCours]);
 
+    const handleLogout = useCallback(() => {
+        router.post('/logout');
+    }, []);
+
     const renderTabContent = () => {
         if (loading) {
             return <LoadingPage text="Chargement de votre espace..." />;
@@ -372,7 +376,7 @@ export default function DepanneurDashboard() {
             case 'finances':
                 return <FinancialDashboard />;
             case 'profile':
-                return <DepanneurProfile profile={props.profile || undefined} />;
+                return <DepanneurProfile profile={props.profile || undefined} onLogout={handleLogout} />;
             default:
                 return <OverviewTab 
                     stats={stats} 

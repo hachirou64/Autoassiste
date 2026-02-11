@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Users, Wrench, MapPin, FileText, Hammer, DollarSign, BarChart3, Settings, Home } from 'lucide-react';
+import { LayoutGrid, Users, Wrench, MapPin, FileText, Hammer, DollarSign, BarChart3, Settings, Home } from 'lucide-react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -71,16 +71,6 @@ const footerNavItems: NavItem[] = [
         title: 'Accueil',
         href: home().url,
         icon: Home,
-    },
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
     },
 ];
 

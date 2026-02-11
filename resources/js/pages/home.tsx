@@ -234,7 +234,7 @@ const pricingPlans = [
               <a href="#pro" className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-amber-500 dark:hover:text-amber-400 transition-colors">
                 Devenir Pro
               </a>
-              <a href="#contact-form" className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-amber-500 dark:hover:text-amber-400 transition-colors">
+              <a href="/contact" className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-amber-500 dark:hover:text-amber-400 transition-colors">
                 Contact
               </a>
               
@@ -308,7 +308,7 @@ const pricingPlans = [
                   Devenir Pro
                 </a>
                 <a 
-                  href="#contact-form" 
+                  href="/contact" 
                   className="block px-4 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -822,211 +822,7 @@ const pricingPlans = [
         </div>
       </section>
 
-      {/* Contact Section */}
-      <section id="contact-form" className="py-16 lg:py-24 bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-colors duration-300 relative overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-20 left-10 w-32 h-32 bg-amber-500 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-20 right-10 w-40 h-40 bg-blue-500 rounded-full blur-3xl"></div>
-        </div>
-
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12 lg:mb-20">
-              <Badge variant="info" className="mb-6 animate-pulse">
-                <Mail size={16} className="mr-2" /> CONTACTEZ-NOUS
-              </Badge>
-              <h2 className="text-4xl lg:text-5xl font-black text-slate-900 dark:text-white mb-6 leading-tight">
-                Parlons de votre{' '}
-                <span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
-                  projet
-                </span>
-              </h2>
-              <p className="text-xl lg:text-2xl text-slate-600 dark:text-slate-400 max-w-3xl mx-auto leading-relaxed">
-                Notre équipe d'experts est là pour répondre à toutes vos questions et vous accompagner dans vos besoins d'assistance routière.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
-              {/* Contact Info Cards */}
-              <div className="lg:col-span-1 space-y-6">
-                <Card className="p-6 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <Phone size={24} className="text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2">
-                        Téléphone
-                      </h3>
-                      <p className="text-slate-600 dark:text-slate-400 mb-1">
-                        +229 01 69 16 21 07
-                      </p>
-                      <p className="text-sm text-slate-500 dark:text-slate-500">
-                        Disponible 24/7
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-
-                <Card className="p-6 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <Mail size={24} className="text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2">
-                        Email
-                      </h3>
-                      <p className="text-slate-600 dark:text-slate-400 mb-1">
-                        support@autoassist.bj
-                      </p>
-                      <p className="text-sm text-slate-500 dark:text-slate-500">
-                        Réponse sous 2h
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-
-                <Card className="p-6 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <Building size={24} className="text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2">
-                        Bureau
-                      </h3>
-                      <p className="text-slate-600 dark:text-slate-400 mb-1">
-                        Cotonou, Bénin
-                      </p>
-                      <p className="text-sm text-slate-500 dark:text-slate-500">
-                        Zone industrielle
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-
-                <Card className="p-6 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <ClockIcon size={24} className="text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2">
-                        Horaires
-                      </h3>
-                      <p className="text-slate-600 dark:text-slate-400 mb-1">
-                        Lun - Dim: 24/7
-                      </p>
-                      <p className="text-sm text-slate-500 dark:text-slate-500">
-                        Support technique
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-              </div>
-
-              {/* Contact Form */}
-              <div className="lg:col-span-2">
-                <Card className="p-8 lg:p-12 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border-0 shadow-2xl">
-                  <div className="mb-8">
-                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
-                      Envoyez-nous un message
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-400">
-                      Remplissez le formulaire ci-dessous et nous vous répondrons dans les plus brefs délais.
-                    </p>
-                  </div>
-
-                  <form onSubmit={handleContactSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="relative">
-                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                          <User size={16} className="inline mr-2" />
-                          Nom complet *
-                        </label>
-                        <input
-                          type="text"
-                          value={contactForm.name}
-                          onChange={(e) => setContactForm({...contactForm, name: e.target.value})}
-                          className="w-full px-4 py-4 pl-12 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                          placeholder="Votre nom complet"
-                          required
-                        />
-                        <User size={20} className="absolute left-4 top-11 text-slate-400" />
-                      </div>
-                      <div className="relative">
-                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                          <Mail size={16} className="inline mr-2" />
-                          Email *
-                        </label>
-                        <input
-                          type="email"
-                          value={contactForm.email}
-                          onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
-                          className="w-full px-4 py-4 pl-12 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                          placeholder="votre@email.com"
-                          required
-                        />
-                        <Mail size={20} className="absolute left-4 top-11 text-slate-400" />
-                      </div>
-                    </div>
-
-                    <div className="relative">
-                      <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                        <MessageSquare size={16} className="inline mr-2" />
-                        Sujet
-                      </label>
-                      <input
-                        type="text"
-                        value={contactForm.subject}
-                        onChange={(e) => setContactForm({...contactForm, subject: e.target.value})}
-                        className="w-full px-4 py-4 pl-12 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                        placeholder="Objet de votre message"
-                      />
-                      <MessageSquare size={20} className="absolute left-4 top-11 text-slate-400" />
-                    </div>
-
-                    <div className="relative">
-                      <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                        <Send size={16} className="inline mr-2" />
-                        Message *
-                      </label>
-                      <Textarea
-                        value={contactForm.message}
-                        onChange={(e) => setContactForm({...contactForm, message: e.target.value})}
-                        className="w-full px-4 py-4 pl-12 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-none transition-all duration-200"
-                        placeholder="Décrivez votre demande en détail..."
-                        rows={6}
-                        required
-                      />
-                      <Send size={20} className="absolute left-4 top-11 text-slate-400" />
-                    </div>
-
-                    <div className="text-center pt-4">
-                      <Button
-                        type="submit"
-                        variant="primary"
-                        size="lg"
-                        loading={contactLoading}
-                        className="px-12 py-4 text-lg font-semibold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
-                      >
-                        <Send size={20} className="mr-2" />
-                        Envoyer le message
-                      </Button>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-4">
-                        Nous respectons votre confidentialité et ne partageons jamais vos informations.
-                      </p>
-                    </div>
-                  </form>
-                </Card>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
+     
       {/* Footer */}
       <footer className="bg-slate-900 text-white pt-16 pb-8">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">

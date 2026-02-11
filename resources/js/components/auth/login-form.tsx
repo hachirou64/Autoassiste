@@ -39,13 +39,33 @@ export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
     // Redirect if already logged in (client-side only)
     useEffect(() => {
         if (!mounted) return;
-        
+
         if (auth?.user) {
-            // User is already logged in, redirect to appropriate dashboard
+            // User is already logged in, redirect to appropriate dashboard based on user type
+            let redirectUrl = '/client/dashboard';
+
+            // Check user type for universal redirection
+            if (auth.user.id_type_compte) {
+                // TypeCompte: 1 = Admin, 2 = Client, 3 = Depanneur
+                switch (auth.user.id_type_compte) {
+                    case 1:
+                        redirectUrl = '/admin/dashboard';
+                        break;
+                    case 2:
+                        redirectUrl = '/client/dashboard';
+                        break;
+                    case 3:
+                        redirectUrl = '/depanneur/dashboard';
+                        break;
+                    default:
+                        redirectUrl = '/client/dashboard';
+                }
+            }
+
             if (onSuccess) {
                 onSuccess();
             } else {
-                window.location.href = '/client/dashboard';
+                window.location.href = redirectUrl;
             }
         }
     }, [auth, mounted, onSuccess]);

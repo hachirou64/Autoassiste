@@ -228,27 +228,44 @@ export function SosButton({ variant = 'floating', showLocation = true, onClick }
                                     Temps moyen d'intervention: <span className="font-medium text-slate-700 dark:text-slate-300">15-30 min</span>
                                 </div>
 
-                                {/* Bouton principal */}
+                                {/* Bouton principal - Universel pour tous les utilisateurs */}
                                 <Button
                                     onClick={handlePrimaryAction}
                                     className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
                                     size="lg"
                                 >
                                     <Phone className="h-5 w-5 mr-2" />
-                                    {isAuthenticated ? 'Créer une demande' : 'Créer un compte pour continue'}
+                                    {isAuthenticated ? 'Créer une demande' : 'Se connecter / Créer un compte'}
                                 </Button>
 
-                                {/* Lien vers connexion si non connecté */}
+                                {/* Lien vers connexion si non connecté - Option claire pour tous les types d'utilisateurs */}
                                 {!isAuthenticated && (
-                                    <p className="text-xs text-center text-slate-500">
-                                        Déjà un compte?{' '}
-                                        <button
-                                            onClick={() => window.location.href = '/login'}
-                                            className="text-amber-500 hover:text-amber-600 font-medium"
-                                        >
-                                            Se connecter
-                                        </button>
-                                    </p>
+                                    <div className="space-y-2">
+                                        <p className="text-xs text-center text-slate-500">
+                                            Vous avez déjà un compte ?
+                                        </p>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => window.location.href = '/login'}
+                                                className="flex-1 bg-slate-700 border-slate-600 text-white hover:bg-slate-600 text-sm"
+                                                size="sm"
+                                            >
+                                                Se connecter
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                onClick={() => window.location.href = '/register'}
+                                                className="flex-1 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 text-sm"
+                                                size="sm"
+                                            >
+                                                Créer un compte
+                                            </Button>
+                                        </div>
+                                        <p className="text-xs text-center text-slate-500 mt-2">
+                                            Clients, dépanneurs &amp; admins
+                                        </p>
+                                    </div>
                                 )}
                             </div>
                         </div>

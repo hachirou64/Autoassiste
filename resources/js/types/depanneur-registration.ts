@@ -1,6 +1,6 @@
 // Types pour l'inscription des dépanneurs
 
-export type VehicleTypeDepanneur = 'voiture' | 'moto' | 'tous';
+export type VehicleTypeDepanneur = 'voiture' | 'moto' | 'les_deux';
 
 export type PaymentMethod = 'mobile_money' | 'wave' | 'especes' | 'virement';
 

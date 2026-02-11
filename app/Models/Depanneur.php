@@ -28,7 +28,7 @@ class Depanneur extends Model
         'status',              // Statut actuel
         'isActive',            // Si le compte est activé
         'type_vehicule',       // Type de véhicule (voiture, moto, les_deux)
-        'localisation_actuelle', // Position GPS actuelle
+        'localisation_actuelle', // Position GPS actuelle (format: "lat,lng")
     ];
 
    

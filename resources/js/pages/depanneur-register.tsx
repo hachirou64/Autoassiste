@@ -1,16 +1,11 @@
 import { Head, router } from '@inertiajs/react';
-import { Truck, ArrowLeft, LogIn } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Truck } from 'lucide-react';
 import { DepanneurRegistrationForm } from '@/components/auth/depanneur-registration-form';
 
 export default function DepanneurRegisterPage() {
     const handleSuccess = () => {
         // Rediriger vers le dashboard dépanneur après inscription réussie
         router.get('/depanneur/dashboard');
-    };
-
-    const handleLoginClick = () => {
-        router.get('/login');
     };
 
     return (
@@ -28,15 +23,6 @@ export default function DepanneurRegisterPage() {
                             AutoAssist<span className="text-amber-500">.</span>
                         </span>
                     </a>
-                    
-                    <Button
-                        variant="ghost"
-                        onClick={handleLoginClick}
-                        className="text-slate-400 hover:text-white"
-                    >
-                        <LogIn className="h-4 w-4 mr-2" />
-                        Se connecter
-                    </Button>
                 </div>
             </header>
 
@@ -53,7 +39,6 @@ export default function DepanneurRegisterPage() {
 
                 <DepanneurRegistrationForm
                     onSuccess={handleSuccess}
-                    onLoginClick={handleLoginClick}
                 />
             </main>
 

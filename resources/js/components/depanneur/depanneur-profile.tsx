@@ -152,14 +152,18 @@ export function DepanneurProfile({
                                 {profile.promoteur_name}
                             </p>
                             <div className="flex items-center justify-center md:justify-start gap-4 mt-2">
-                                <div className="flex items-center gap-1 text-amber-400">
-                                    <Star className="h-5 w-5 fill-amber-400" />
-                                    <span className="font-bold">{profile.statistiques.note_moyenne.toFixed(1)}</span>
-                                    <span className="text-slate-400">({profile.statistiques.total_interventions} interventions)</span>
-                                </div>
-                                <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                                    {profile.statistiques.depuis}
-                                </Badge>
+                                {profile.statistiques && (
+                                    <>
+                                        <div className="flex items-center gap-1 text-amber-400">
+                                            <Star className="h-5 w-5 fill-amber-400" />
+                                            <span className="font-bold">{(profile.statistiques.note_moyenne ?? 0).toFixed(1)}</span>
+                                            <span className="text-slate-400">({profile.statistiques.total_interventions} interventions)</span>
+                                        </div>
+                                        <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                                            {profile.statistiques.depuis}
+                                        </Badge>
+                                    </>
+                                )}
                             </div>
                         </div>
                         
@@ -308,7 +312,7 @@ export function DepanneurProfile({
                     <CardContent>
                         <div className="space-y-2">
                             {JOURS_SEMAINE.map((jour) => {
-                                const horaire = profile.horaires.find(h => h.jour === jour.key);
+                                const horaire = profile.horaires?.find(h => h.jour === jour.key);
                                 return (
                                     <div 
                                         key={jour.key}

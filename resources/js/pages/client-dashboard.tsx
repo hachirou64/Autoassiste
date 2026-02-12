@@ -445,7 +445,7 @@ function HomeTab({ data }: { data: DashboardData }) {
                 <InterventionTracker
                     demandeActive={data.stats.demande_active}
                     onContactDepanneur={() => {
-                        if (data.stats.demande_active?.depanneur?.phone) {
+                        if (data.stats.demande_active && data.stats.demande_active.depanneur && data.stats.demande_active.depanneur.phone) {
                             window.open(`tel:${data.stats.demande_active.depanneur.phone}`);
                         } else {
                             console.log('Aucun numéro de téléphone disponible');
@@ -480,7 +480,7 @@ function DemandesTab({ data }: { data: DashboardData }) {
         localisation: 'Cotonou, Rue de la Paix',
         date: h.date,
         status: h.status as 'en_attente' | 'acceptee' | 'en_cours' | 'terminee' | 'annulee',
-        depanneur: { etablissement_name: h.depanneur.etablissement_name, fullName: h.depanneur.fullName },
+        depanneur: h.depanneur ? { etablissement_name: h.depanneur.etablissement_name, fullName: h.depanneur.fullName } : { etablissement_name: 'N/A', fullName: 'N/A' },
     }));
 
     return (

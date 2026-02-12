@@ -350,6 +350,13 @@ export default function DepanneurDashboard() {
                                 client: props.interventionEnCours.client,
                                 vehicle: props.interventionEnCours.vehicle || undefined,
                                 startedAt: props.interventionEnCours.startedAt,
+                                // Propriétés requises par le type mais pas toujours présentes
+                                coutPiece: 0,
+                                coutMainOeuvre: 0,
+                                coutTotal: 0,
+                                distanceClient: 3.5,
+                                dureeEstimee: 15,
+                                adresseClient: props.interventionEnCours.demande.localisation,
                             } : undefined}
                             onStart={handleStartIntervention}
                             onEnd={handleEndIntervention}

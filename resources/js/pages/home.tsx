@@ -89,8 +89,8 @@ const HomePage = ({ onRoleSelect }) => {
   ];
 
   const stats = [
-    { value: "50K+", label: "Clients satisfaits" },
-    { value: "500+", label: "Mécaniciens certifiés" },
+    { value: "5", label: "Clients satisfaits" },
+    { value: "5", label: "Mécaniciens certifiés" },
     { value: "24/7", label: "Assistance disponible" },
     { value: "15min", label: "Temps moyen d'intervention" }
   ];
@@ -99,7 +99,7 @@ const HomePage = ({ onRoleSelect }) => {
     {
       name: "Moussa B.",
       role: "Mécanicien partenaire",
-      content: "AutoAssist m'a permis de doubler mes revenus. Les missions sont régulières et les clients sont satisfaits.",
+      content: "GoAssist m'a permis de doubler mes revenus. Les missions sont régulières et les clients sont satisfaits.",
       rating: 5,
       avatar: "MB"
     },
@@ -218,7 +218,7 @@ const pricingPlans = [
                 <Car size={24} />
               </div>
               <span className="font-black text-2xl tracking-tighter text-slate-900 dark:text-white">
-                AutoAssist<span className="text-amber-500">.</span>
+                GoAssist<span className="text-amber-500">.</span>
               </span>
             </div>
 
@@ -293,13 +293,7 @@ const pricingPlans = [
                 >
                   Comment ça marche
                 </a>
-                <a 
-                  href="#pricing" 
-                  className="block px-4 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Tarifs
-                </a>
+                
                 <a 
                   href="#pro" 
                   className="block px-4 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors"
@@ -316,16 +310,14 @@ const pricingPlans = [
                 </a>
                 
                 <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                  <Button
-                    variant="primary"
-                    onClick={() => {
-                      onRoleSelect('client');
-                      setMobileMenuOpen(false);
-                    }}
-                    className="w-full"
-                  >
-                    Se connecter
-                  </Button>
+                   <Button
+                  variant="primary"
+                  onClick={() => window.location.href = '/login'}
+                  size="lg"
+                  className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 border-2 border-amber-400"
+                >
+                  Se connecter
+                </Button>
                 </div>
               </div>
             </div>
@@ -414,7 +406,7 @@ const pricingPlans = [
                           <Car size={24} className="text-white" />
                         </div>
                         <div>
-                          <span className="font-bold text-white">AutoAssist Pro</span>
+                          <span className="font-bold text-white">GoAssist Pro</span>
                           <p className="text-xs text-slate-400">Mode LIVE activé</p>
                         </div>
                       </div>
@@ -693,7 +685,7 @@ const pricingPlans = [
               </Badge>
               
               <h2 className="text-3xl lg:text-4xl font-bold mb-6">
-                Devenez partenaire AutoAssist
+                Devenez partenaire GoAssist
               </h2>
               
               <p className="text-lg lg:text-xl text-slate-300 mb-8">
@@ -801,7 +793,7 @@ const pricingPlans = [
                   </div>
                   
                   <p className="text-slate-300 italic text-center">
-                    "AutoAssist m'a permis de doubler mon activité en 6 mois. Les outils sont parfaits et le support est excellent."
+                    "GoAssist m'a permis de doubler mon activité en 6 mois. Les outils sont parfaits et le support est excellent."
                   </p>
                 </div>
               </Card>
@@ -822,7 +814,7 @@ const pricingPlans = [
                   <Car size={24} />
                 </div>
                 <span className="font-black text-2xl">
-                  AutoAssist<span className="text-amber-500">.</span>
+                  GoAssist<span className="text-amber-500">.</span>
                 </span>
               </div>
               <p className="text-slate-400 mb-6">
@@ -848,6 +840,7 @@ const pricingPlans = [
                 <li><a href="#features" className="text-slate-400 hover:text-amber-400 transition-colors">Fonctionnalités</a></li>
                 <li><a href="#how-it-works" className="text-slate-400 hover:text-amber-400 transition-colors">Comment ça marche</a></li>
                 <li><a href="#pro" className="text-slate-400 hover:text-amber-400 transition-colors">Devenir Pro</a></li>
+                 <li><a href="/contact" className="text-slate-400 hover:text-amber-400 transition-colors">Contact</a></li>
               </ul>
             </div>
             
@@ -872,7 +865,7 @@ const pricingPlans = [
                 </li>
                 <li className="flex items-center gap-2 text-slate-400">
                   <Mail size={16} />
-                  <span>support@autoassist.bj</span>
+                  <span>support@goassist.bj</span>
                 </li>
                 <li className="flex items-center gap-2 text-slate-400">
                   <MapPin size={16} />
@@ -884,7 +877,7 @@ const pricingPlans = [
           
           <div className="border-t border-slate-800 pt-8 text-center">
             <p className="text-slate-500 text-sm">
-              © {new Date().getFullYear()} AutoAssist. Tous droits réservés.
+              © {new Date().getFullYear()} GoAssist. Tous droits réservés.
             </p>
             <p className="text-slate-500 text-sm mt-2">
               Conçu avec ❤️ pour l'Afrique

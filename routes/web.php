@@ -13,6 +13,18 @@ Route::get('/login', function () {
     return Inertia::render('login');
 })->name('login');
 
+// Route Déconnexion
+Route::get('/logout', function () {
+    return Inertia::render('logout');
+})->name('logout.page');
+
+// POST Logout - Effectue la déconnexion
+Route::post('/logout', [App\Http\Controllers\AuthController::class, 'logout'])->name('logout');
+
+// Routes pour gérer les sessions
+Route::get('/api/auth/check-session', [App\Http\Controllers\AuthController::class, 'checkSession'])->name('api.auth.check-session');
+Route::post('/api/auth/reauth', [App\Http\Controllers\AuthController::class, 'reauth'])->name('api.auth.reauth');
+
 // Routes d'authentification sociale (Google, Facebook)
 Route::prefix('auth')->group(function () {
     // Routes OAuth génériques avec paramètre provider
@@ -164,14 +176,6 @@ Route::prefix('api/depanneur')->middleware(['auth'])->group(function () {
     // Statistiques
     Route::get('/stats', [App\Http\Controllers\DashboardController::class, 'getDepanneurStats'])->name('depanneur.api.stats');
 });
-
-// Logout Route
-Route::post('/logout', function () {
-    Auth::logout();
-    request()->session()->invalidate();
-    request()->session()->regenerateToken();
-    return redirect('/');
-})->name('logout');
 
 require __DIR__.'/settings.php';
 

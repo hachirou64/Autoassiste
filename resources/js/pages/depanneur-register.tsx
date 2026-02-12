@@ -10,7 +10,7 @@ export default function DepanneurRegisterPage() {
 
     return (
         <div className="min-h-screen bg-slate-950">
-            <Head title="Inscription Dépanneur - AutoAssist" />
+            <Head title="Inscription Dépanneur - GoAssist" />
             
             {/* Header simple */}
             <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm">
@@ -20,7 +20,7 @@ export default function DepanneurRegisterPage() {
                             <Truck size={24} />
                         </div>
                         <span className="font-black text-2xl text-white">
-                            AutoAssist<span className="text-amber-500">.</span>
+                            GoAssist<span className="text-amber-500">.</span>
                         </span>
                     </a>
                 </div>
@@ -45,7 +45,7 @@ export default function DepanneurRegisterPage() {
             {/* Footer simple */}
             <footer className="border-t border-slate-800 mt-12 py-6">
                 <div className="container mx-auto px-4 text-center text-slate-500 text-sm">
-                    <p>© {new Date().getFullYear()} AutoAssist. Tous droits réservés.</p>
+                    <p>© {new Date().getFullYear()} GoAssist. Tous droits réservés.</p>
                     <p className="mt-1">
                         <a href="/mentions-legales" className="hover:text-slate-400">Mentions légales</a>
                         {' • '}

@@ -207,6 +207,20 @@ class AuthController extends Controller
    
     public function logout(Request $request)
     {
+        // Vérifier que l'utilisateur est authentifié
+        if (Auth::check()) {
+            // Récupérer l'utilisateur avant déconnexion pour logs
+            $user = Auth::user();
+            
+            // Log la déconnexion pour audit
+            \Log::info('User logged out', [
+                'user_id' => $user?->id,
+                'email' => $user?->email,
+                'timestamp' => now(),
+                'ip_address' => $request->ip(),
+            ]);
+        }
+
         // Déconnecter l'utilisateur
         Auth::logout();
 
@@ -216,9 +230,58 @@ class AuthController extends Controller
         // Régénérer le token CSRF pour éviter les attaques CSRF
         $request->session()->regenerateToken();
 
+        // Nettoyer les cookies de mémorisation
+        if ($request->hasCookie('remember_token')) {
+            return redirect()->route('home')
+                           ->withCookie(\Illuminate\Cookie\Middleware\EncryptCookies::hash('remember_token', '', -1))
+                           ->with('success', 'Déconnexion réussie.');
+        }
+
         // Rediriger vers la page d'accueil avec un message de succès
         return redirect()->route('home')
                        ->with('success', 'Déconnexion réussie.');
+    }
+
+    /**
+     * Fonction pour réauthentifier un utilisateur après expiration de session
+     * Utilisée pour la continuité de session
+     */
+    public function reauth(Request $request)
+    {
+        // Vérifier que l'utilisateur a une session valide
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('error', 'Session expirée. Veuillez vous reconnecter.');
+        }
+
+        // La session est encore valide, rafraîchir la session
+        $request->session()->regenerate();
+
+        // Retourner une réponse JSON pour AJAX
+        return response()->json([
+            'success' => true,
+            'message' => 'Session réactivée',
+            'user' => Auth::user(),
+        ]);
+    }
+
+    /**
+     * Vérifier le statut de la session
+     * Utilisé pour détecter les expirations de session
+     */
+    public function checkSession(Request $request)
+    {
+        if (Auth::check()) {
+            return response()->json([
+                'authenticated' => true,
+                'user' => Auth::user(),
+                'expires_at' => now()->addMinutes(config('session.lifetime'))->timestamp,
+            ]);
+        }
+
+        return response()->json([
+            'authenticated' => false,
+            'message' => 'Session expirée',
+        ], 401);
     }
 
     

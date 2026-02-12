@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, Mail, Lock, ArrowRight, RefreshCw, Eye, EyeOff, Car, Phone, MapPin, Shield } from 'lucide-react';
+import { AlertCircle, Mail, Lock, ArrowRight, RefreshCw, Eye, EyeOff, Car, Phone, MapPin, Shield, CheckCircle } from 'lucide-react';
 import type { SharedData } from '@/types';
 
 interface LoginFormProps {
@@ -31,10 +31,20 @@ export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
     const [showPassword, setShowPassword] = useState(false);
     const [mounted, setMounted] = useState(false);
     const [inputType, setInputType] = useState<'email' | 'phone'>('email');
+    const [attemptCount, setAttemptCount] = useState(0);
+    const [showSessionExpiredWarning, setShowSessionExpiredWarning] = useState(false);
 
     // Wait for mount before checking auth (client-side only)
     useEffect(() => {
         setMounted(true);
+
+        // Vérifier si l'utilisateur revient après une session expirée
+        const sessionExpired = sessionStorage.getItem('session_expired');
+        if (sessionExpired) {
+            setShowSessionExpiredWarning(true);
+            sessionStorage.removeItem('session_expired');
+            setError('Votre session a expiré. Veuillez vous reconnecter.');
+        }
     }, []);
 
     // Redirect if already logged in (client-side only)
@@ -102,6 +112,12 @@ export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
             return;
         }
 
+        // Vérifier si trop de tentatives échouées
+        if (attemptCount >= 5) {
+            setError('Trop de tentatives échouées. Veuillez réessayer dans quelques minutes.');
+            return;
+        }
+
         setLoading(true);
 
         // Submit using Inertia POST
@@ -111,12 +127,23 @@ export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
             remember: formData.remember,
         }, {
             onSuccess: () => {
+                // Réinitialiser le compteur de tentatives
+                setAttemptCount(0);
+                sessionStorage.removeItem('login_attempts');
+                
                 if (onSuccess) {
                     onSuccess();
                 }
             },
             onError: (errors) => {
                 setLoading(false);
+                
+                // Incrémenter le compteur de tentatives
+                const newAttemptCount = attemptCount + 1;
+                setAttemptCount(newAttemptCount);
+                sessionStorage.setItem('login_attempts', newAttemptCount.toString());
+
+                // Afficher l'erreur appropriée
                 if (errors.login) {
                     setError(errors.login);
                 } else if (errors.password) {
@@ -125,6 +152,14 @@ export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
                     setError(errors.root);
                 } else {
                     setError('Les identifiants sont incorrects. Veuillez réessayer.');
+                }
+
+                // Ajouter des messages différents selon le nombre de tentatives
+                if (newAttemptCount >= 3) {
+                    const remainingAttempts = 5 - newAttemptCount;
+                    setError((prev) => 
+                        `${prev} (${remainingAttempts} tentative${remainingAttempts > 1 ? 's' : ''} restante${remainingAttempts > 1 ? 's' : ''})`
+                    );
                 }
             },
             onFinish: () => {
@@ -200,7 +235,7 @@ export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
                 
                 <div className="bg-slate-800/30 rounded-xl p-6 border border-slate-700">
                     <h3 className="font-semibold text-white mb-4">
-                        Pourquoi choisir AutoAssist ?
+                        Pourquoi choisir GoAssist ?
                     </h3>
                     <ul className="space-y-3 text-slate-400">
                         <li className="flex items-center gap-2">

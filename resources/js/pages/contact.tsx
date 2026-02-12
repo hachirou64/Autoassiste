@@ -86,7 +86,7 @@ const ContactPage = () => {
                       Email
                     </h3>
                     <p className="text-slate-600 dark:text-slate-400">
-                      support@autoassist.bj
+                      support@goassist.bj
                     </p>
                     <p className="text-sm text-slate-500 dark:text-slate-500 mt-2">
                       Réponse sous 2h

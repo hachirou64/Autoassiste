@@ -96,7 +96,7 @@ export function GMapComponent({ demandeActive }: GMapComponentProps) {
                     </div>
 
                     {/* Dépanneur en route (si applicable) */}
-                    {statusInfo.showDepanneur && demandeActive?.depanneur && (
+                    {statusInfo.showDepanneur && demandeActive && demandeActive.depanneur && (
                         <div className="absolute top-1/3 left-2/3 transform -translate-x-1/2 -translate-y-1/2 animate-bounce">
                             <div className="relative">
                                 <div className="w-8 h-8 bg-blue-500 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
@@ -138,17 +138,21 @@ export function GMapComponent({ demandeActive }: GMapComponentProps) {
                             </div>
                             <div className="flex-1">
                                 <h4 className="font-medium text-white">
-                                    {demandeActive.depanneur.etablissement_name}
+                                    {demandeActive.depanneur.etablissement_name || 'Dépanneur'}
                                 </h4>
                                 <p className="text-sm text-slate-400">
-                                    {demandeActive.depanneur.fullName}
+                                    {demandeActive.depanneur.fullName || 'N/A'}
                                 </p>
                             </div>
                             <Button
                                 size="icon"
                                 variant="outline"
                                 className="bg-green-500/20 border-green-500/30 text-green-400 hover:bg-green-500/30"
-                                onClick={() => window.open(`tel:${demandeActive.depanneur.phone}`)}
+                                onClick={() => {
+                                    if (demandeActive.depanneur?.phone) {
+                                        window.open(`tel:${demandeActive.depanneur.phone}`);
+                                    }
+                                }}
                             >
                                 <Phone className="h-4 w-4" />
                             </Button>

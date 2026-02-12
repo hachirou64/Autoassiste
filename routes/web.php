@@ -116,8 +116,26 @@ Route::prefix('api/client')->group(function () {
 // API Route pour les données du dashboard client
 Route::get('/api/client/dashboard', [App\Http\Controllers\DashboardController::class, 'getClientDashboardData'])->name('api.client.dashboard');
 
-// API Route pour créer une demande (JSON)
-Route::post('/api/demandes', [App\Http\Controllers\DemandeController::class, 'storeApi'])->name('api.demandes.store');
+// Routes Client - Suivi et completion demandes
+Route::prefix('client')->middleware(['auth'])->group(function () {
+    Route::get('/demande/{id}/suivi', [App\Http\Controllers\DemandeController::class, 'suivi'])->name('client.demande.suivi');
+    Route::get('/intervention/{id}/completion', function () {
+        return Inertia::render('client/intervention-completion');
+    })->name('client.intervention.completion');
+});
+
+// API Routes pour les demandes clients
+Route::prefix('api/demandes')->middleware(['auth'])->group(function () {
+    Route::post('/', [App\Http\Controllers\DemandeController::class, 'storeApi'])->name('api.demandes.store');
+    Route::get('/', [App\Http\Controllers\DemandeController::class, 'getClientDemandes'])->name('api.demandes.index');
+    Route::get('/{id}', [App\Http\Controllers\DemandeController::class, 'show'])->name('api.demandes.show');
+    Route::post('/{id}/cancel', [App\Http\Controllers\DemandeController::class, 'cancel'])->name('api.demandes.cancel');
+    Route::post('/{id}/payment', [App\Http\Controllers\DemandeController::class, 'processPayment'])->name('api.demandes.payment');
+    Route::post('/{id}/evaluate', [App\Http\Controllers\DemandeController::class, 'evaluate'])->name('api.demandes.evaluate');
+});
+
+// API Route pour obtenir les dépanneurs disponibles proches
+Route::get('/api/depanneurs/nearby', [App\Http\Controllers\DemandeController::class, 'getNearbyDepanneurs'])->name('api.depanneurs.nearby');
 
 // Route Dépanneur Dashboard
 Route::get('/depanneur/dashboard', [App\Http\Controllers\DashboardController::class, 'depanneurDashboard'])->name('depanneur.dashboard');

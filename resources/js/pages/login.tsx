@@ -96,7 +96,7 @@ export default function LoginPage() {
 
     return (
         <AppHeaderLayout>
-            <Head title="Connexion - AutoAssist" />
+            <Head title="Connexion - GoAssist" />
             
             <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
                 <div className="container mx-auto px-4 py-12">

@@ -339,5 +339,156 @@ class DemandeController extends Controller
             ->limit($this->maxDepanneursToNotify)  // Limiter le nombre
             ->get();
     }
+
+    /**
+     * API: Obtenir les dépanneurs disponibles proches
+     */
+    public function getNearbyDepanneurs(Request $request)
+    {
+        $validated = $request->validate([
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+            'vehicle_type' => 'required|in:voiture,moto,camion',
+            'radius' => 'nullable|integer|min:1|max:50',
+        ]);
+
+        $radius = $validated['radius'] ?? 10;
+        
+        $depanneurs = $this->findNearbyDepanneurs(
+            (float)$validated['latitude'],
+            (float)$validated['longitude'],
+            $radius,
+            $validated['vehicle_type']
+        );
+
+        return response()->json([
+            'success' => true,
+            'depanneurs' => $depanneurs->map(fn($d) => [
+                'id' => $d->id,
+                'name' => $d->etablissement_name,
+                'rating' => $d->rating ?? 4.5,
+                'reviews' => $d->reviews_count ?? 0,
+                'distance' => round($d->distance, 1),
+                'estimated_time' => round(($d->distance ?? 0) / 40 * 60), // Estimation basée sur 40km/h
+                'price_min' => $d->price_min ?? 50,
+                'price_max' => $d->price_max ?? 80,
+                'specialities' => $d->specialites ?? '',
+                'phone' => $d->phone ?? '',
+                'avatar' => $d->avatar_url ?? null,
+            ]),
+        ]);
+    }
+
+    /**
+     * API: Traiter un paiement
+     */
+    public function processPayment(Request $request, $id)
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['error' => 'Non authentifié'], 401);
+        }
+
+        $demande = Demande::findOrFail($id);
+
+        // Vérifier l'ownership
+        $client = Client::where('id_utilisateur', $user->id)->first();
+        
+        if (!$client || $demande->id_client !== $client->id) {
+            return response()->json(['error' => 'Accès non autorisé'], 403);
+        }
+
+        $validated = $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+            'method' => 'required|in:card,cash,mobile',
+            'card_data' => 'nullable|array',
+        ]);
+
+        try {
+            // Créer une facture
+            $facture = Facture::create([
+                'code' => 'FAC-' . now()->format('YmdHis'),
+                'id_demande' => $demande->id,
+                'montant' => $validated['amount'],
+                'status' => 'payee',
+                'payment_method' => $validated['method'],
+                'createdAt' => now(),
+                'updatedAt' => now(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Paiement traité avec succès',
+                'facture' => [
+                    'id' => $facture->id,
+                    'code' => $facture->code,
+                    'montant' => $facture->montant,
+                ],
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Erreur lors du traitement du paiement',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * API: Évaluer une intervention
+     */
+    public function evaluate(Request $request, $id)
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['error' => 'Non authentifié'], 401);
+        }
+
+        $demande = Demande::findOrFail($id);
+
+        // Vérifier l'ownership
+        $client = Client::where('id_utilisateur', $user->id)->first();
+        
+        if (!$client || $demande->id_client !== $client->id) {
+            return response()->json(['error' => 'Accès non autorisé'], 403);
+        }
+
+        $validated = $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string|max:500',
+        ]);
+
+        try {
+            // Créer une notification pour le dépanneur
+            if ($demande->id_depanneur) {
+                $depanneur = Depanneur::findOrFail($demande->id_depanneur);
+                
+                Notification::create([
+                    'titre' => 'Nouvelle évaluation',
+                    'contenu' => "Note: {$validated['rating']}/5 - {$validated['comment']}",
+                    'type' => 'evaluation',
+                    'id_utilisateur' => $depanneur->id_utilisateur,
+                    'id_demande' => $demande->id,
+                    'is_read' => false,
+                    'createdAt' => now(),
+                    'updatedAt' => now(),
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Évaluation enregistrée',
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Erreur lors de l\'enregistrement',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }
+
 

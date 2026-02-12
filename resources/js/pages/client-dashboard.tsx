@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import AppHeaderLayout from '@/layouts/app/app-header-layout';
 import type { BreadcrumbItem } from '@/types';
 import { ClientStatsCards } from '@/components/client/client-stats';
@@ -248,7 +248,8 @@ export default function ClientDashboard() {
     };
 
     const handleLogout = () => {
-        console.log('Déconnexion');
+        // Déconnexion via Inertia router vers la route /logout (POST)
+        router.post('/logout');
     };
 
     const renderTabContent = () => {

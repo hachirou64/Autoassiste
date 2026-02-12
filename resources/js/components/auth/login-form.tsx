@@ -167,7 +167,7 @@ export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
                             <Car size={28} />
                         </div>
                         <span className="font-black text-3xl tracking-tighter text-white">
-                            AutoAssist<span className="text-amber-500">.</span>
+                            GoAssist<span className="text-amber-500">.</span>
                         </span>
                     </div>
                     <h1 className="text-4xl font-bold text-white mb-4">
@@ -227,8 +227,8 @@ export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
             <div className="lg:pl-8">
                 <Card className="w-full max-w-md mx-auto bg-slate-800/50 border-slate-700">
                     <CardHeader className="text-center">
-                        <CardTitle className="text-2xl font-bold text-white">
-                            Connexion à AutoAssist
+                    <CardTitle className="text-2xl font-bold text-white">
+                            Connexion à GoAssist
                         </CardTitle>
                         <CardDescription className="text-slate-400">
                             Entrez vos identifiants pour accéder à votre compte

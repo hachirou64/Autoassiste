@@ -7,12 +7,13 @@ import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { AlertTriangle, MapPin, Clock, Car, Bike } from 'lucide-react';
+import { AlertTriangle, MapPin, Clock, Car, Bike, ChevronDown, ChevronUp } from 'lucide-react';
 import { 
     VEHICLE_TYPES, 
     type VehicleType, 
     getTypesPanneByVehicleType 
 } from '@/types/vehicle';
+import { DepanneursListComponent } from './depanneurs-list';
 
 interface DemandeFormProps {
     onSubmit: (data: {
@@ -29,6 +30,9 @@ export function DemandeForm({ onSubmit, isLoading = false }: DemandeFormProps) {
     const [typePanne, setTypePanne] = useState<string>('panne_seche');
     const [description, setDescription] = useState('');
     const [localisation, setLocalisation] = useState('');
+    const [showDepanneurs, setShowDepanneurs] = useState(false);
+    const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+    const [selectedDepanneur, setSelectedDepanneur] = useState<any>(null);
 
     // Récupérer les types de panne selon le véhicule sélectionné
     const typesPanne = getTypesPanneByVehicleType(vehicleType);
@@ -37,9 +41,11 @@ export function DemandeForm({ onSubmit, isLoading = false }: DemandeFormProps) {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    setLocalisation(
-                        `${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`
-                    );
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    setCoords({ lat, lng });
+                    setLocalisation(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+                    setShowDepanneurs(true);
                 },
                 () => {
                     setLocalisation('Position non disponible');
@@ -48,9 +54,20 @@ export function DemandeForm({ onSubmit, isLoading = false }: DemandeFormProps) {
         }
     };
 
+    const handleSelectDepanneur = (depanneur: any) => {
+        setSelectedDepanneur(depanneur);
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit({ vehicleType, typePanne, description, localisation });
+        if (coords) {
+            onSubmit({ 
+                vehicleType, 
+                typePanne, 
+                description, 
+                localisation,
+            });
+        }
     };
 
     return (
@@ -140,11 +157,49 @@ export function DemandeForm({ onSubmit, isLoading = false }: DemandeFormProps) {
                         />
                     </div>
 
+                    {/* Afficher les dépanneurs si localisation détectée */}
+                    {showDepanneurs && coords && (
+                        <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-4">
+                            <button
+                                type="button"
+                                onClick={() => setShowDepanneurs(!showDepanneurs)}
+                                className="w-full flex items-center justify-between text-white mb-3 hover:text-amber-400 transition"
+                            >
+                                <span className="font-semibold">Dépanneurs disponibles</span>
+                                {showDepanneurs ? (
+                                    <ChevronUp className="h-5 w-5" />
+                                ) : (
+                                    <ChevronDown className="h-5 w-5" />
+                                )}
+                            </button>
+
+                            {showDepanneurs && (
+                                <div className="space-y-2">
+                                    <DepanneursListComponent
+                                        latitude={coords.lat}
+                                        longitude={coords.lng}
+                                        vehicleType={vehicleType}
+                                        onSelectDepanneur={handleSelectDepanneur}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Affichage du dépanneur sélectionné */}
+                    {selectedDepanneur && (
+                        <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                            <p className="text-green-400 text-sm font-semibold">
+                                ✓ {selectedDepanneur.name} sélectionné - {selectedDepanneur.price_min}€ - {selectedDepanneur.price_max}€
+                            </p>
+                        </div>
+                    )}
+
                     {/* Bouton SOS */}
                     <Button
                         type="submit"
                         className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-6 text-lg"
-                        disabled={isLoading}
+                        disabled={isLoading || !coords}
                     >
                         {isLoading ? (
                             <>

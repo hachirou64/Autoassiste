@@ -315,15 +315,15 @@ export default function TwoFactorSetupModal({
     }, [onClose, resetModalState]);
 
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-            <DialogContent className="sm:max-w-md">
+        <Dialog open={isOpen} onOpenChange={handleClose}>
+            <DialogContent className="sm:max-w-md" onEscapeKeyDown={handleClose} onPointerDownOutside={handleClose}>
                 <DialogHeader className="flex items-center justify-center">
                     <GridScanIcon />
                     <DialogTitle>{modalConfig.title}</DialogTitle>
-                    <DialogDescription className="text-center">
-                        {modalConfig.description}
-                    </DialogDescription>
                 </DialogHeader>
+                <DialogDescription className="text-center">
+                    {modalConfig.description}
+                </DialogDescription>
 
                 <div className="flex flex-col items-center space-y-5">
                     {showVerificationStep ? (

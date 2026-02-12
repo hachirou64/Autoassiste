@@ -14,6 +14,7 @@ import {
     getTypesPanneByVehicleType 
 } from '@/types/vehicle';
 import { DepanneursListComponent } from './depanneurs-list';
+import { DepanneursMapModal } from './depanneurs-map-modal';
 
 interface DemandeFormProps {
     onSubmit: (data: {
@@ -31,6 +32,7 @@ export function DemandeForm({ onSubmit, isLoading = false }: DemandeFormProps) {
     const [description, setDescription] = useState('');
     const [localisation, setLocalisation] = useState('');
     const [showDepanneurs, setShowDepanneurs] = useState(false);
+    const [showMapModal, setShowMapModal] = useState(false);
     const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
     const [selectedDepanneur, setSelectedDepanneur] = useState<any>(null);
 
@@ -45,17 +47,12 @@ export function DemandeForm({ onSubmit, isLoading = false }: DemandeFormProps) {
                     const lng = position.coords.longitude;
                     setCoords({ lat, lng });
                     setLocalisation(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
-                    setShowDepanneurs(true);
                 },
                 () => {
                     setLocalisation('Position non disponible');
                 }
             );
         }
-    };
-
-    const handleSelectDepanneur = (depanneur: any) => {
-        setSelectedDepanneur(depanneur);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -158,40 +155,76 @@ export function DemandeForm({ onSubmit, isLoading = false }: DemandeFormProps) {
                     </div>
 
                     {/* Afficher les dépanneurs si localisation détectée */}
-                    {showDepanneurs && coords && (
-                        <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-4">
-                            <button
-                                type="button"
-                                onClick={() => setShowDepanneurs(!showDepanneurs)}
-                                className="w-full flex items-center justify-between text-white mb-3 hover:text-amber-400 transition"
-                            >
-                                <span className="font-semibold">Dépanneurs disponibles</span>
-                                {showDepanneurs ? (
-                                    <ChevronUp className="h-5 w-5" />
-                                ) : (
-                                    <ChevronDown className="h-5 w-5" />
-                                )}
-                            </button>
+                    {coords && (
+                        <>
+                            <div className="space-y-2">
+                                <Button
+                                    type="button"
+                                    onClick={() => setShowMapModal(true)}
+                                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-6"
+                                >
+                                    <MapPin className="h-5 w-5 mr-2" />
+                                    Sélectionner un dépanneur sur la carte
+                                </Button>
+                            </div>
 
-                            {showDepanneurs && (
-                                <div className="space-y-2">
-                                    <DepanneursListComponent
-                                        latitude={coords.lat}
-                                        longitude={coords.lng}
-                                        vehicleType={vehicleType}
-                                        onSelectDepanneur={handleSelectDepanneur}
-                                    />
-                                </div>
-                            )}
-                        </div>
+                            {/* Modale de sélection sur carte */}
+                            <DepanneursMapModal
+                                isOpen={showMapModal}
+                                latitude={coords.lat}
+                                longitude={coords.lng}
+                                vehicleType={vehicleType}
+                                onSelectDepanneur={(depanneur) => {
+                                    setSelectedDepanneur(depanneur);
+                                    setShowMapModal(false);
+                                }}
+                                onClose={() => setShowMapModal(false)}
+                            />
+
+                            {/* Alternative: Liste simple */}
+                            <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowDepanneurs(!showDepanneurs)}
+                                    className="w-full flex items-center justify-between text-white mb-3 hover:text-amber-400 transition"
+                                >
+                                    <span className="font-semibold">Ou afficher la liste des dépanneurs</span>
+                                    {showDepanneurs ? (
+                                        <ChevronUp className="h-5 w-5" />
+                                    ) : (
+                                        <ChevronDown className="h-5 w-5" />
+                                    )}
+                                </button>
+
+                                {showDepanneurs && (
+                                    <div className="space-y-2">
+                                        <DepanneursListComponent
+                                            latitude={coords.lat}
+                                            longitude={coords.lng}
+                                            vehicleType={vehicleType}
+                                            onSelectDepanneur={setSelectedDepanneur}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </>
                     )}
 
                     {/* Affichage du dépanneur sélectionné */}
                     {selectedDepanneur && (
-                        <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
-                            <p className="text-green-400 text-sm font-semibold">
-                                ✓ {selectedDepanneur.name} sélectionné - {selectedDepanneur.price_min}€ - {selectedDepanneur.price_max}€
+                        <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+                            <p className="text-green-400 text-sm font-semibold mb-2">
+                                ✓ Dépanneur sélectionné
                             </p>
+                            <div className="bg-slate-700/50 rounded p-3 space-y-1">
+                                <p className="text-white font-semibold">{selectedDepanneur.name}</p>
+                                <p className="text-slate-400 text-sm">
+                                    {selectedDepanneur.distance} km | {selectedDepanneur.estimated_time} min
+                                </p>
+                                <p className="text-amber-400 font-semibold">
+                                    {selectedDepanneur.price_min}€ - {selectedDepanneur.price_max}€
+                                </p>
+                            </div>
                         </div>
                     )}
 

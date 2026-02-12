@@ -162,6 +162,24 @@ class AuthController extends Controller
 
         // Vérifier les credentials
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
+            // Log pour debugging
+            \Log::warning('Échec de connexion', [
+                'login' => $credentials['login'],
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+
+            // Retourner une réponse JSON pour les requêtes AJAX
+            if ($request->expectsJson() || $request->is('api/*') || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Les identifiants sont incorrects.',
+                    'errors' => [
+                        'login' => 'Les identifiants sont incorrects.',
+                    ],
+                ], 401);
+            }
+
             return back()->withErrors([
                 'login' => 'Les identifiants sont incorrects.',
             ])->onlyInput('login');
@@ -173,14 +191,53 @@ class AuthController extends Controller
         // Régénérer la session pour sécurité
         $request->session()->regenerate();
 
-        // Redirection selon le type de compte
-        if ($user->isAdmin()) {
-            return redirect()->intended(route('admin.dashboard'));
-        } elseif ($user->isClient()) {
-            return redirect()->intended(route('client.dashboard'));
-        } else {
-            return redirect()->intended(route('depanneur.dashboard'));
+        // Déterminer l'URL de redirection
+        $redirectUrl = $this->getRedirectUrl($user);
+
+        // Log de connexion réussie
+        \Log::info('Connexion réussie', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'type_compte' => $user->typeCompte->name ?? 'Unknown',
+            'ip' => $request->ip(),
+        ]);
+
+        // Retourner la réponse appropriée
+        if ($request->expectsJson() || $request->is('api/*') || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Connexion réussie',
+                'user' => [
+                    'id' => $user->id,
+                    'email' => $user->email,
+                    'fullName' => $user->fullName,
+                    'id_type_compte' => $user->id_type_compte,
+                ],
+                'redirect' => $redirectUrl,
+                'url' => $redirectUrl,
+            ]);
         }
+
+        // Redirection selon le type de compte
+        return redirect()->intended($redirectUrl)
+                       ->with('success', 'Bienvenue, ' . $user->fullName . ' !');
+    }
+
+    /**
+     * Déterminer l'URL de redirection selon le type de compte
+     */
+    protected function getRedirectUrl(Utilisateur $user): string
+    {
+        if ($user->isAdmin()) {
+            return route('admin.dashboard');
+        } elseif ($user->isClient()) {
+            return route('client.dashboard');
+        } elseif ($user->isDepanneur()) {
+            return route('depanneur.dashboard');
+        }
+
+        // Par défaut, rediriger vers le dashboard client
+        return route('client.dashboard');
     }
 
     /**
@@ -237,6 +294,9 @@ class AuthController extends Controller
                            ->with('success', 'Déconnexion réussie.');
         }
 
+        // Stocker un indicateur de déconnexion dans la session pour la page suivante
+        $request->session()->put('just_logged_out', true);
+
         // Rediriger vers la page d'accueil avec un message de succès
         return redirect()->route('home')
                        ->with('success', 'Déconnexion réussie.');
@@ -250,6 +310,13 @@ class AuthController extends Controller
     {
         // Vérifier que l'utilisateur a une session valide
         if (!Auth::check()) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Session expirée. Veuillez vous reconnecter.',
+                ], 401);
+            }
+
             return redirect()->route('login')->with('error', 'Session expirée. Veuillez vous reconnecter.');
         }
 

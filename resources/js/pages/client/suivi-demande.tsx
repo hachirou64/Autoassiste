@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Head, usePage } from '@inertiajs/react';
 import AppHeaderLayout from '@/layouts/app/app-header-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,14 +7,18 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
     MapPin, Clock, Phone, MessageCircle, AlertTriangle, CheckCircle,
-    TrendingUp, Navigation, ArrowLeft
+    TrendingUp, Navigation, ArrowLeft, RefreshCw
 } from 'lucide-react';
-import type { SharedData } from '@/types';
+import LiveTrackingMap from '@/components/client/LiveTrackingMap';
+import { DistanceETA } from '@/components/client/DistanceETA';
+import { SharedData } from '@/types';
 
 interface Demande {
     id: number;
     codeDemande: string;
     localisation: string;
+    latitude?: number;
+    longitude?: number;
     vehicle_type: string;
     typePanne: string;
     descriptionProbleme: string;
@@ -29,9 +33,11 @@ interface Depanneur {
     etablissement_name: string;
     phone: string;
     avatar_url?: string;
+    localisation_actuelle?: string;
 }
 
 export default function SuiviDemandePage() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { demande, depanneur } = usePage<SharedData & {
         demande?: Demande;
         depanneur?: Depanneur;
@@ -39,39 +45,87 @@ export default function SuiviDemandePage() {
 
     const [currentStatus, setCurrentStatus] = useState(demande?.status || 'en_attente');
     const [depanneurLocation, setDepanneurLocation] = useState<{ lat: number; lng: number } | null>(null);
+    const [clientLocation, setClientLocation] = useState<{ lat: number; lng: number } | null>(null);
     const [timeRemaining, setTimeRemaining] = useState(15);
     const [refreshing, setRefreshing] = useState(false);
 
-    // Mettre à jour le statut toutes les 5 secondes
+    // Extraire la position du dépanneur depuis la localisation_actuelle
     useEffect(() => {
-        const interval = setInterval(async () => {
-            setRefreshing(true);
-            try {
-                const response = await fetch(`/api/demandes/${demande?.id}`, {
-                    headers: { 'Accept': 'application/json' },
-                    credentials: 'include',
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    setCurrentStatus(data.status);
-                }
-            } catch (error) {
-                console.error('Erreur lors de la mise à jour du statut:', error);
-            } finally {
-                setRefreshing(false);
+        if (depanneur?.localisation_actuelle) {
+            const coords = depanneur.localisation_actuelle.split(',').map(Number);
+            if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+                setDepanneurLocation({ lat: coords[0], lng: coords[1] });
             }
-        }, 5000);
+        }
+    }, [depanneur]);
+
+    // Géolocalisation du client avec API HTML5
+    useEffect(() => {
+        if ('geolocation' in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setClientLocation({
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                    });
+                },
+                (error) => {
+                    console.error('Erreur géolocalisation:', error);
+                    // Position par défaut (Paris) si GPS non disponible
+                    setClientLocation({ lat: 48.8566, lng: 2.3522 });
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        } else {
+            // Fallback si pas de support GPS
+            setClientLocation({ lat: 48.8566, lng: 2.3522 });
+        }
+    }, []);
+
+    // Rafraîchir les données de la demande
+    const refreshData = useCallback(async () => {
+        if (!demande?.id) return;
+
+        try {
+            const response = await fetch(`/api/demandes/${demande.id}`, {
+                headers: { 'Accept': 'application/json' },
+                credentials: 'include',
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setCurrentStatus(data.status);
+
+                // Récupérer la localisation du dépanneur si disponible
+                if (data.depanneur?.location) {
+                    setDepanneurLocation({
+                        lat: data.depanneur.location.latitude,
+                        lng: data.depanneur.location.longitude,
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Erreur lors de la mise à jour:', error);
+        }
+    }, [demande?.id]);
+
+    // Mettre à jour le statut toutes les 10 secondes
+    useEffect(() => {
+        if (!demande?.id) return;
+
+        const interval = setInterval(() => {
+            refreshData();
+        }, 10000);
 
         return () => clearInterval(interval);
-    }, [demande?.id]);
+    }, [demande?.id, refreshData]);
 
     // Décrémenter le temps restant
     useEffect(() => {
         if (currentStatus === 'acceptee') {
             const timer = setInterval(() => {
                 setTimeRemaining((prev) => (prev > 0 ? prev - 1 : 0));
-            }, 60000); // 1 minute
+            }, 60000);
 
             return () => clearInterval(timer);
         }
@@ -91,7 +145,7 @@ export default function SuiviDemandePage() {
             case 'acceptee':
                 return {
                     title: 'Dépanneur en route',
-                    description: `${depanneur?.etablissement_name} arrive dans ${timeRemaining} minutes`,
+                    description: `${depanneur?.etablissement_name || 'Un dépanneur'} arrive dans ${timeRemaining} minutes`,
                     icon: <Navigation className="h-6 w-6 text-blue-400" />,
                     color: 'bg-blue-500/10',
                     borderColor: 'border-blue-500/30',
@@ -170,7 +224,10 @@ export default function SuiviDemandePage() {
                             Retour
                         </Button>
                         {refreshing && (
-                            <span className="text-xs text-slate-400">Mise à jour...</span>
+                            <span className="text-xs text-slate-400 flex items-center">
+                                <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                                Mise à jour...
+                            </span>
                         )}
                     </div>
 
@@ -198,6 +255,39 @@ export default function SuiviDemandePage() {
                             </CardTitle>
                         </CardHeader>
                     </Card>
+
+                    {/* Carte de suivi en temps réel avec LiveTrackingMap */}
+                    {clientLocation && (
+                        <LiveTrackingMap
+                            demandeId={demande.id}
+                            clientPosition={clientLocation}
+                            depanneurPosition={depanneurLocation || undefined}
+                            depanneurName={depanneur?.etablissement_name}
+                            depanneurEtablissement={depanneur?.etablissement_name}
+                            depanneurPhone={depanneur?.phone}
+                            status={currentStatus as 'en_attente' | 'acceptee' | 'en_cours' | 'terminee' | 'annulee'}
+                            onRefresh={refreshData}
+                            openInMapsUrl={
+                                clientLocation && depanneurLocation
+                                    ? `https://www.google.com/maps/dir/${clientLocation.lat},${clientLocation.lng}/${depanneurLocation.lat},${depanneurLocation.lng}`
+                                    : clientLocation
+                                    ? `https://www.google.com/maps?q=${clientLocation.lat},${clientLocation.lng}`
+                                    : undefined
+                            }
+                            height="450px"
+                        />
+                    )}
+
+                    {/* Distance ETA Card */}
+                    {clientLocation && depanneurLocation && currentStatus !== 'en_attente' && (
+                        <DistanceETA
+                            from={clientLocation}
+                            to={depanneurLocation}
+                            fromLabel="Votre position"
+                            toLabel={depanneur?.etablissement_name || 'Dépanneur'}
+                            expanded={true}
+                        />
+                    )}
 
                     {/* Détails du dépannage */}
                     <Card className="bg-slate-800/50 border-slate-700">
@@ -324,3 +414,4 @@ export default function SuiviDemandePage() {
         </AppHeaderLayout>
     );
 }
+

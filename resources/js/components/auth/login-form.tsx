@@ -38,12 +38,17 @@ export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
     useEffect(() => {
         setMounted(true);
 
-        // Vérifier si l'utilisateur revient après une session expirée
+        // Vérifier si l'utilisateur vient d'une déconnexion ou session expirée
         const sessionExpired = sessionStorage.getItem('session_expired');
+        const justLoggedOut = sessionStorage.getItem('just_logged_out');
+        
         if (sessionExpired) {
             setShowSessionExpiredWarning(true);
             sessionStorage.removeItem('session_expired');
             setError('Votre session a expiré. Veuillez vous reconnecter.');
+        } else if (justLoggedOut) {
+            sessionStorage.removeItem('just_logged_out');
+            // Pas d'erreur, juste une déconnexion normale
         }
     }, []);
 
@@ -97,7 +102,11 @@ export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const getCsrfToken = () => {
+        return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
 
@@ -120,52 +129,92 @@ export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
 
         setLoading(true);
 
-        // Submit using Inertia POST
-        router.post('/login', {
-            login: formData.login,
-            password: formData.password,
-            remember: formData.remember,
-        }, {
-            onSuccess: () => {
-                // Réinitialiser le compteur de tentatives
-                setAttemptCount(0);
-                sessionStorage.removeItem('login_attempts');
+        try {
+            // Nettoyer les anciennes données de session potentiellement invalides
+            sessionStorage.removeItem('login_attempts');
+
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                },
+                body: JSON.stringify({
+                    login: formData.login,
+                    password: formData.password,
+                    remember: formData.remember,
+                }),
+                credentials: 'include',
+            });
+
+            // Réinitialiser le compteur de tentatives en cas de succès
+            setAttemptCount(0);
+            sessionStorage.removeItem('login_attempts');
+
+            if (response.ok) {
+                // Login réussi
+                const data = await response.json();
                 
+                // Marquer que l'utilisateur vient de se connecter
+                sessionStorage.setItem('just_logged_in', 'true');
+                
+                // Rediriger selon le type de compte
                 if (onSuccess) {
                     onSuccess();
-                }
-            },
-            onError: (errors) => {
-                setLoading(false);
-                
-                // Incrémenter le compteur de tentatives
-                const newAttemptCount = attemptCount + 1;
-                setAttemptCount(newAttemptCount);
-                sessionStorage.setItem('login_attempts', newAttemptCount.toString());
-
-                // Afficher l'erreur appropriée
-                if (errors.login) {
-                    setError(errors.login);
-                } else if (errors.password) {
-                    setError(errors.password);
-                } else if (errors.root) {
-                    setError(errors.root);
                 } else {
-                    setError('Les identifiants sont incorrects. Veuillez réessayer.');
+                    // Récupérer l'URL de redirection depuis la réponse ou utiliser défaut
+                    const redirectUrl = data.redirect || data.url || getRedirectUrl(auth?.user);
+                    window.location.href = redirectUrl;
                 }
+                return;
+            }
 
-                // Ajouter des messages différents selon le nombre de tentatives
-                if (newAttemptCount >= 3) {
-                    const remainingAttempts = 5 - newAttemptCount;
-                    setError((prev) => 
-                        `${prev} (${remainingAttempts} tentative${remainingAttempts > 1 ? 's' : ''} restante${remainingAttempts > 1 ? 's' : ''})`
-                    );
-                }
-            },
-            onFinish: () => {
-                setLoading(false);
-            },
-        });
+            // Login échoué
+            const errorData = await response.json().catch(() => ({}));
+            const newAttemptCount = attemptCount + 1;
+            setAttemptCount(newAttemptCount);
+            sessionStorage.setItem('login_attempts', newAttemptCount.toString());
+
+            // Déterminer le message d'erreur
+            let errorMessage = 'Les identifiants sont incorrects. Veuillez réessayer.';
+            
+            if (errorData.errors?.login) {
+                errorMessage = errorData.errors.login;
+            } else if (errorData.message) {
+                errorMessage = errorData.message;
+            } else if (response.status === 419) {
+                errorMessage = 'Votre session a expiré. Veuillez rafraîchir la page et réessayer.';
+            } else if (response.status === 500) {
+                errorMessage = 'Erreur serveur. Veuillez réessayer plus tard.';
+            }
+
+            // Ajouter des messages différents selon le nombre de tentatives
+            if (newAttemptCount >= 3) {
+                const remainingAttempts = 5 - newAttemptCount;
+                errorMessage = `${errorMessage} (${remainingAttempts} tentative${remainingAttempts > 1 ? 's' : ''} restante${remainingAttempts > 1 ? 's' : ''})`;
+            }
+
+            setError(errorMessage);
+
+        } catch (err) {
+            console.error('Login error:', err);
+            setError('Erreur de connexion. Veuillez vérifier votre connexion internet et réessayer.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Déterminer l'URL de redirection basée sur le type de compte
+    const getRedirectUrl = (user: any): string => {
+        if (!user) return '/client/dashboard';
+        
+        switch (user.id_type_compte) {
+            case 1: return '/admin/dashboard';
+            case 2: return '/client/dashboard';
+            case 3: return '/depanneur/dashboard';
+            default: return '/client/dashboard';
+        }
     };
 
     // Handle Facebook login
@@ -209,7 +258,7 @@ export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
                         Content de vous revoir !
                     </h1>
                     <p className="text-xl text-slate-400">
-                        Connectez-vous pour accéder à votre compte et obtenir de l'aide rapidement
+                        Connectez-vous pour accéder à votre compte et obtenir de l&apos;aide rapidement
                     </p>
                 </div>
                 
@@ -244,7 +293,7 @@ export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
                         </li>
                         <li className="flex items-center gap-2">
                             <span className="text-amber-400">✓</span>
-                            Prix transparents et connus à l'avance
+                            Prix transparents et connus à l&apos;avance
                         </li>
                         <li className="flex items-center gap-2">
                             <span className="text-amber-400">✓</span>
@@ -436,7 +485,7 @@ export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
                             <p className="text-center text-xs text-slate-500 mt-4">
                                 En vous connectant, vous acceptez nos{' '}
                                 <a href="#" className="text-amber-400 hover:underline">
-                                    Conditions d'utilisation
+                                    Conditions d&apos;utilisation
                                 </a>
                             </p>
                         </form>

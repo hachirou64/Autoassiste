@@ -165,12 +165,13 @@ export function DemandesStream({
         prevCountRef.current = demandes.length;
     }, [demandes.length, soundEnabled]);
 
-    // Timer pour chaque demande
+    // Timer pour chaque demande - timers sont mis à jour par le parent
     useEffect(() => {
-        const interval = setInterval(() => {
-            // Mettre à jour les timers (logique à implémenter)
-        }, 1000);
-        return () => clearInterval(interval);
+        // Les timers sont gérés par le composant parent qui passe les données
+        // Cette fonction peut être utilisée pour des mises à jour périodiques si nécessaire
+        return () => {
+            // Cleanup si nécessaire
+        };
     }, []);
 
     const handleAccept = (demandeId: number) => {

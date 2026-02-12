@@ -8,10 +8,13 @@ Route::get('/', function () {
     return Inertia::render('home');
 })->name('home');
 
-// Route Connexion (Inertia)
+// Route Connexion (Inertia) - GET affiche le formulaire
 Route::get('/login', function () {
     return Inertia::render('login');
 })->name('login');
+
+// POST Login - Effectue la connexion (AVANT la route GET pour éviter les conflits)
+Route::post('/login', [App\Http\Controllers\AuthController::class, 'login'])->name('login.post');
 
 // Route Déconnexion
 Route::get('/logout', function () {
@@ -177,6 +180,20 @@ Route::prefix('api/depanneur')->middleware(['auth'])->group(function () {
     
     // Statistiques
     Route::get('/stats', [App\Http\Controllers\DashboardController::class, 'getDepanneurStats'])->name('depanneur.api.stats');
+});
+
+// ==================== GÉOCODAGE ====================
+
+// API Routes pour le géocodage (gratuit avec Nominatim/OpenStreetMap)
+Route::prefix('api/geocode')->group(function () {
+    // Géocodage inverse : coordonnées → adresse
+    Route::get('/reverse', [App\Http\Controllers\GeocodingController::class, 'reverse'])->name('geocode.reverse');
+    
+    // Recherche d'adresse : adresse → coordonnées
+    Route::get('/search', [App\Http\Controllers\GeocodingController::class, 'search'])->name('geocode.search');
+    
+    // Calcul de distance et ETA entre deux points
+    Route::get('/distance', [App\Http\Controllers\GeocodingController::class, 'distance'])->name('geocode.distance');
 });
 
 require __DIR__.'/settings.php';

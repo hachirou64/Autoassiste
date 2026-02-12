@@ -9,13 +9,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { SharedData } from '@/types';
 
 export default function NouvelleDemandePage() {
-    const { auth } = usePage<SharedData>().props;
+    const { auth, flash } = usePage<SharedData>().props;
     const [submitted, setSubmitted] = useState(false);
     const [demandeInfo, setDemandeInfo] = useState<{
         id: number;
         codeDemande: string;
     } | null>(null);
     const [checkingAuth, setCheckingAuth] = useState(true);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+    // Afficher le message flash de succès (provenant de l'inscription)
+    useEffect(() => {
+        if (flash?.success) {
+            setSuccessMessage(flash.success);
+            // Le flash message sera automatiquement consommé par Inertia après le prochain render
+        }
+    }, [flash]);
 
     // Vérifier si l'utilisateur est connecté
     useEffect(() => {
@@ -144,6 +153,14 @@ export default function NouvelleDemandePage() {
             
             <div className="min-h-screen bg-slate-950 p-4 lg:p-8">
                 <div className="max-w-2xl mx-auto">
+                    {/* Message de succès de l'inscription */}
+                    {successMessage && (
+                        <div className="mb-6 p-4 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 flex items-center gap-3">
+                            <CheckCircle className="h-5 w-5 flex-shrink-0" />
+                            <span className="font-medium">{successMessage}</span>
+                        </div>
+                    )}
+
                     {/* Header */}
                     <div className="mb-8">
                         <Button

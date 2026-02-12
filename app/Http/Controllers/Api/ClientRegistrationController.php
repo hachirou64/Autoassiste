@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class ClientRegistrationController extends Controller
 {
@@ -58,18 +59,16 @@ class ClientRegistrationController extends Controller
 
             DB::commit();
 
-            // Retourner réponse JSON avec redirect_url
-            return response()->json([
-                'success' => true,
-                'message' => 'Inscription réussie ! Bienvenue sur GoAssist.',
-                'redirect_url' => route('demande.nouvelle'),
-                'user' => [
+            // Retourner une réponse Inertia avec redirection et flash message
+            // Le flash message sera affiché sur la page de destination
+            return to_route('demande.nouvelle')
+                ->with('success', 'Inscription réussie ! Bienvenue sur GoAssist.')
+                ->with('user', [
                     'id' => $utilisateur->id,
                     'fullName' => $utilisateur->fullName,
                     'email' => $utilisateur->email,
                     'client_id' => $client->id,
-                ],
-            ], 201);
+                ]);
             
         } catch (\Exception $e) {
             DB::rollBack();

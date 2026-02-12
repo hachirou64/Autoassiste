@@ -121,9 +121,11 @@ Route::get('/contact', function () {
 
 // API Routes pour l'inscription client (simple)
 Route::prefix('api/client')->group(function () {
-    Route::post('/register', [App\Http\Controllers\Api\ClientRegistrationController::class, 'register'])->name('client.register');
     Route::get('/check-auth', [App\Http\Controllers\Api\ClientRegistrationController::class, 'checkAuth'])->name('client.check-auth');
 });
+
+// Route web pour l'inscription client (retourne une réponse Inertia)
+Route::post('/client/register', [App\Http\Controllers\Api\ClientRegistrationController::class, 'register'])->name('client.register.web');
 
 // API Route pour les données du dashboard client
 Route::get('/api/client/dashboard', [App\Http\Controllers\DashboardController::class, 'getClientDashboardData'])->name('api.client.dashboard');

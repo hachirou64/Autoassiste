@@ -74,8 +74,8 @@ export function QuickRegistrationForm({ onSuccess, onLoginClick }: QuickRegistra
 
         setLoading(true);
 
-        // Utiliser router.post d'Inertia pour préserver la session
-        router.post('/api/client/register', {
+        // Utiliser router.post d'Inertia pour préserver la session et obtenir une réponse Inertia
+        router.post('/client/register', {
             fullName: formData.fullName,
             email: formData.email,
             phone: formData.phone,

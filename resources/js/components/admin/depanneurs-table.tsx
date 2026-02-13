@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/table';
 import {
     Search, Plus, Edit, Trash2, MoreHorizontal, Mail, Phone, MapPin,
-    CheckCircle, XCircle, Clock, Map
+    CheckCircle, XCircle, Clock, Map, ToggleLeft, ToggleRight
 } from 'lucide-react';
 import type { Depanneur } from '@/types';
 
@@ -28,6 +28,7 @@ interface DepanneursTableProps {
     onValidate?: (depanneur: Depanneur) => void;
     onView?: (depanneur: Depanneur) => void;
     onViewZones?: (depanneur: Depanneur) => void;
+    onToggleStatus?: (depanneur: Depanneur) => void;
     isLoading?: boolean;
 }
 
@@ -41,6 +42,7 @@ export function DepanneursTable({
     onValidate,
     onView,
     onViewZones,
+    onToggleStatus,
     isLoading = false,
 }: DepanneursTableProps) {
     const [searchQuery, setSearchQuery] = useState('');
@@ -146,7 +148,6 @@ export function DepanneursTable({
                                 <TableHead className="text-slate-300">Promoteur</TableHead>
                                 <TableHead className="text-slate-300">Contact</TableHead>
                                 <TableHead className="text-slate-300">Statut</TableHead>
-                                <TableHead className="text-slate-300">Zones</TableHead>
                                 <TableHead className="text-slate-300">Interventions</TableHead>
                                 <TableHead className="text-slate-300">Revenus</TableHead>
                                 <TableHead className="text-slate-300">Inscrit le</TableHead>
@@ -185,17 +186,6 @@ export function DepanneursTable({
                                             {getStatusBadge(depanneur.status, depanneur.isActive)}
                                         </TableCell>
                                         <TableCell className="text-slate-300">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => onViewZones?.(depanneur)}
-                                                className="text-blue-400 hover:text-blue-300"
-                                            >
-                                                <MapPin className="h-3 w-3 mr-1" />
-                                                {depanneur.zones?.length || 0}
-                                            </Button>
-                                        </TableCell>
-                                        <TableCell className="text-slate-300">
                                             <span className="bg-purple-500/20 text-purple-400 px-2 py-1 rounded-full text-sm">
                                                 {depanneur.interventions_count || 0}
                                             </span>
@@ -232,6 +222,19 @@ export function DepanneursTable({
                                                     title="Valider IFU"
                                                 >
                                                     <CheckCircle className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => onToggleStatus?.(depanneur)}
+                                                    className={`h-8 w-8 ${depanneur.isActive ? 'text-green-400 hover:text-red-400' : 'text-red-400 hover:text-green-400'}`}
+                                                    title={depanneur.isActive ? 'Désactiver le compte' : 'Activer le compte'}
+                                                >
+                                                    {depanneur.isActive ? (
+                                                        <ToggleRight className="h-4 w-4" />
+                                                    ) : (
+                                                        <ToggleLeft className="h-4 w-4" />
+                                                    )}
                                                 </Button>
                                                 <Button
                                                     variant="ghost"

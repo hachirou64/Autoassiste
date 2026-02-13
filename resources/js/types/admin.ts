@@ -66,6 +66,7 @@ export interface Depanneur {
     phone: string;
     status: 'disponible' | 'occupe' | 'hors_service';
     isActive: boolean;
+    type_vehicule?: string;
     localisation_actuelle?: string;
     createdAt: string;
     updatedAt: string;

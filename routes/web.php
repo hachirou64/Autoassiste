@@ -46,12 +46,24 @@ Route::prefix('admin')->group(function () {
     Route::get('/api/alerts', [App\Http\Controllers\DashboardController::class, 'getAlerts'])->name('admin.api.alerts');
     Route::get('/api/recent-activities', [App\Http\Controllers\DashboardController::class, 'getRecentActivitiesApi'])->name('admin.api.recent-activities');
     
-    // Clients API
+// Clients API
     Route::get('/api/clients', [App\Http\Controllers\DashboardController::class, 'clientsApi'])->name('admin.api.clients');
+    Route::get('/api/clients/{client}', [App\Http\Controllers\ClientController::class, 'showApi'])->name('admin.api.clients.show');
+    Route::put('/api/clients/{client}', [App\Http\Controllers\ClientController::class, 'updateApi'])->name('admin.api.clients.update');
+    Route::delete('/api/clients/{client}', [App\Http\Controllers\ClientController::class, 'destroyApi'])->name('admin.api.clients.destroy');
     
     // Dépanneurs API
     Route::get('/api/depanneurs', [App\Http\Controllers\DashboardController::class, 'depanneursApi'])->name('admin.api.depanneurs');
     Route::get('/api/depanneurs/pending', [App\Http\Controllers\DashboardController::class, 'depanneursEnAttente'])->name('admin.api.depanneurs.pending');
+    
+// Activation/Désactivation compte dépanneur (Admin)
+    Route::post('/api/depanneurs/{depanneur}/toggle-status', [App\Http\Controllers\DepanneurController::class, 'toggleStatus'])->name('admin.depanneur.toggle-status');
+    Route::post('/api/depanneurs/{depanneur}/activate', [App\Http\Controllers\DepanneurController::class, 'activate'])->name('admin.depanneur.activate');
+    Route::post('/api/depanneurs/{depanneur}/deactivate', [App\Http\Controllers\DepanneurController::class, 'deactivate'])->name('admin.depanneur.deactivate');
+    Route::get('/api/depanneurs/{depanneur}', [App\Http\Controllers\DepanneurController::class, 'show'])->name('admin.depanneur.show');
+    Route::put('/api/depanneurs/{depanneur}', [App\Http\Controllers\DepanneurController::class, 'update'])->name('admin.depanneur.update');
+    Route::post('/api/depanneurs/{depanneur}/validate-ifu', [App\Http\Controllers\DepanneurController::class, 'validateIFU'])->name('admin.depanneur.validate-ifu');
+    Route::delete('/api/depanneurs/{depanneur}', [App\Http\Controllers\DepanneurController::class, 'destroy'])->name('admin.depanneur.destroy');
     
     // Demandes API
     Route::get('/api/demandes', [App\Http\Controllers\DashboardController::class, 'demandes'])->name('admin.api.demandes');

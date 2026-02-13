@@ -72,7 +72,7 @@ class DepanneurController extends Controller
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'status' => 'disponible',
-                'isActive' => true,
+                'isActive' => false,
                 'type_vehicule' => $request->type_vehicule,
                 'localisation_actuelle' => $request->localisation_actuelle,
             ]);
@@ -209,5 +209,218 @@ class DepanneurController extends Controller
                 'email' => $utilisateur->email,
             ],
         ]);
+    }
+
+    /**
+     * Activer ou désactiver un compte dépanneur (pour l'admin)
+     */
+    public function toggleStatus(Depanneur $depanneur)
+    {
+        try {
+            // Inverser le statut actuel
+            $newStatus = !$depanneur->isActive;
+            $depanneur->update(['isActive' => $newStatus]);
+
+            // Mettre à jour aussi l'utilisateur associé
+            if ($depanneur->utilisateur) {
+                $depanneur->utilisateur->update(['isActive' => $newStatus]);
+            }
+
+            $statusText = $newStatus ? 'activé' : 'désactivé';
+
+            return response()->json([
+                'success' => true,
+                'message' => "Compte dépanneur {$statusText} avec succès.",
+                'isActive' => $newStatus,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Erreur toggle status depanneur: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la modification du statut.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Activer un compte dépanneur
+     */
+    public function activate(Depanneur $depanneur)
+    {
+        try {
+            $depanneur->update(['isActive' => true]);
+
+            if ($depanneur->utilisateur) {
+                $depanneur->utilisateur->update(['isActive' => true]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Compte dépanneur activé avec succès.',
+                'isActive' => true,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'activation du compte.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Désactiver un compte dépanneur
+     */
+    public function deactivate(Depanneur $depanneur)
+    {
+        try {
+            $depanneur->update(['isActive' => false]);
+
+            if ($depanneur->utilisateur) {
+                $depanneur->utilisateur->update(['isActive' => false]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Compte dépanneur désactivé avec succès.',
+                'isActive' => false,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la désactivation du compte.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Afficher les détails d'un dépanneur
+     */
+    public function show(Depanneur $depanneur)
+    {
+        try {
+            $depanneur->load(['zones', 'utilisateur']);
+            
+            return response()->json([
+                'success' => true,
+                'depanneur' => [
+                    'id' => $depanneur->id,
+                    'promoteur_name' => $depanneur->promoteur_name,
+                    'etablissement_name' => $depanneur->etablissement_name,
+                    'IFU' => $depanneur->IFU,
+                    'email' => $depanneur->email,
+                    'phone' => $depanneur->phone,
+                    'status' => $depanneur->status,
+                    'isActive' => $depanneur->isActive,
+                    'type_vehicule' => $depanneur->type_vehicule,
+                    'localisation_actuelle' => $depanneur->localisation_actuelle,
+                    'createdAt' => $depanneur->createdAt,
+                    'zones' => $depanneur->zones->map(fn($z) => [
+                        'id' => $z->id,
+                        'name' => $z->name,
+                        'city' => $z->city,
+                    ]),
+                    'interventions_count' => $depanneur->interventions()->count(),
+                    'demandes_count' => $depanneur->demandes()->count(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération des détails.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Mettre à jour un dépanneur (admin)
+     */
+    public function update(Request $request, Depanneur $depanneur)
+    {
+        $validator = Validator::make($request->all(), [
+            'promoteur_name' => 'sometimes|string|max:255',
+            'etablissement_name' => 'sometimes|string|max:255',
+            'IFU' => 'sometimes|string|max:50',
+            'phone' => 'sometimes|string|max:20',
+            'type_vehicule' => 'sometimes|in:voiture,moto,les_deux',
+            'status' => 'sometimes|in:disponible,occupe,hors_service',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Données invalides.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            $depanneur->update($validator->validated());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Dépanneur mis à jour avec succès.',
+                'depanneur' => $depanneur,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la mise à jour.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Valider l'IFU d'un dépanneur
+     */
+    public function validateIFU(Depanneur $depanneur)
+    {
+        try {
+            $depanneur->update(['ifu_validated' => true]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'IFU validé avec succès.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la validation IFU.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Supprimer un dépanneur
+     */
+    public function destroy(Depanneur $depanneur)
+    {
+        try {
+            // Supprimer l'utilisateur associé
+            if ($depanneur->utilisateur) {
+                $depanneur->utilisateur->delete();
+            }
+
+            // Supprimer les relations
+            $depanneur->zones()->detach();
+            $depanneur->demandes()->delete();
+            $depanneur->interventions()->delete();
+            $depanneur->notifications()->delete();
+            $depanneur->services()->delete();
+
+            // Supprimer le dépanneur
+            $depanneur->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Dépanneur supprimé avec succès.',
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Erreur suppression depanneur: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la suppression.',
+            ], 500);
+        }
     }
 }

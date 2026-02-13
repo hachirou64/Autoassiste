@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('phone');
             $table->enum('status', ['disponible', 'occupe', 'hors_service'])->default('disponible');
-            $table->boolean('isActive')->default(true);
+            $table->boolean('isActive')->default(false);
             $table->timestamp('createdAt')->useCurrent();
             $table->timestamp('updatedAt')->useCurrent()->useCurrentOnUpdate();
         });

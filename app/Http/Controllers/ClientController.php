@@ -189,4 +189,139 @@ class ClientController extends Controller
             return back()->with('error', 'Erreur lors de la suppression : ' . $e->getMessage());
         }
     }
+
+    // ==================== API METHODS ====================
+
+    /**
+     * Afficher les détails d'un client (API)
+     */
+    public function showApi(Client $client)
+    {
+        try {
+            $client->load([
+                'demandes.depanneur',
+                'demandes.interventions.facture',
+                'notifications'
+            ]);
+
+            // Calculer des statistiques
+            $totalDepense = $client->demandes()
+                ->whereHas('interventions.facture', function($q) {
+                    $q->where('status', 'payee');
+                })
+                ->with('interventions.facture')
+                ->get()
+                ->flatMap->interventions
+                ->pluck('facture')
+                ->sum('montant');
+
+            return response()->json([
+                'success' => true,
+                'client' => [
+                    'id' => $client->id,
+                    'fullName' => $client->fullName,
+                    'email' => $client->email,
+                    'phone' => $client->phone,
+                    'createdAt' => $client->createdAt,
+                    'updatedAt' => $client->updatedAt,
+                    'demandes_count' => $client->demandes->count(),
+                    'total_depenses' => $totalDepense,
+                    'demandes' => $client->demandes->map(fn($d) => [
+                        'id' => $d->id,
+                        'codeDemande' => $d->codeDemande,
+                        'status' => $d->status,
+                        'createdAt' => $d->createdAt,
+                    ]),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération des détails.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Mettre à jour un client (API)
+     */
+    public function updateApi(Request $request, Client $client)
+    {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'fullName' => 'required|string|max:255',
+            'email' => 'required|email|unique:clients,email,' . $client->id,
+            'phone' => 'required|string|max:20',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Données invalides.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        
+        try {
+            $client->update($validator->validated());
+
+            if ($client->utilisateur) {
+                $client->utilisateur->update([
+                    'fullName' => $request->fullName,
+                    'email' => $request->email,
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Client mis à jour avec succès.',
+                'client' => $client,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la mise à jour : ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Supprimer un client (API)
+     */
+    public function destroyApi(Client $client)
+    {
+        if ($client->demandes()->whereIn('status', ['en_attente', 'acceptee', 'en_cours'])->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Impossible de supprimer un client avec des demandes en cours.',
+            ], 400);
+        }
+
+        DB::beginTransaction();
+        
+        try {
+            if ($client->utilisateur) {
+                $client->utilisateur->delete();
+            }
+
+            $client->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Client supprimé avec succès.',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la suppression : ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }

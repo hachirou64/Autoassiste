@@ -24,7 +24,6 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard Admin', href: '/admin/dashboard' },
 ];
 
-// Navigation locale avec types simplifiés
 interface LocalNavItem {
     title: string;
     href: string;
@@ -42,7 +41,6 @@ const localNavItems: LocalNavItem[] = [
     { title: 'Parametres', href: '/admin/settings', icon: Settings },
 ];
 
-// Valeurs par défaut pour les stats
 const defaultStats: AdminStats = {
     total_clients: 0,
     total_depanneurs: 0,
@@ -96,7 +94,6 @@ export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState<TabType>('overview');
     const [sidebarOpen, setSidebarOpen] = useState(true);
     
-    // Utiliser les hooks pour récupérer les données dynamiques
     const { 
         stats: dynamicStats, 
         alerts: dynamicAlerts = defaultAlerts, 
@@ -106,10 +103,8 @@ export default function AdminDashboard() {
         refresh: refreshAdminData
     } = useAdminData();
     
-    // Utiliser les stats par défaut si les données dynamiques sont null
     const stats = dynamicStats || defaultStats;
     
-    // Données pour les clients (dynamiques avec pagination)
     const { 
         clients: dynamicClients = [], 
         pagination: clientsPagination,
@@ -119,15 +114,14 @@ export default function AdminDashboard() {
         onPageChange
     } = useAdminClients({ per_page: 10 });
     
-    // Données pour les depanneurs (dynamiques avec pagination)
     const { 
         depanneurs: dynamicDepanneurs = [], 
         pagination: depanneursPagination,
         loading: loadingDepanneurs,
-        refresh: refreshDepanneurs 
+        refresh: refreshDepanneurs,
+        setSearch: setDepanneurSearch
     } = useAdminDepanneurs({ per_page: 10 });
 
-    // Fonction de rafraîchissement global
     const handleRefresh = () => {
         refreshAdminData();
         refreshClients();
@@ -146,7 +140,7 @@ export default function AdminDashboard() {
                     onPageChange={onPageChange}
                 />
             );
-            case 'depanneurs': return <DepanneursTab depanneurs={dynamicDepanneurs} pagination={depanneursPagination} isLoading={loadingDepanneurs} />;
+            case 'depanneurs': return <DepanneursTab depanneurs={dynamicDepanneurs} pagination={depanneursPagination} isLoading={loadingDepanneurs} setSearch={setDepanneurSearch} />;
             case 'demandes': return <DemandesTab />;
             case 'interventions': return <InterventionsTab />;
             case 'financial': return <FinancialTab />;
@@ -250,14 +244,7 @@ export default function AdminDashboard() {
     );
 }
 
-// Composants d'onglets
-interface OverviewTabProps {
-    stats: AdminStats;
-    alerts: AdminAlert[];
-    activities: RecentActivity[];
-}
-
-function OverviewTab({ stats, alerts, activities }: OverviewTabProps) {
+function OverviewTab({ stats, alerts, activities }: { stats: AdminStats; alerts: AdminAlert[]; activities: RecentActivity[] }) {
     return (
         <div className="space-y-6">
             <StatsCards stats={stats} />
@@ -269,49 +256,321 @@ function OverviewTab({ stats, alerts, activities }: OverviewTabProps) {
     );
 }
 
-interface ClientsTabProps {
-    clients: import('@/types').Client[];
-    pagination: {
-        current_page: number;
-        last_page: number;
-        total: number;
-        per_page: number;
-    };
-    isLoading: boolean;
-    onSearch?: (query: string) => void;
-    onPageChange?: (page: number) => void;
-}
+function ClientsTab({ clients, pagination, isLoading, onSearch, onPageChange }: { clients: import('@/types').Client[]; pagination: { current_page: number; last_page: number; total: number; per_page: number }; isLoading: boolean; onSearch?: (query: string) => void; onPageChange?: (page: number) => void }) {
+    const [selectedClient, setSelectedClient] = useState<import('@/types').Client | null>(null);
+    const [showViewModal, setShowViewModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [isLoadingAction, setIsLoadingAction] = useState(false);
+    const [editFormData, setEditFormData] = useState({
+        fullName: '',
+        email: '',
+        phone: '',
+    });
 
-function ClientsTab({ clients, pagination, isLoading, onSearch, onPageChange }: ClientsTabProps) {
+    const handleView = async (client: import('@/types').Client) => {
+        setSelectedClient(client);
+        setShowViewModal(true);
+    };
+
+    const handleEdit = async (client: import('@/types').Client) => {
+        setSelectedClient(client);
+        setEditFormData({
+            fullName: client.fullName,
+            email: client.email,
+            phone: client.phone,
+        });
+        setShowEditModal(true);
+    };
+
+    const handleDelete = async (client: import('@/types').Client) => {
+        if (!confirm(`Êtes-vous sûr de vouloir supprimer le client "${client.fullName}" ? Cette action est irréversible.`)) {
+            return;
+        }
+        setIsLoadingAction(true);
+        try {
+            const response = await fetch(`/admin/api/clients/${client.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                credentials: 'include',
+            });
+            const data = await response.json();
+            if (data.success) {
+                alert('Client supprimé avec succès');
+                window.location.reload();
+            } else {
+                alert(data.message || 'Erreur lors de la suppression');
+            }
+        } catch (error) {
+            console.error('Erreur suppression:', error);
+            alert('Erreur lors de la suppression');
+        } finally {
+            setIsLoadingAction(false);
+        }
+    };
+
+    const handleEditSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedClient) return;
+        
+        setIsLoadingAction(true);
+        try {
+            const response = await fetch(`/admin/api/clients/${selectedClient.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                credentials: 'include',
+                body: JSON.stringify(editFormData),
+            });
+            const data = await response.json();
+            if (data.success) {
+                alert('Client mis à jour avec succès');
+                setShowEditModal(false);
+                window.location.reload();
+            } else {
+                alert(data.message || 'Erreur lors de la mise à jour');
+            }
+        } catch (error) {
+            console.error('Erreur mise à jour:', error);
+            alert('Erreur lors de la mise à jour');
+        } finally {
+            setIsLoadingAction(false);
+        }
+    };
+
     return (
-        <ClientsTable 
-            clients={clients} 
-            pagination={pagination}
-            isLoading={isLoading}
-            onSearch={onSearch}
-            onPageChange={onPageChange}
-        />
+        <>
+            <ClientsTable 
+                clients={clients} 
+                pagination={pagination}
+                isLoading={isLoading || isLoadingAction}
+                onSearch={onSearch}
+                onPageChange={onPageChange}
+                onView={handleView}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+            />
+            
+            {/* Modal View Client Details */}
+            {showViewModal && selectedClient && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-slate-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+                        <h3 className="text-xl font-bold text-white mb-4">Détails du client</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div><p className="text-slate-400 text-sm">ID</p><p className="text-white">#{selectedClient.id}</p></div>
+                            <div><p className="text-slate-400 text-sm">Nom complet</p><p className="text-white">{selectedClient.fullName}</p></div>
+                            <div><p className="text-slate-400 text-sm">Email</p><p className="text-white">{selectedClient.email}</p></div>
+                            <div><p className="text-slate-400 text-sm">Téléphone</p><p className="text-white">{selectedClient.phone}</p></div>
+                            <div><p className="text-slate-400 text-sm">Nombre de demandes</p><p className="text-white">{selectedClient.demandes_count || 0}</p></div>
+                            <div><p className="text-slate-400 text-sm">Total dépenses</p><p className="text-white">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF' }).format(selectedClient.total_depenses || 0)}</p></div>
+                            <div><p className="text-slate-400 text-sm">Date d'inscription</p><p className="text-white">{new Date(selectedClient.createdAt).toLocaleDateString('fr-FR')}</p></div>
+                        </div>
+                        <div className="mt-6 flex justify-end">
+                            <button onClick={() => setShowViewModal(false)} className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600">Fermer</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Edit Client */}
+            {showEditModal && selectedClient && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-slate-800 rounded-lg p-6 max-w-md w-full mx-4">
+                        <h3 className="text-xl font-bold text-white mb-4">Modifier le client</h3>
+                        <form onSubmit={handleEditSubmit}>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm text-slate-400 mb-1">Nom complet</label>
+                                    <input
+                                        type="text"
+                                        value={editFormData.fullName}
+                                        onChange={(e) => setEditFormData({ ...editFormData, fullName: e.target.value })}
+                                        className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-slate-400 mb-1">Email</label>
+                                    <input
+                                        type="email"
+                                        value={editFormData.email}
+                                        onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                                        className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-slate-400 mb-1">Téléphone</label>
+                                    <input
+                                        type="tel"
+                                        value={editFormData.phone}
+                                        onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                                        className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            <div className="mt-6 flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowEditModal(false)}
+                                    className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600"
+                                >
+                                    Annuler
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isLoadingAction}
+                                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+                                >
+                                    {isLoadingAction ? 'Enregistrement...' : 'Enregistrer'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </>
     );
 }
 
-interface DepanneursTabProps {
-    depanneurs: import('@/types').Depanneur[];
-    pagination: {
-        current_page: number;
-        last_page: number;
-        total: number;
-        per_page: number;
-    };
-    isLoading: boolean;
-}
+function DepanneursTab({ depanneurs, pagination, isLoading, setSearch }: { depanneurs: import('@/types').Depanneur[]; pagination: { current_page: number; last_page: number; total: number; per_page: number }; isLoading: boolean; setSearch?: (query: string) => void }) {
+    const [selectedDepanneur, setSelectedDepanneur] = useState<import('@/types').Depanneur | null>(null);
+    const [showViewModal, setShowViewModal] = useState(false);
+    const [isLoadingAction, setIsLoadingAction] = useState(false);
 
-function DepanneursTab({ depanneurs, pagination, isLoading }: DepanneursTabProps) {
+    const handleView = async (depanneur: import('@/types').Depanneur) => {
+        setSelectedDepanneur(depanneur);
+        setShowViewModal(true);
+    };
+
+    const handleEdit = async (depanneur: import('@/types').Depanneur) => {
+        alert('Fonctionnalité de modification à implémenter');
+    };
+
+    const handleValidate = async (depanneur: import('@/types').Depanneur) => {
+        if (!confirm('Êtes-vous sûr de vouloir valider l\'IFU de ce dépanneur ?')) {
+            return;
+        }
+        setIsLoadingAction(true);
+        try {
+            const response = await fetch(`/admin/api/depanneurs/${depanneur.id}/validate-ifu`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                credentials: 'include',
+            });
+            const data = await response.json();
+            if (data.success) {
+                alert('IFU validé avec succès');
+                window.location.reload();
+            } else {
+                alert(data.message || 'Erreur lors de la validation IFU');
+            }
+        } catch (error) {
+            console.error('Erreur validation IFU:', error);
+            alert('Erreur lors de la validation IFU');
+        } finally {
+            setIsLoadingAction(false);
+        }
+    };
+
+    const handleDelete = async (depanneur: import('@/types').Depanneur) => {
+        if (!confirm(`Êtes-vous sûr de vouloir supprimer le dépanneur "${depanneur.etablissement_name}" ? Cette action est irréversible.`)) {
+            return;
+        }
+        setIsLoadingAction(true);
+        try {
+            const response = await fetch(`/admin/api/depanneurs/${depanneur.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                credentials: 'include',
+            });
+            const data = await response.json();
+            if (data.success) {
+                alert('Dépanneur supprimé avec succès');
+                window.location.reload();
+            } else {
+                alert(data.message || 'Erreur lors de la suppression');
+            }
+        } catch (error) {
+            console.error('Erreur suppression:', error);
+            alert('Erreur lors de la suppression');
+        } finally {
+            setIsLoadingAction(false);
+        }
+    };
+
+    const handleToggleStatus = async (depanneur: import('@/types').Depanneur) => {
+        setIsLoadingAction(true);
+        try {
+            const response = await fetch(`/admin/api/depanneurs/${depanneur.id}/toggle-status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                credentials: 'include',
+            });
+            const data = await response.json();
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message || 'Erreur lors du changement de statut');
+            }
+        } catch (error) {
+            console.error('Erreur toggle status:', error);
+            alert('Erreur lors du changement de statut');
+        } finally {
+            setIsLoadingAction(false);
+        }
+    };
+
     return (
-        <DepanneursTable 
-            depanneurs={depanneurs} 
-            pagination={pagination}
-            isLoading={isLoading}
-        />
+        <>
+            <DepanneursTable 
+                depanneurs={depanneurs} 
+                pagination={pagination}
+                isLoading={isLoading || isLoadingAction}
+                onSearch={setSearch}
+                onView={handleView}
+                onEdit={handleEdit}
+                onValidate={handleValidate}
+                onDelete={handleDelete}
+                onToggleStatus={handleToggleStatus}
+            />
+            {showViewModal && selectedDepanneur && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-slate-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+                        <h3 className="text-xl font-bold text-white mb-4">Détails du dépanneur</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div><p className="text-slate-400 text-sm">ID</p><p className="text-white">#{selectedDepanneur.id}</p></div>
+                            <div><p className="text-slate-400 text-sm">Établissement</p><p className="text-white">{selectedDepanneur.etablissement_name}</p></div>
+                            <div><p className="text-slate-400 text-sm">Promoteur</p><p className="text-white">{selectedDepanneur.promoteur_name}</p></div>
+                            <div><p className="text-slate-400 text-sm">IFU</p><p className="text-white">{selectedDepanneur.IFU}</p></div>
+                            <div><p className="text-slate-400 text-sm">Email</p><p className="text-white">{selectedDepanneur.email}</p></div>
+                            <div><p className="text-slate-400 text-sm">Téléphone</p><p className="text-white">{selectedDepanneur.phone}</p></div>
+                            <div><p className="text-slate-400 text-sm">Statut</p><p className="text-white">{selectedDepanneur.status}</p></div>
+                            <div><p className="text-slate-400 text-sm">Compte</p><p className="text-white">{selectedDepanneur.isActive ? 'Actif' : 'Inactif'}</p></div>
+                            <div><p className="text-slate-400 text-sm">Type véhicule</p><p className="text-white">{selectedDepanneur.type_vehicule}</p></div>
+                            <div><p className="text-slate-400 text-sm">Date d'inscription</p><p className="text-white">{new Date(selectedDepanneur.createdAt).toLocaleDateString('fr-FR')}</p></div>
+                        </div>
+                        <div className="mt-6 flex justify-end">
+                            <button onClick={() => setShowViewModal(false)} className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600">Fermer</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
     );
 }
 
@@ -327,11 +586,7 @@ function FinancialTab() {
     return <FinancialReports factures={defaultFactures} pagination={defaultPagination} />;
 }
 
-interface AnalyticsTabProps {
-    stats: AdminStats;
-}
-
-function AnalyticsTab({ stats }: AnalyticsTabProps) {
+function AnalyticsTab({ stats }: { stats: AdminStats }) {
     const { data: trends } = useApi<TrendsData>('/admin/api/trends', { immediate: true });
     const finalTrends = trends || defaultTrends;
     

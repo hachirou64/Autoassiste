@@ -174,6 +174,31 @@ export function DemandesStream({
         };
     }, []);
 
+    // Filtrer les demandes selon les filtres actifs
+    const filteredDemandes = demandes.filter((demande) => {
+        // Filtrer par type de panne
+        if (filters.typePanne && demande.typePanne !== filters.typePanne) {
+            return false;
+        }
+        
+        // Filtrer par distance (rayon)
+        if (demande.distance > filters.rayon) {
+            return false;
+        }
+        
+        // Filtrer par type de véhicule (si spécifié)
+        if (filters.vehicleType && filters.vehicleType !== 'all') {
+            // Note: Les données du véhicule ne sont pas toujours présentes
+            // Donc on filtre uniquement si on a l'info
+            if (demande.vehicle) {
+                // Pour l'instant, le type de véhicule n'est pas dans les données de la demande
+                // Donc on laisse passer toutes les demandes
+            }
+        }
+        
+        return true;
+    });
+
     const handleAccept = (demandeId: number) => {
         onAccept(demandeId);
         setSelectedDemande(null);
@@ -194,7 +219,7 @@ export function DemandesStream({
                             <MapPin className="h-5 w-5 text-blue-400" />
                             Demandes disponibles
                             <Badge variant="outline" className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-                                {demandes.length}
+                                {filteredDemandes.length}
                             </Badge>
                         </CardTitle>
                         
@@ -289,12 +314,47 @@ export function DemandesStream({
                             </Button>
                         ))}
                     </div>
+                    
+                    {/* Filtre par type de panne */}
+                    <div className="flex flex-wrap gap-2 mt-2">
+                        <span className="text-sm text-slate-400 flex items-center">
+                            <AlertCircle className="h-4 w-4 mr-1" />
+                            Panne:
+                        </span>
+                        <Button
+                            variant={!filters.typePanne ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => onFiltersChange({ ...filters, typePanne: undefined })}
+                            className={
+                                !filters.typePanne
+                                    ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                                    : 'bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600'
+                            }
+                        >
+                            Toutes
+                        </Button>
+                        {TYPES_PANNE_DEPANNAGE.map((type) => (
+                            <Button
+                                key={type.value}
+                                variant={filters.typePanne === type.value ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => onFiltersChange({ ...filters, typePanne: type.value })}
+                                className={
+                                    filters.typePanne === type.value
+                                        ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                                        : 'bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600'
+                                }
+                            >
+                                {type.icon} {type.label}
+                            </Button>
+                        ))}
+                    </div>
                 </CardContent>
             </Card>
 
             {/* Liste des demandes */}
             <div className="space-y-3">
-                {demandes.length === 0 ? (
+                {filteredDemandes.length === 0 ? (
                     <Card className="bg-slate-800/50 border-slate-700">
                         <CardContent className="py-12">
                             <div className="text-center">
@@ -312,7 +372,7 @@ export function DemandesStream({
                         </CardContent>
                     </Card>
                 ) : (
-                    demandes.map((demande) => {
+                    filteredDemandes.map((demande) => {
                         const typeInfo = getTypePanneInfo(demande.typePanne);
                         const isSelected = selectedDemande === demande.id;
                         const isAnimating = animatingNew.includes(demande.id);

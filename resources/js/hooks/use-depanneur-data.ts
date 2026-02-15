@@ -1,5 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { DepanneurStats, DemandeAvailable, StatusDisponibilite, DepanneurProfile } from '@/types/depanneur';
+import type { 
+    DepanneurStats, 
+    DemandeAvailable, 
+    StatusDisponibilite, 
+    DepanneurProfile,
+    InterventionHistoryItem,
+    FinancialStats,
+    Facture,
+    DepanneurNotification
+} from '@/types/depanneur';
 
 // Types pour les données du dépanneur
 interface DepanneurData {
@@ -21,6 +30,21 @@ interface DepanneurData {
     } | null;
 }
 
+interface InterventionHistoryData {
+    data: InterventionHistoryItem[];
+    current_page: number;
+    last_page: number;
+    total: number;
+    per_page: number;
+}
+
+interface FinancialData {
+    stats: FinancialStats;
+    factures: Facture[];
+    revenusParJour: { date: string; jour: string; revenus: number; interventions: number }[];
+    revenusParMois: { mois: string; label: string; revenus: number; interventions: number }[];
+}
+
 interface UseDepanneurDataReturn {
     data: DepanneurData | null;
     loading: boolean;
@@ -31,6 +55,31 @@ interface UseDepanneurDataReturn {
     refuseDemande: (demandeId: number) => Promise<void>;
     startIntervention: (demandeId: number) => Promise<void>;
     endIntervention: (data: { montant: number; notes: string }) => Promise<void>;
+    
+    // Nouvelles fonctions pour les données dynamiques
+    fetchHistory: (filters?: { status?: string; search?: string; date_from?: string; date_to?: string }) => Promise<InterventionHistoryData | null>;
+    fetchFinancialData: () => Promise<FinancialData | null>;
+    fetchNotifications: () => Promise<DepanneurNotification[] | null>;
+    markNotificationRead: (notificationId: number) => Promise<boolean>;
+}
+
+// Fonction utilitaire pour les appels API
+async function fetchApi<T>(url: string, options?: RequestInit): Promise<T> {
+    const response = await fetch(url, {
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            ...options?.headers,
+        },
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Erreur réseau' }));
+        throw new Error(error.error || error.message || 'Erreur lors de la requête');
+    }
+
+    return response.json();
 }
 
 export function useDepanneurData(): UseDepanneurDataReturn {
@@ -38,216 +87,240 @@ export function useDepanneurData(): UseDepanneurDataReturn {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Fonction pour charger les données
+    // Fonction pour charger les données depuis le backend
     const fetchData = useCallback(async () => {
         setLoading(true);
         setError(null);
 
         try {
-            // Dans un vrai projet, récupérer depuis l'API
-            // const response = await fetch('/api/depanneur/dashboard');
-            // const result = await response.json();
+            // Les données sont déjà chargées via Inertia props dans la page
+            // Mais on peut aussi les rafraîchir via API si besoin
+            // Cette fonction est principalement utilisée pour le rafraîchissement
             
-            // Simulation de données réelles basées sur l'utilisateur connecté
-            // Ces données viendraient de l'API
-            const mockData: DepanneurData = {
-                stats: {
-                    interventions_aujourdhui: 3,
-                    revenus_aujourdhui: 105000,
-                    demandes_acceptees_aujourdhui: 4,
-                    note_moyenne_aujourdhui: 4.8,
-                    interventions_mois: 28,
-                    revenus_mois: 720000,
-                    demandes_acceptees_mois: 32,
-                    note_moyenne_mois: 4.7,
-                    total_interventions: 156,
-                    total_revenus: 2450000,
-                    note_moyenne: 4.7,
-                    total_clients: 89,
-                    status: 'disponible',
-                    zones_count: 4,
-                },
-                profile: {
-                    id: 1,
-                    fullName: 'Kouami Toto',
-                    email: 'kouami@garage.com',
-                    phone: '+229 90 00 11 11',
-                    etablissement_name: 'Garage du Centre',
-                    rating: 4.8,
-                    status: 'disponible',
-                },
-                demandes: [
-                    {
-                        id: 1,
-                        codeDemande: 'DEM-2024-001',
-                        typePanne: 'batterie',
-                        descriptionProbleme: 'Véhicule qui ne démarre pas, batterie HS',
-                        localisation: 'Cotonou, Rue de la Paix',
-                        latitude: 6.366,
-                        longitude: 2.433,
-                        distance: 2.5,
-                        createdAt: new Date().toISOString(),
-                        tempsRestant: 180,
-                        client: {
-                            id: 1,
-                            fullName: 'Jean Dupont',
-                            phone: '+229 90 00 00 01',
-                        },
-                        vehicle: {
-                            brand: 'Toyota',
-                            model: 'Corolla',
-                            color: 'Gris',
-                            plate: 'ABC-123',
-                        },
-                    },
-                    {
-                        id: 2,
-                        codeDemande: 'DEM-2024-002',
-                        typePanne: 'panne_seche',
-                        descriptionProbleme: 'Panne de carburant en route',
-                        localisation: 'Cotonou, Avenue de la Liberté',
-                        latitude: 6.370,
-                        longitude: 2.440,
-                        distance: 5.2,
-                        createdAt: new Date(Date.now() - 120000).toISOString(),
-                        tempsRestant: 300,
-                        client: {
-                            id: 2,
-                            fullName: 'Marie Kouami',
-                            phone: '+229 90 00 00 02',
-                        },
-                    },
-                ],
-                currentStatus: 'disponible',
-                interventionEnCours: null,
-            };
+            // Récupérer les stats via API
+            const statsResponse = await fetchApi<{ stats: DepanneurStats }>('/api/depanneur/stats');
+            
+            // Récupérer les demandes via API
+            const demandesResponse = await fetchApi<{ demandes: DemandeAvailable[] }>('/api/depanneur/demandes');
+            
+            // Récupérer les notifications
+            const notificationsResponse = await fetchApi<{ notifications: DepanneurNotification[] }>('/api/depanneur/notifications');
 
-            setData(mockData);
+            setData(prev => prev ? {
+                ...prev,
+                stats: statsResponse.stats,
+                demandes: demandesResponse.demandes,
+                notifications: notificationsResponse.notifications,
+            } : null);
+            
         } catch (err) {
-            setError('Erreur lors du chargement des données');
-            console.error('Error fetching depanneur data:', err);
+            console.error('Erreur lors du chargement des données:', err);
+            // On ne gère pas l'erreur ici pour ne pas bloquer l'affichage
+            // Les données peuvent provenir des props Inertia
         } finally {
             setLoading(false);
         }
     }, []);
 
-    // Charger les données au montage
+    // Charger les données initiales - utilisé seulement si nécessaire
+    // Les données proviennent principalement des props Inertia
     useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        // Initialisation minimale - les données viennent des props
+        setLoading(false);
+    }, []);
 
     // Mettre à jour le statut
     const updateStatus = useCallback(async (status: StatusDisponibilite) => {
-        if (!data) return;
-
         try {
-            // Dans un vrai projet:
-            // await fetch('/api/depanneur/status', {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify({ status }),
-            // });
+            const result = await fetchApi<{ success: boolean; status: StatusDisponibilite }>('/api/depanneur/status', {
+                method: 'POST',
+                body: JSON.stringify({ status }),
+            });
 
-            setData(prev => prev ? { ...prev, currentStatus: status, stats: { ...prev.stats, status } } : null);
+            if (result.success) {
+                setData(prev => prev ? { 
+                    ...prev, 
+                    currentStatus: result.status,
+                    stats: { ...prev.stats, status: result.status }
+                } : null);
+            }
         } catch (err) {
-            console.error('Error updating status:', err);
+            console.error('Erreur mise à jour statut:', err);
+            throw err;
         }
-    }, [data]);
+    }, []);
 
     // Accepter une demande
     const acceptDemande = useCallback(async (demandeId: number) => {
-        if (!data) return;
-
         try {
-            // Dans un vrai projet:
-            // await fetch(`/api/demandes/${demandeId}/accepter`, {
-            //     method: 'POST',
-            // });
+            const result = await fetchApi<{ success: boolean; intervention: { id: number } }>(
+                `/api/depanneur/demandes/${demandeId}/accepter`,
+                { method: 'POST' }
+            );
 
-            const demande = data.demandes.find(d => d.id === demandeId);
-            setData(prev => prev ? {
-                ...prev,
-                demandes: prev.demandes.filter(d => d.id !== demandeId),
-                interventionEnCours: demande ? {
-                    id: demande.id,
-                    codeDemande: demande.codeDemande,
-                    client: demande.client,
-                    localisation: demande.localisation,
-                    latitude: demande.latitude,
-                    longitude: demande.longitude,
-                    status: 'acceptee',
-                } : null,
-                currentStatus: 'occupe',
-                stats: { ...prev.stats, status: 'occupe' },
-            } : null);
+            if (result.success) {
+                setData(prev => {
+                    if (!prev) return null;
+                    
+                    const acceptedDemande = prev.demandes.find(d => d.id === demandeId);
+                    
+                    return {
+                        ...prev,
+                        demandes: prev.demandes.filter(d => d.id !== demandeId),
+                        interventionEnCours: acceptedDemande ? {
+                            id: result.intervention.id,
+                            codeDemande: acceptedDemande.codeDemande,
+                            client: acceptedDemande.client,
+                            localisation: acceptedDemande.localisation,
+                            latitude: acceptedDemande.latitude,
+                            longitude: acceptedDemande.longitude,
+                            status: 'acceptee',
+                        } : null,
+                        currentStatus: 'occupe' as StatusDisponibilite,
+                        stats: { ...prev.stats, status: 'occupe' as StatusDisponibilite },
+                    };
+                });
+            }
         } catch (err) {
-            console.error('Error accepting demande:', err);
+            console.error('Erreur acceptation demande:', err);
+            throw err;
         }
-    }, [data]);
+    }, []);
 
     // Refuser une demande
     const refuseDemande = useCallback(async (demandeId: number) => {
-        if (!data) return;
-
         try {
-            // Dans un vrai projet:
-            // await fetch(`/api/demandes/${demandeId}/refuser`, {
-            //     method: 'POST',
-            // });
+            const result = await fetchApi<{ success: boolean }>(
+                `/api/depanneur/demandes/${demandeId}/refuser`,
+                { method: 'POST' }
+            );
 
-            setData(prev => prev ? {
-                ...prev,
-                demandes: prev.demandes.filter(d => d.id !== demandeId),
-            } : null);
+            if (result.success) {
+                setData(prev => prev ? {
+                    ...prev,
+                    demandes: prev.demandes.filter(d => d.id !== demandeId),
+                } : null);
+            }
         } catch (err) {
-            console.error('Error refusing demande:', err);
+            console.error('Erreur refus demande:', err);
+            throw err;
         }
-    }, [data]);
+    }, []);
 
     // Démarrer une intervention
     const startIntervention = useCallback(async (demandeId: number) => {
-        if (!data) return;
-
         try {
-            setData(prev => prev ? {
-                ...prev,
-                interventionEnCours: prev.interventionEnCours ? {
-                    ...prev.interventionEnCours,
-                    status: 'en_cours',
-                } : null,
-            } : null);
+            const result = await fetchApi<{ success: boolean }>(
+                `/api/depanneur/interventions/${demandeId}/start`,
+                { method: 'POST' }
+            );
+
+            if (result.success) {
+                setData(prev => prev ? {
+                    ...prev,
+                    interventionEnCours: prev.interventionEnCours ? {
+                        ...prev.interventionEnCours,
+                        status: 'en_cours',
+                    } : undefined,
+                } : null);
+            }
         } catch (err) {
-            console.error('Error starting intervention:', err);
+            console.error('Erreur démarrage intervention:', err);
+            throw err;
         }
-    }, [data]);
+    }, []);
 
     // Terminer une intervention
     const endIntervention = useCallback(async (endData: { montant: number; notes: string }) => {
-        if (!data) return;
+        if (!data?.interventionEnCours) return;
 
         try {
-            // Dans un vrai projet:
-            // await fetch('/api/interventions/end', {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify(endData),
-            // });
+            const result = await fetchApi<{ success: boolean }>(
+                `/api/depanneur/interventions/${data.interventionEnCours.id}/end`,
+                {
+                    method: 'POST',
+                    body: JSON.stringify(endData),
+                }
+            );
 
-            setData(prev => prev ? {
-                ...prev,
-                interventionEnCours: null,
-                currentStatus: 'disponible',
-                stats: {
-                    ...prev.stats,
-                    status: 'disponible',
-                    interventions_aujourdhui: prev.stats.interventions_aujourdhui + 1,
-                    revenus_aujourdhui: prev.stats.revenus_aujourdhui + endData.montant,
-                },
-            } : null);
+            if (result.success) {
+                setData(prev => prev ? {
+                    ...prev,
+                    interventionEnCours: null,
+                    currentStatus: 'disponible' as StatusDisponibilite,
+                    stats: {
+                        ...prev.stats,
+                        status: 'disponible' as StatusDisponibilite,
+                        interventions_aujourdhui: prev.stats.interventions_aujourdhui + 1,
+                        revenus_aujourdhui: prev.stats.revenus_aujourdhui + endData.montant,
+                    },
+                } : null);
+            }
         } catch (err) {
-            console.error('Error ending intervention:', err);
+            console.error('Erreur fin intervention:', err);
+            throw err;
         }
-    }, [data]);
+    }, [data?.interventionEnCours]);
+
+    // Récupérer l'historique des interventions
+    const fetchHistory = useCallback(async (filters?: { 
+        status?: string; 
+        search?: string; 
+        date_from?: string; 
+        date_to?: string 
+    }): Promise<InterventionHistoryData | null> => {
+        try {
+            const params = new URLSearchParams();
+            if (filters?.status) params.append('status', filters.status);
+            if (filters?.search) params.append('search', filters.search);
+            if (filters?.date_from) params.append('date_from', filters.date_from);
+            if (filters?.date_to) params.append('date_to', filters.date_to);
+
+            const url = `/api/depanneur/interventions/history${params.toString() ? '?' + params.toString() : ''}`;
+            const result = await fetchApi<InterventionHistoryData>(url);
+            
+            return result;
+        } catch (err) {
+            console.error('Erreur récupération historique:', err);
+            return null;
+        }
+    }, []);
+
+    // Récupérer les données financières
+    const fetchFinancialData = useCallback(async (): Promise<FinancialData | null> => {
+        try {
+            const result = await fetchApi<FinancialData>('/api/depanneur/financial');
+            return result;
+        } catch (err) {
+            console.error('Erreur récupération données financières:', err);
+            return null;
+        }
+    }, []);
+
+    // Récupérer les notifications
+    const fetchNotifications = useCallback(async (): Promise<DepanneurNotification[] | null> => {
+        try {
+            const result = await fetchApi<{ notifications: DepanneurNotification[] }>('/api/depanneur/notifications');
+            return result.notifications;
+        } catch (err) {
+            console.error('Erreur récupération notifications:', err);
+            return null;
+        }
+    }, []);
+
+    // Marquer une notification comme lue
+    const markNotificationRead = useCallback(async (notificationId: number): Promise<boolean> => {
+        try {
+            const result = await fetchApi<{ success: boolean }>(
+                `/api/depanneur/notifications/${notificationId}/read`,
+                { method: 'POST' }
+            );
+            return result.success;
+        } catch (err) {
+            console.error('Erreur marquage notification:', err);
+            return false;
+        }
+    }, []);
 
     return {
         data,
@@ -259,5 +332,10 @@ export function useDepanneurData(): UseDepanneurDataReturn {
         refuseDemande,
         startIntervention,
         endIntervention,
+        fetchHistory,
+        fetchFinancialData,
+        fetchNotifications,
+        markNotificationRead,
     };
 }
+

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,96 +16,28 @@ import {
     Clock,
     AlertCircle,
     ArrowUpRight,
-    ArrowDownRight
+    ArrowDownRight,
+    Loader2
 } from 'lucide-react';
 import type { FinancialStats, Facture, RevenusParPeriode } from '@/types/depanneur';
 
-// Données mockées
-const mockFinancialStats: FinancialStats = {
-    revenus_jour: 35000,
-    revenus_semaine: 185000,
-    revenus_mois: 720000,
-    revenus_total: 2450000,
-    
-    factures_en_attente: 3,
-    factures_payees: 45,
-    factures_annulees: 2,
-    
-    total_factures: 50,
-    
-    interventions_terminees: 48,
-    interventions_en_cours: 1,
-    
-    meilleur_jour: '2024-01-15',
-    meilleur_montant: 85000,
-};
+// Fonction utilitaire pour les appels API
+async function fetchApi<T>(url: string, options?: RequestInit): Promise<T> {
+    const response = await fetch(url, {
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            ...options?.headers,
+        },
+    });
 
-const mockFactures: Facture[] = [
-    {
-        id: 1,
-        numeroFacture: 'FAC-2024-001',
-        montant: 35000,
-        coutPiece: 15000,
-        coutMainOeuvre: 20000,
-        mdePaiement: 'mobile_money',
-        status: 'payee',
-        transactionId: 'TXN-001',
-        intervention: {
-            id: 1,
-            codeIntervention: 'INT-2024-001',
-            codeDemande: 'DEM-2024-001',
-            typePanne: 'batterie',
-        },
-        client: {
-            fullName: 'Jean Dupont',
-            phone: '+229 90 00 00 01',
-        },
-        createdAt: new Date().toISOString(),
-        paidAt: new Date().toISOString(),
-    },
-    {
-        id: 2,
-        numeroFacture: 'FAC-2024-002',
-        montant: 25000,
-        coutPiece: 10000,
-        coutMainOeuvre: 15000,
-        mdePaiement: 'cash',
-        status: 'en_attente',
-        intervention: {
-            id: 2,
-            codeIntervention: 'INT-2024-002',
-            codeDemande: 'DEM-2024-002',
-            typePanne: 'panne_seche',
-        },
-        client: {
-            fullName: 'Marie Kouami',
-            phone: '+229 90 00 00 02',
-        },
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
-    },
-    {
-        id: 3,
-        numeroFacture: 'FAC-2024-003',
-        montant: 85000,
-        coutPiece: 45000,
-        coutMainOeuvre: 40000,
-        mdePaiement: 'carte_bancaire',
-        status: 'payee',
-        transactionId: 'TXN-003',
-        intervention: {
-            id: 3,
-            codeIntervention: 'INT-2024-003',
-            codeDemande: 'DEM-2024-003',
-            typePanne: 'moteur',
-        },
-        client: {
-            fullName: 'Paul Agossou',
-            phone: '+229 90 00 00 03',
-        },
-        createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
-        paidAt: new Date(Date.now() - 86400000 * 7).toISOString(),
-    },
-];
+    if (!response.ok) {
+        throw new Error('Erreur lors de la requête');
+    }
+
+    return response.json();
+}
 
 function formatCurrency(amount: number): string {
     return new Intl.NumberFormat('fr-FR', {
@@ -153,20 +85,95 @@ interface FinancialDashboardProps {
     factures?: Facture[];
     onDownloadFacture?: (factureId: number) => void;
     onExport?: (format: 'excel' | 'pdf') => void;
+    // Nouvelles props pour les données dynamiques
+    fetchFromApi?: boolean;
+}
+
+interface FinancialApiData {
+    stats: FinancialStats;
+    factures: Facture[];
+    revenusParJour: { date: string; jour: string; revenus: number; interventions: number }[];
+    revenusParMois: { mois: string; label: string; revenus: number; interventions: number }[];
 }
 
 export function FinancialDashboard({
-    stats = mockFinancialStats,
-    factures = mockFactures,
+    stats: initialStats,
+    factures: initialFactures,
     onDownloadFacture,
     onExport,
+    fetchFromApi = false,
 }: FinancialDashboardProps) {
+    const [loading, setLoading] = useState(false);
+    const [stats, setStats] = useState<FinancialStats | undefined>(initialStats);
+    const [factures, setFactures] = useState<Facture[]>(initialFactures || []);
+    const [revenusParJour, setRevenusParJour] = useState<{ date: string; jour: string; revenus: number; interventions: number }[]>([]);
+    const [revenusParMois, setRevenusParMois] = useState<{ mois: string; label: string; revenus: number; interventions: number }[]>([]);
+
+    // Charger les données depuis l'API
+    const loadFinancialData = useCallback(async () => {
+        if (!fetchFromApi) {
+            setStats(initialStats);
+            setFactures(initialFactures || []);
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const data = await fetchApi<FinancialApiData>('/api/depanneur/financial');
+            
+            setStats(data.stats);
+            setFactures(data.factures);
+            setRevenusParJour(data.revenusParJour);
+            setRevenusParMois(data.revenusParMois);
+        } catch (error) {
+            console.error('Erreur chargement données financières:', error);
+            // En cas d'erreur, utiliser les données initiales
+            setStats(initialStats);
+            setFactures(initialFactures || []);
+        } finally {
+            setLoading(false);
+        }
+    }, [fetchFromApi, initialStats, initialFactures]);
+
+    useEffect(() => {
+        loadFinancialData();
+    }, [loadFinancialData]);
+
+    // Données à afficher
+    const displayStats = stats;
+    const displayFactures = fetchFromApi ? factures : (initialFactures || []);
+    const displayRevenusParJour = fetchFromApi ? revenusParJour : [];
+    const displayRevenusParMois = fetchFromApi ? revenusParMois : [];
 
     // Calculer les stats pour les onglets
-    const facturesPayees = factures.filter(f => f.status === 'payee');
-    const facturesEnAttente = factures.filter(f => f.status === 'en_attente');
+    const facturesPayees = displayFactures.filter(f => f.status === 'payee');
+    const facturesEnAttente = displayFactures.filter(f => f.status === 'en_attente');
     const totalPaye = facturesPayees.reduce((sum, f) => sum + f.montant, 0);
     const totalEnAttente = facturesEnAttente.reduce((sum, f) => sum + f.montant, 0);
+
+    // Préparer les données du graphique (7 derniers jours par défaut ou depuis l'API)
+    const chartData = displayRevenusParJour.length > 0 
+        ? displayRevenusParJour.map((d) => ({ day: d.jour, amount: d.revenus }))
+        : [
+            { day: 'Lun', amount: 0 },
+            { day: 'Mar', amount: 0 },
+            { day: 'Mer', amount: 0 },
+            { day: 'Jeu', amount: 0 },
+            { day: 'Ven', amount: 0 },
+            { day: 'Sam', amount: 0 },
+            { day: 'Dim', amount: 0 },
+        ];
+
+    const maxAmount = Math.max(...chartData.map((d) => d.amount), 1);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 text-amber-400 animate-spin" />
+                <span className="ml-2 text-slate-400">Chargement des données financières...</span>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -181,7 +188,7 @@ export function FinancialDashboard({
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-white">
-                            {formatCurrency(stats.revenus_jour)}
+                            {displayStats ? formatCurrency(displayStats.revenus_jour) : formatCurrency(0)}
                         </div>
                         <div className="flex items-center gap-1 text-xs text-green-400 mt-1">
                             <ArrowUpRight className="h-3 w-3" />
@@ -199,7 +206,7 @@ export function FinancialDashboard({
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-white">
-                            {formatCurrency(stats.revenus_mois)}
+                            {displayStats ? formatCurrency(displayStats.revenus_mois) : formatCurrency(0)}
                         </div>
                         <div className="flex items-center gap-1 text-xs text-green-400 mt-1">
                             <ArrowUpRight className="h-3 w-3" />
@@ -217,7 +224,7 @@ export function FinancialDashboard({
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-white">
-                            {formatCurrency(stats.revenus_total)}
+                            {displayStats ? formatCurrency(displayStats.revenus_total) : formatCurrency(0)}
                         </div>
                         <p className="text-xs text-slate-400 mt-1">
                             Depuis votre inscription
@@ -237,30 +244,30 @@ export function FinancialDashboard({
                             {formatCurrency(totalEnAttente)}
                         </div>
                         <p className="text-xs text-slate-400 mt-1">
-                            {stats.factures_en_attente} facture(s)
+                            {displayStats?.factures_en_attente || 0} facture(s)
                         </p>
                     </CardContent>
                 </Card>
             </div>
 
-                {/* Graphiques et tabs */}
-                <Tabs defaultValue="overview" className="space-y-4">
-                    <TabsList className="bg-slate-800 border-slate-700">
-                        <TabsTrigger value="overview" className="data-[state=active]:bg-slate-700">
-                            Aperçu
-                        </TabsTrigger>
-                        <TabsTrigger value="factures" className="data-[state=active]:bg-slate-700">
-                            Factures
-                        </TabsTrigger>
-                        <TabsTrigger value="revenus" className="data-[state=active]:bg-slate-700">
-                            Revenus
-                        </TabsTrigger>
-                    </TabsList>
+            {/* Graphiques et tabs */}
+            <Tabs defaultValue="overview" className="space-y-4">
+                <TabsList className="bg-slate-800 border-slate-700">
+                    <TabsTrigger value="overview" className="data-[state=active]:bg-slate-700">
+                        Aperçu
+                    </TabsTrigger>
+                    <TabsTrigger value="factures" className="data-[state=active]:bg-slate-700">
+                        Factures
+                    </TabsTrigger>
+                    <TabsTrigger value="revenus" className="data-[state=active]:bg-slate-700">
+                        Revenus
+                    </TabsTrigger>
+                </TabsList>
 
                 {/* Aperçu */}
                 <TabsContent value="overview" className="space-y-4">
                     <div className="grid gap-6 lg:grid-cols-2">
-                        {/* Chart des revenus (simulé) */}
+                        {/* Chart des revenus */}
                         <Card className="bg-slate-800/50 border-slate-700">
                             <CardHeader>
                                 <CardTitle className="text-white flex items-center gap-2">
@@ -273,20 +280,12 @@ export function FinancialDashboard({
                             </CardHeader>
                             <CardContent>
                                 <div className="h-64 flex items-end justify-between gap-2">
-                                    {[
-                                        { day: 'Lun', amount: 45000 },
-                                        { day: 'Mar', amount: 52000 },
-                                        { day: 'Mer', amount: 38000 },
-                                        { day: 'Jeu', amount: 65000 },
-                                        { day: 'Ven', amount: 72000 },
-                                        { day: 'Sam', amount: 35000 },
-                                        { day: 'Dim', amount: 28000 },
-                                    ].map((item, index) => (
+                                    {chartData.map((item, index) => (
                                         <div key={index} className="flex flex-col items-center gap-2 flex-1">
                                             <div 
                                                 className="w-full bg-green-500/20 rounded-t-lg relative group cursor-pointer hover:bg-green-500/30 transition-colors"
                                                 style={{ 
-                                                    height: `${(item.amount / 72000) * 200}px`,
+                                                    height: `${(item.amount / maxAmount) * 200}px`,
                                                     minHeight: '20px'
                                                 }}
                                             >
@@ -317,7 +316,7 @@ export function FinancialDashboard({
                                     </div>
                                     <div className="text-right">
                                         <p className="font-bold text-green-400">{formatCurrency(totalPaye)}</p>
-                                        <p className="text-xs text-slate-400">{stats.factures_payees} factures</p>
+                                        <p className="text-xs text-slate-400">{displayStats?.factures_payees || 0} factures</p>
                                     </div>
                                 </div>
                                 
@@ -328,7 +327,7 @@ export function FinancialDashboard({
                                     </div>
                                     <div className="text-right">
                                         <p className="font-bold text-amber-400">{formatCurrency(totalEnAttente)}</p>
-                                        <p className="text-xs text-slate-400">{stats.factures_en_attente} factures</p>
+                                        <p className="text-xs text-slate-400">{displayStats?.factures_en_attente || 0} factures</p>
                                     </div>
                                 </div>
                                 
@@ -339,14 +338,14 @@ export function FinancialDashboard({
                                     </div>
                                     <div className="text-right">
                                         <p className="font-bold text-red-400">{formatCurrency(0)}</p>
-                                        <p className="text-xs text-slate-400">{stats.factures_annulees} factures</p>
+                                        <p className="text-xs text-slate-400">{displayStats?.factures_annulees || 0} factures</p>
                                     </div>
                                 </div>
                                 
                                 <div className="pt-4 border-t border-slate-700">
                                     <div className="flex items-center justify-between">
                                         <span className="text-white font-medium">Total factures</span>
-                                        <span className="text-xl font-bold text-white">{stats.total_factures}</span>
+                                        <span className="text-xl font-bold text-white">{displayStats?.total_factures || 0}</span>
                                     </div>
                                 </div>
                             </CardContent>
@@ -383,54 +382,60 @@ export function FinancialDashboard({
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="space-y-3">
-                                {factures.map((facture) => (
-                                    <div 
-                                        key={facture.id}
-                                        className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-colors"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className={`p-2 rounded-lg ${
-                                                facture.status === 'payee' ? 'bg-green-500/20' :
-                                                facture.status === 'en_attente' ? 'bg-amber-500/20' : 'bg-red-500/20'
-                                            }`}>
-                                                {getStatusIcon(facture.status)}
-                                            </div>
-                                            <div>
-                                                <p className="font-medium text-white">{facture.numeroFacture}</p>
-                                                <p className="text-sm text-slate-400">
-                                                    {facture.client.fullName} - {facture.intervention.typePanne}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="flex items-center gap-6">
-                                            <div className="flex items-center gap-2">
-                                                {getMdeIcon(facture.mdePaiement)}
-                                                <span className="text-sm text-slate-300 capitalize">
-                                                    {facture.mdePaiement.replace('_', ' ')}
-                                                </span>
+                            {displayFactures.length === 0 ? (
+                                <div className="py-8 text-center text-slate-400">
+                                    Aucune facture trouvée
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {displayFactures.map((facture) => (
+                                        <div 
+                                            key={facture.id}
+                                            className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className={`p-2 rounded-lg ${
+                                                    facture.status === 'payee' ? 'bg-green-500/20' :
+                                                    facture.status === 'en_attente' ? 'bg-amber-500/20' : 'bg-red-500/20'
+                                                }`}>
+                                                    {getStatusIcon(facture.status)}
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-white">{facture.numeroFacture}</p>
+                                                    <p className="text-sm text-slate-400">
+                                                        {facture.client.fullName} - {facture.intervention.typePanne}
+                                                    </p>
+                                                </div>
                                             </div>
                                             
-                                            <div className="text-right">
-                                                <p className="font-bold text-white">{formatCurrency(facture.montant)}</p>
-                                                <p className="text-xs text-slate-400">
-                                                    {formatDate(facture.createdAt)}
-                                                </p>
+                                            <div className="flex items-center gap-6">
+                                                <div className="flex items-center gap-2">
+                                                    {getMdeIcon(facture.mdePaiement)}
+                                                    <span className="text-sm text-slate-300 capitalize">
+                                                        {facture.mdePaiement.replace('_', ' ')}
+                                                    </span>
+                                                </div>
+                                                
+                                                <div className="text-right">
+                                                    <p className="font-bold text-white">{formatCurrency(facture.montant)}</p>
+                                                    <p className="text-xs text-slate-400">
+                                                        {formatDate(facture.createdAt)}
+                                                    </p>
+                                                </div>
+                                                
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => onDownloadFacture?.(facture.id)}
+                                                    className="text-slate-400 hover:text-white"
+                                                >
+                                                    <Download className="h-4 w-4" />
+                                                </Button>
                                             </div>
-                                            
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => onDownloadFacture?.(facture.id)}
-                                                className="text-slate-400 hover:text-white"
-                                            >
-                                                <Download className="h-4 w-4" />
-                                            </Button>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
+                                    ))}
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -444,7 +449,7 @@ export function FinancialDashboard({
                             </CardHeader>
                             <CardContent>
                                 <p className="text-3xl font-bold text-green-400">
-                                    {formatCurrency(stats.revenus_jour)}
+                                    {displayStats ? formatCurrency(displayStats.revenus_jour) : formatCurrency(0)}
                                 </p>
                                 <div className="flex items-center gap-1 mt-2 text-sm text-green-400">
                                     <ArrowUpRight className="h-4 w-4" />
@@ -459,7 +464,7 @@ export function FinancialDashboard({
                             </CardHeader>
                             <CardContent>
                                 <p className="text-3xl font-bold text-green-400">
-                                    {formatCurrency(stats.revenus_semaine)}
+                                    {displayStats ? formatCurrency(displayStats.revenus_semaine) : formatCurrency(0)}
                                 </p>
                                 <div className="flex items-center gap-1 mt-2 text-sm text-green-400">
                                     <ArrowUpRight className="h-4 w-4" />
@@ -474,7 +479,7 @@ export function FinancialDashboard({
                             </CardHeader>
                             <CardContent>
                                 <p className="text-3xl font-bold text-green-400">
-                                    {formatCurrency(stats.revenus_mois)}
+                                    {displayStats ? formatCurrency(displayStats.revenus_mois) : formatCurrency(0)}
                                 </p>
                                 <div className="flex items-center gap-1 mt-2 text-sm text-green-400">
                                     <ArrowUpRight className="h-4 w-4" />

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,181 +25,40 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-    Calendar,
     Download,
     Filter,
     Search,
     Star,
     FileText,
     Phone,
-    MapPin,
     Clock,
     MoreVertical,
     Eye,
     File,
-    DollarSign
+    DollarSign,
+    CheckCircle,
+    Loader2
 } from 'lucide-react';
 import type { InterventionHistoryItem, HistoryFilters } from '@/types/depanneur';
 import { DEMANDE_STATUS_COLORS, DEMANDE_STATUS_LABELS } from '@/types/client';
 
-// Données mockées
-const mockHistory: InterventionHistoryItem[] = [
-    {
-        id: 1,
-        codeIntervention: 'INT-2024-001',
-        codeDemande: 'DEM-2024-001',
-        date: new Date().toISOString(),
-        typePanne: 'batterie',
-        status: 'terminee',
-        client: {
-            fullName: 'Jean Dupont',
-            phone: '+229 90 00 00 01',
+// Fonction utilitaire pour les appels API
+async function fetchApi<T>(url: string, options?: RequestInit): Promise<T> {
+    const response = await fetch(url, {
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            ...options?.headers,
         },
-        vehicle: {
-            brand: 'Toyota',
-            model: 'Corolla',
-            plate: 'ABC-123',
-        },
-        montant: 35000,
-        duree: 45,
-        coutPiece: 15000,
-        coutMainOeuvre: 20000,
-        evaluation: {
-            note: 5,
-            commentaire: 'Service rapide et professionnel!'
-        },
-        facture: {
-            id: 1,
-            montant: 35000,
-            status: 'payee',
-            url: '#',
-        },
-        createdAt: new Date().toISOString(),
-        completedAt: new Date().toISOString(),
-    },
-    {
-        id: 2,
-        codeIntervention: 'INT-2024-002',
-        codeDemande: 'DEM-2024-002',
-        date: new Date(Date.now() - 86400000).toISOString(),
-        typePanne: 'panne_seche',
-        status: 'terminee',
-        client: {
-            fullName: 'Marie Kouami',
-            phone: '+229 90 00 00 02',
-        },
-        vehicle: {
-            brand: 'Honda',
-            model: 'Civic',
-            plate: 'DEF-456',
-        },
-        montant: 25000,
-        duree: 30,
-        coutPiece: 10000,
-        coutMainOeuvre: 15000,
-        evaluation: {
-            note: 4,
-            commentaire: 'Bon service, délai respecté'
-        },
-        facture: {
-            id: 2,
-            montant: 25000,
-            status: 'payee',
-            url: '#',
-        },
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
-        completedAt: new Date(Date.now() - 86400000).toISOString(),
-    },
-    {
-        id: 3,
-        codeIntervention: 'INT-2024-003',
-        codeDemande: 'DEM-2024-003',
-        date: new Date(Date.now() - 86400000 * 7).toISOString(),
-        typePanne: 'creaison',
-        status: 'terminee',
-        client: {
-            fullName: 'Paul Agossou',
-            phone: '+229 90 00 00 03',
-        },
-        vehicle: {
-            brand: 'Ford',
-            model: 'Fiesta',
-            plate: 'GHI-789',
-        },
-        montant: 15000,
-        duree: 25,
-        coutPiece: 5000,
-        coutMainOeuvre: 10000,
-        evaluation: {
-            note: 5,
-            commentaire: 'Excellent travail!'
-        },
-        facture: {
-            id: 3,
-            montant: 15000,
-            status: 'en_attente',
-            url: '#',
-        },
-        createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
-        completedAt: new Date(Date.now() - 86400000 * 7).toISOString(),
-    },
-    {
-        id: 4,
-        codeIntervention: 'INT-2024-004',
-        codeDemande: 'DEM-2024-004',
-        date: new Date(Date.now() - 86400000 * 14).toISOString(),
-        typePanne: 'moteur',
-        status: 'terminee',
-        client: {
-            fullName: 'Sika Aime',
-            phone: '+229 90 00 00 04',
-        },
-        vehicle: {
-            brand: 'Peugeot',
-            model: '308',
-            plate: 'JKL-012',
-        },
-        montant: 85000,
-        duree: 180,
-        coutPiece: 45000,
-        coutMainOeuvre: 40000,
-        evaluation: {
-            note: 5,
-            commentaire: 'Problème résolu rapidement'
-        },
-        facture: {
-            id: 4,
-            montant: 85000,
-            status: 'payee',
-            url: '#',
-        },
-        createdAt: new Date(Date.now() - 86400000 * 14).toISOString(),
-        completedAt: new Date(Date.now() - 86400000 * 14).toISOString(),
-    },
-    {
-        id: 5,
-        codeIntervention: 'INT-2024-005',
-        codeDemande: 'DEM-2024-005',
-        date: new Date(Date.now() - 86400000 * 21).toISOString(),
-        typePanne: 'freins',
-        status: 'annulee',
-        client: {
-            fullName: 'Koffi Jean',
-            phone: '+229 90 00 00 05',
-        },
-        vehicle: {
-            brand: 'Renault',
-            model: 'Clio',
-            plate: 'MNO-345',
-        },
-        montant: 0,
-        duree: 10,
-        coutPiece: 0,
-        coutMainOeuvre: 0,
-        createdAt: new Date(Date.now() - 86400000 * 21).toISOString(),
-        completedAt: new Date(Date.now() - 86400000 * 21).toISOString(),
-    },
-];
+    });
+
+    if (!response.ok) {
+        throw new Error('Erreur lors de la requête');
+    }
+
+    return response.json();
+}
 
 function formatDate(dateString: string): string {
     const date = new Date(dateString);
@@ -220,7 +79,8 @@ function formatCurrency(amount: number): string {
     }).format(amount);
 }
 
-function formatDuree(minutes: number): string {
+function formatDuree(minutes: number | null): string {
+    if (!minutes) return '-';
     if (minutes < 60) {
         return `${minutes} min`;
     }
@@ -234,20 +94,103 @@ interface InterventionHistoryProps {
     onViewDetails?: (item: InterventionHistoryItem) => void;
     onDownloadFacture?: (factureId: number) => void;
     onExport?: (format: 'excel' | 'pdf') => void;
+    fetchFromApi?: boolean;
 }
 
 export function InterventionHistory({
-    history = mockHistory,
+    history: initialHistory,
     onViewDetails,
     onDownloadFacture,
     onExport,
+    fetchFromApi = false,
 }: InterventionHistoryProps) {
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [dateFilter, setDateFilter] = useState<string>('all');
+    const [loading, setLoading] = useState(false);
+    const [history, setHistory] = useState<InterventionHistoryItem[]>(initialHistory || []);
+    const [pagination, setPagination] = useState({
+        current_page: 1,
+        last_page: 1,
+        total: 0,
+        per_page: 20,
+    });
 
-    // Filtrer l'historique
-    const filteredHistory = history.filter(item => {
+    const loadHistory = useCallback(async () => {
+        if (!fetchFromApi) {
+            setHistory(initialHistory || []);
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const params = new URLSearchParams();
+            params.append('page', String(pagination.current_page));
+            params.append('per_page', String(pagination.per_page));
+            
+            if (statusFilter && statusFilter !== 'all') {
+                params.append('status', statusFilter);
+            }
+            if (searchQuery) {
+                params.append('search', searchQuery);
+            }
+            if (dateFilter === 'today') {
+                params.append('date_from', new Date().toISOString().split('T')[0]);
+            } else if (dateFilter === 'week') {
+                const weekAgo = new Date();
+                weekAgo.setDate(weekAgo.getDate() - 7);
+                params.append('date_from', weekAgo.toISOString().split('T')[0]);
+            } else if (dateFilter === 'month') {
+                const monthAgo = new Date();
+                monthAgo.setMonth(monthAgo.getMonth() - 1);
+                params.append('date_from', monthAgo.toISOString().split('T')[0]);
+            }
+
+            const response = await fetchApi<{
+                data: InterventionHistoryItem[];
+                current_page: number;
+                last_page: number;
+                total: number;
+                per_page: number;
+            }>(`/api/depanneur/interventions/history?${params.toString()}`);
+
+            setHistory(response.data);
+            setPagination({
+                current_page: response.current_page,
+                last_page: response.last_page,
+                total: response.total,
+                per_page: response.per_page,
+            });
+        } catch (error) {
+            console.error('Erreur chargement historique:', error);
+            setHistory(initialHistory || []);
+        } finally {
+            setLoading(false);
+        }
+    }, [fetchFromApi, initialHistory, pagination.current_page, pagination.per_page, statusFilter, searchQuery, dateFilter]);
+
+    useEffect(() => {
+        loadHistory();
+    }, [loadHistory]);
+
+    const handleStatusFilterChange = (value: string) => {
+        setStatusFilter(value);
+        setPagination(prev => ({ ...prev, current_page: 1 }));
+    };
+
+    const handleDateFilterChange = (value: string) => {
+        setDateFilter(value);
+        setPagination(prev => ({ ...prev, current_page: 1 }));
+    };
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(e.target.value);
+        setPagination(prev => ({ ...prev, current_page: 1 }));
+    };
+
+    const displayHistory = fetchFromApi ? history : (initialHistory || []);
+    
+    const filteredHistory = !fetchFromApi ? displayHistory.filter(item => {
         const matchesSearch = 
             item.codeDemande.toLowerCase().includes(searchQuery.toLowerCase()) ||
             item.codeIntervention.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -256,9 +199,8 @@ export function InterventionHistory({
         const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
         
         return matchesSearch && matchesStatus;
-    });
+    }) : displayHistory;
 
-    // Statistiques
     const stats = {
         total: filteredHistory.length,
         terminees: filteredHistory.filter(i => i.status === 'terminee').length,
@@ -266,6 +208,36 @@ export function InterventionHistory({
         montantTotal: filteredHistory
             .filter(i => i.status === 'terminee')
             .reduce((sum, i) => sum + i.montant, 0),
+    };
+
+    const getStatusColor = (status: string): string => {
+        switch (status) {
+            case 'terminee':
+                return 'bg-green-500';
+            case 'en_cours':
+                return 'bg-blue-500';
+            case 'acceptee':
+                return 'bg-amber-500';
+            case 'annulee':
+                return 'bg-red-500';
+            default:
+                return 'bg-slate-500';
+        }
+    };
+
+    const getStatusLabel = (status: string) => {
+        switch (status) {
+            case 'terminee':
+                return 'Terminée';
+            case 'en_cours':
+                return 'En cours';
+            case 'acceptee':
+                return 'Acceptée';
+            case 'annulee':
+                return 'Annulée';
+            default:
+                return status;
+        }
     };
 
     return (
@@ -280,7 +252,7 @@ export function InterventionHistory({
                             </div>
                             <div>
                                 <p className="text-sm text-slate-400">Total</p>
-                                <p className="text-2xl font-bold text-white">{stats.total}</p>
+                                <p className="text-2xl font-bold text-white">{fetchFromApi ? pagination.total : stats.total}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -333,19 +305,17 @@ export function InterventionHistory({
             <Card className="bg-slate-800/50 border-slate-700">
                 <CardContent className="py-4">
                     <div className="flex flex-col md:flex-row gap-4">
-                        {/* Recherche */}
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                             <Input
                                 placeholder="Rechercher par code, client..."
                                 value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onChange={handleSearchChange}
                                 className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400"
                             />
                         </div>
                         
-                        {/* Filtre statut */}
-                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
                             <SelectTrigger className="w-full md:w-48 bg-slate-700/50 border-slate-600 text-white">
                                 <SelectValue placeholder="Statut" />
                             </SelectTrigger>
@@ -353,12 +323,12 @@ export function InterventionHistory({
                                 <SelectItem value="all">Tous les statuts</SelectItem>
                                 <SelectItem value="terminee">Terminée</SelectItem>
                                 <SelectItem value="en_cours">En cours</SelectItem>
+                                <SelectItem value="acceptee">Acceptée</SelectItem>
                                 <SelectItem value="annulee">Annulée</SelectItem>
                             </SelectContent>
                         </Select>
                         
-                        {/* Filtre date */}
-                        <Select value={dateFilter} onValueChange={setDateFilter}>
+                        <Select value={dateFilter} onValueChange={handleDateFilterChange}>
                             <SelectTrigger className="w-full md:w-48 bg-slate-700/50 border-slate-600 text-white">
                                 <SelectValue placeholder="Période" />
                             </SelectTrigger>
@@ -370,7 +340,6 @@ export function InterventionHistory({
                             </SelectContent>
                         </Select>
                         
-                        {/* Export */}
                         <div className="flex gap-2">
                             <Button
                                 variant="outline"
@@ -395,110 +364,145 @@ export function InterventionHistory({
 
             {/* Tableau */}
             <Card className="bg-slate-800/50 border-slate-700">
-                <Table>
-                    <TableHeader>
-                        <TableRow className="border-slate-700 hover:bg-slate-700/50">
-                            <TableHead className="text-slate-300">Date</TableHead>
-                            <TableHead className="text-slate-300">Code</TableHead>
-                            <TableHead className="text-slate-300">Client</TableHead>
-                            <TableHead className="text-slate-300">Type</TableHead>
-                            <TableHead className="text-slate-300">Montant</TableHead>
-                            <TableHead className="text-slate-300">Durée</TableHead>
-                            <TableHead className="text-slate-300">Statut</TableHead>
-                            <TableHead className="text-slate-300">Note</TableHead>
-                            <TableHead className="text-slate-300 text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {filteredHistory.map((item) => (
-                            <TableRow 
-                                key={item.id}
-                                className="border-slate-700 hover:bg-slate-700/50"
-                            >
-                                <TableCell className="text-slate-300">
-                                    {formatDate(item.date)}
-                                </TableCell>
-                                <TableCell>
-                                    <div>
-                                        <p className="font-medium text-white">{item.codeIntervention}</p>
-                                        <p className="text-xs text-slate-400">{item.codeDemande}</p>
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <div>
-                                        <p className="text-white">{item.client.fullName}</p>
-                                        <p className="text-xs text-slate-400">{item.vehicle?.brand} {item.vehicle?.model}</p>
-                                    </div>
-                                </TableCell>
-                                <TableCell className="text-slate-300 capitalize">
-                                    {item.typePanne.replace('_', ' ')}
-                                </TableCell>
-                                <TableCell>
-                                    <span className="font-medium text-green-400">
-                                        {formatCurrency(item.montant)}
-                                    </span>
-                                </TableCell>
-                                <TableCell className="text-slate-300">
-                                    {formatDuree(item.duree)}
-                                </TableCell>
-                                <TableCell>
-                                    <Badge className={DEMANDE_STATUS_COLORS[item.status as keyof typeof DEMANDE_STATUS_COLORS] || 'bg-slate-500'}>
-                                        {DEMANDE_STATUS_LABELS[item.status as keyof typeof DEMANDE_STATUS_LABELS] || item.status}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell>
-                                    {item.evaluation ? (
-                                        <div className="flex items-center gap-1">
-                                            <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-                                            <span className="text-white">{item.evaluation.note}/5</span>
+                {loading ? (
+                    <div className="flex items-center justify-center py-12">
+                        <Loader2 className="h-8 w-8 text-amber-400 animate-spin" />
+                        <span className="ml-2 text-slate-400">Chargement...</span>
+                    </div>
+                ) : (
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="border-slate-700 hover:bg-slate-700/50">
+                                <TableHead className="text-slate-300">Date</TableHead>
+                                <TableHead className="text-slate-300">Code</TableHead>
+                                <TableHead className="text-slate-300">Client</TableHead>
+                                <TableHead className="text-slate-300">Type</TableHead>
+                                <TableHead className="text-slate-300">Montant</TableHead>
+                                <TableHead className="text-slate-300">Durée</TableHead>
+                                <TableHead className="text-slate-300">Statut</TableHead>
+                                <TableHead className="text-slate-300">Note</TableHead>
+                                <TableHead className="text-slate-300 text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredHistory.map((item) => (
+                                <TableRow 
+                                    key={item.id}
+                                    className="border-slate-700 hover:bg-slate-700/50"
+                                >
+                                    <TableCell className="text-slate-300">
+                                        {formatDate(item.date)}
+                                    </TableCell>
+                                    <TableCell>
+                                        <div>
+                                            <p className="font-medium text-white">{item.codeIntervention}</p>
+                                            <p className="text-xs text-slate-400">{item.codeDemande}</p>
                                         </div>
-                                    ) : (
-                                        <span className="text-slate-500">-</span>
-                                    )}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="text-slate-400">
-                                                <MoreVertical className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700">
-                                            <DropdownMenuItem 
-                                                onClick={() => onViewDetails?.(item)}
-                                                className="text-white hover:bg-slate-700"
-                                            >
-                                                <Eye className="h-4 w-4 mr-2" />
-                                                Voir détails
-                                            </DropdownMenuItem>
-                                            {item.facture && (
+                                    </TableCell>
+                                    <TableCell>
+                                        <div>
+                                            <p className="text-white">{item.client.fullName}</p>
+                                            <p className="text-xs text-slate-400">{item.vehicle?.brand} {item.vehicle?.model}</p>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-slate-300 capitalize">
+                                        {item.typePanne.replace('_', ' ')}
+                                    </TableCell>
+                                    <TableCell>
+                                        <span className="font-medium text-green-400">
+                                            {formatCurrency(item.montant)}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell className="text-slate-300">
+                                        {formatDuree(item.duree)}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge className={getStatusColor(item.status)}>
+                                            {getStatusLabel(item.status)}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        {item.evaluation ? (
+                                            <div className="flex items-center gap-1">
+                                                <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
+                                                <span className="text-white">{item.evaluation.note}/5</span>
+                                            </div>
+                                        ) : (
+                                            <span className="text-slate-500">-</span>
+                                        )}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="text-slate-400">
+                                                    <MoreVertical className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700">
                                                 <DropdownMenuItem 
-                                                    onClick={() => onDownloadFacture?.(item.facture.id)}
+                                                    onClick={() => onViewDetails?.(item)}
                                                     className="text-white hover:bg-slate-700"
                                                 >
-                                                    <File className="h-4 w-4 mr-2" />
-                                                    Facture
+                                                    <Eye className="h-4 w-4 mr-2" />
+                                                    Voir détails
                                                 </DropdownMenuItem>
-                                            )}
-                                            <DropdownMenuItem className="text-white hover:bg-slate-700">
-                                                <Phone className="h-4 w-4 mr-2" />
-                                                Appeler le client
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                                                {item.facture && (
+                                                    <DropdownMenuItem 
+                                                        onClick={() => onDownloadFacture?.(item.facture!.id)}
+                                                        className="text-white hover:bg-slate-700"
+                                                    >
+                                                        <File className="h-4 w-4 mr-2" />
+                                                        Facture
+                                                    </DropdownMenuItem>
+                                                )}
+                                                <DropdownMenuItem className="text-white hover:bg-slate-700">
+                                                    <Phone className="h-4 w-4 mr-2" />
+                                                    Appeler le client
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                )}
                 
-                {filteredHistory.length === 0 && (
+                {filteredHistory.length === 0 && !loading && (
                     <div className="py-12 text-center">
                         <FileText className="h-12 w-12 text-slate-500 mx-auto mb-4" />
                         <p className="text-slate-400">Aucune intervention trouvée</p>
                     </div>
                 )}
             </Card>
+
+            {/* Pagination */}
+            {fetchFromApi && pagination.last_page > 1 && (
+                <div className="flex items-center justify-between">
+                    <p className="text-sm text-slate-400">
+                        Affichage de {(pagination.current_page - 1) * pagination.per_page + 1} à{' '}
+                        {Math.min(pagination.current_page * pagination.per_page, pagination.total)} sur {pagination.total} interventions
+                    </p>
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setPagination(prev => ({ ...prev, current_page: prev.current_page - 1 }))}
+                            disabled={pagination.current_page === 1}
+                        >
+                            Précédent
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setPagination(prev => ({ ...prev, current_page: prev.current_page + 1 }))}
+                            disabled={pagination.current_page === pagination.last_page}
+                        >
+                            Suivant
+                        </Button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

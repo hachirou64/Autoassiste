@@ -1540,5 +1540,303 @@ class DashboardController extends Controller
 
         return response()->json(['stats' => $stats]);
     }
+
+    /**
+     * Récupérer l'historique des interventions du dépanneur
+     */
+    public function getInterventionHistory()
+    {
+        $utilisateur = Auth::user();
+        
+        if (!$utilisateur) {
+            return response()->json(['error' => 'Aucun compte dépanneur lié'], 403);
+        }
+
+        $depanneur = $utilisateur->depanneur ?? null;
+        
+        if (!$depanneur) {
+            return response()->json(['error' => 'Aucun compte dépanneur lié'], 403);
+        }
+
+        $perPage = request()->input('per_page', 20);
+        $page = request()->input('page', 1);
+        $status = request()->input('status', '');
+        $search = request()->input('search', '');
+        $dateFrom = request()->input('date_from', '');
+        $dateTo = request()->input('date_to', '');
+
+        $query = $depanneur->interventions()
+            ->with(['demande.client', 'facture'])
+            ->orderBy('createdAt', 'desc');
+
+        // Filtre par statut
+        if ($status && $status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        // Filtre par recherche
+        if ($search) {
+            $query->whereHas('demande', function($q) use ($search) {
+                $q->where('codeDemande', 'like', "%{$search}%")
+                  ->orWhere('localisation', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtre par date
+        if ($dateFrom) {
+            $query->whereDate('createdAt', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('createdAt', '<=', $dateTo);
+        }
+
+        $interventions = $query->paginate($perPage, ['*'], 'page', $page);
+
+        // Transformer les données
+        $transformedData = collect($interventions->items())->map(function($intervention) {
+            $duree = null;
+            if ($intervention->startedAt && $intervention->completedAt) {
+                $duree = $intervention->startedAt->diffInMinutes($intervention->completedAt);
+            } elseif ($intervention->startedAt) {
+                $duree = $intervention->startedAt->diffInMinutes(now());
+            }
+
+            return [
+                'id' => $intervention->id,
+                'codeIntervention' => $intervention->codeIntervention ?? 'INT-'.$intervention->id,
+                'codeDemande' => $intervention->demande->codeDemande ?? 'DEM-'.$intervention->demande->id,
+                'date' => $intervention->createdAt->toIsoString(),
+                'typePanne' => $intervention->demande->typePanne ?? 'autre',
+                'status' => $intervention->status,
+                'client' => $intervention->demande->client ? [
+                    'fullName' => $intervention->demande->client->fullName,
+                    'phone' => $intervention->demande->client->phone,
+                ] : ['fullName' => 'Client', 'phone' => ''],
+                'vehicle' => $intervention->demande->vehicle ? [
+                    'brand' => $intervention->demande->vehicle->marque,
+                    'model' => $intervention->demande->vehicle->modele,
+                    'plate' => $intervention->demande->vehicle->immatriculation,
+                ] : null,
+                'montant' => $intervention->facture?->montant ?? $intervention->coutTotal ?? 0,
+                'duree' => $duree,
+                'coutPiece' => $intervention->coutPiece ?? 0,
+                'coutMainOeuvre' => $intervention->coutMainOeuvre ?? 0,
+                'evaluation' => $intervention->note ? [
+                    'note' => $intervention->note,
+                    'commentaire' => $intervention->commentaire_evaluation,
+                ] : null,
+                'facture' => $intervention->facture ? [
+                    'id' => $intervention->facture->id,
+                    'montant' => $intervention->facture->montant,
+                    'status' => $intervention->facture->status,
+                    'url' => '#',
+                ] : null,
+                'createdAt' => $intervention->createdAt->toIsoString(),
+                'completedAt' => $intervention->completedAt?->toIsoString(),
+            ];
+        });
+
+        return response()->json([
+            'data' => $transformedData,
+            'current_page' => $interventions->currentPage(),
+            'last_page' => $interventions->lastPage(),
+            'total' => $interventions->total(),
+            'per_page' => $interventions->perPage(),
+        ]);
+    }
+
+    /**
+     * Récupérer les données financières du dépanneur
+     */
+    public function getFinancialData()
+    {
+        $utilisateur = Auth::user();
+        
+        if (!$utilisateur) {
+            return response()->json(['error' => 'Aucun compte dépanneur lié'], 403);
+        }
+
+        $depanneur = $utilisateur->depanneur ?? null;
+        
+        if (!$depanneur) {
+            return response()->json(['error' => 'Aucun compte dépanneur lié'], 403);
+        }
+
+        // Statistiques financières
+        $stats = [
+            'revenus_jour' => $this->getRevenusJour($depanneur),
+            'revenus_semaine' => $this->getRevenusSemaine($depanneur),
+            'revenus_mois' => $this->getRevenusMois($depanneur),
+            'revenus_total' => $this->getRevenusTotal($depanneur),
+            
+            'factures_en_attente' => $depanneur->interventions()
+                ->whereHas('facture', fn($q) => $q->where('status', 'en_attente'))
+                ->count(),
+            'factures_payees' => $depanneur->interventions()
+                ->whereHas('facture', fn($q) => $q->where('status', 'payee'))
+                ->count(),
+            'factures_annulees' => $depanneur->interventions()
+                ->whereHas('facture', fn($q) => $q->where('status', 'annulee'))
+                ->count(),
+            
+            'total_factures' => $depanneur->interventions()
+                ->whereHas('facture')
+                ->count(),
+            
+            'interventions_terminees' => $depanneur->interventions()
+                ->where('status', 'terminee')
+                ->count(),
+            'interventions_en_cours' => $depanneur->interventions()
+                ->whereIn('status', ['acceptee', 'en_cours'])
+                ->count(),
+            
+            // Meilleur jour/mois
+            'meilleur_jour' => $this->getMeilleurJour($depanneur),
+            'meilleur_montant' => $this->getMeilleurMontant($depanneur),
+        ];
+
+        // Liste des factures
+        $facturesQuery = Facture::whereHas('intervention', fn($q) => $q->where('id_depanneur', $depanneur->id))
+            ->with(['intervention.demande.client'])
+            ->orderBy('createdAt', 'desc');
+
+        $factures = $facturesQuery->limit(50)->get()->map(function($facture) {
+            return [
+                'id' => $facture->id,
+                'numeroFacture' => $facture->numeroFacture ?? 'FAC-'.$facture->id,
+                'montant' => $facture->montant,
+                'coutPiece' => $facture->coutPiece,
+                'coutMainOeuvre' => $facture->coutMainOeuvre,
+                'mdePaiement' => $facture->mdePaiement ?? 'mobile_money',
+                'status' => $facture->status,
+                'transactionId' => $facture->transactionId,
+                'intervention' => [
+                    'id' => $facture->intervention->id,
+                    'codeIntervention' => $facture->intervention->codeIntervention ?? 'INT-'.$facture->intervention->id,
+                    'codeDemande' => $facture->intervention->demande->codeDemande ?? 'DEM-'.$facture->intervention->demande->id,
+                    'typePanne' => $facture->intervention->demande->typePanne ?? 'autre',
+                ],
+                'client' => $facture->intervention->demande->client ? [
+                    'fullName' => $facture->intervention->demande->client->fullName,
+                    'phone' => $facture->intervention->demande->client->phone,
+                ] : ['fullName' => 'Client', 'phone' => ''],
+                'createdAt' => $facture->createdAt->toIsoString(),
+                'paidAt' => $facture->paidAt?->toIsoString(),
+            ];
+        });
+
+        // Revenus par jour (7 derniers jours)
+        $revenusParJour = $this->getRevenusParJour($depanneur, 7);
+
+        // Revenus par mois (6 derniers mois)
+        $revenusParMois = $this->getRevenusParMois($depanneur, 6);
+
+        return response()->json([
+            'stats' => $stats,
+            'factures' => $factures,
+            'revenusParJour' => $revenusParJour,
+            'revenusParMois' => $revenusParMois,
+        ]);
+    }
+
+    /**
+     * Récupérer les revenus de la semaine
+     */
+    private function getRevenusSemaine(Depanneur $depanneur): float
+    {
+        return $depanneur->interventions()
+            ->whereBetween('completedAt', [now()->startOfWeek(), now()->endOfWeek()])
+            ->whereHas('facture', fn($q) => $q->where('status', 'payee'))
+            ->with('facture')
+            ->get()
+            ->sum('facture.montant');
+    }
+
+    /**
+     * Récupérer le meilleur jour de revenus
+     */
+    private function getMeilleurJour(Depanneur $depanneur): string
+    {
+        $intervention = $depanneur->interventions()
+            ->whereHas('facture', fn($q) => $q->where('status', 'payee'))
+            ->with('facture')
+            ->get()
+            ->groupBy(fn($i) => $i->completedAt->format('Y-m-d'))
+            ->map(fn($items) => $items->sum(fn($i) => $i->facture->montant))
+            ->sortDesc()
+            ->first();
+
+        return $intervention ? now()->format('Y-m-d') : '';
+    }
+
+    /**
+     * Récupérer le meilleur montant
+     */
+    private function getMeilleurMontant(Depanneur $depanneur): float
+    {
+        return $depanneur->interventions()
+            ->whereHas('facture', fn($q) => $q->where('status', 'payee'))
+            ->with('facture')
+            ->get()
+            ->max(fn($i) => $i->facture->montant) ?? 0;
+    }
+
+    /**
+     * Récupérer les revenus par jour
+     */
+    private function getRevenusParJour(Depanneur $depanneur, int $days): array
+    {
+        $result = [];
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $date = now()->subDays($i);
+            $revenu = $depanneur->interventions()
+                ->whereDate('completedAt', $date)
+                ->whereHas('facture', fn($q) => $q->where('status', 'payee'))
+                ->with('facture')
+                ->get()
+                ->sum('facture.montant');
+
+            $result[] = [
+                'date' => $date->format('Y-m-d'),
+                'jour' => $date->format('D'),
+                'revenus' => $revenu,
+                'interventions' => $depanneur->interventions()
+                    ->whereDate('completedAt', $date)
+                    ->where('status', 'terminee')
+                    ->count(),
+            ];
+        }
+        return $result;
+    }
+
+    /**
+     * Récupérer les revenus par mois
+     */
+    private function getRevenusParMois(Depanneur $depanneur, int $months): array
+    {
+        $result = [];
+        for ($i = $months - 1; $i >= 0; $i--) {
+            $date = now()->subMonths($i);
+            $revenu = $depanneur->interventions()
+                ->whereMonth('completedAt', $date->month)
+                ->whereYear('completedAt', $date->year)
+                ->whereHas('facture', fn($q) => $q->where('status', 'payee'))
+                ->with('facture')
+                ->get()
+                ->sum('facture.montant');
+
+            $result[] = [
+                'mois' => $date->format('Y-m'),
+                'label' => $date->format('M Y'),
+                'revenus' => $revenu,
+                'interventions' => $depanneur->interventions()
+                    ->whereMonth('completedAt', $date->month)
+                    ->whereYear('completedAt', $date->year)
+                    ->where('status', 'terminee')
+                    ->count(),
+            ];
+        }
+        return $result;
+    }
 }
 

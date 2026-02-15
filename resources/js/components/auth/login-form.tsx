@@ -34,7 +34,7 @@ export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
     const [attemptCount, setAttemptCount] = useState(0);
     const [showSessionExpiredWarning, setShowSessionExpiredWarning] = useState(false);
 
-    // Wait for mount before checking auth (client-side only)
+    
     useEffect(() => {
         setMounted(true);
 

@@ -192,6 +192,12 @@ Route::prefix('api/depanneur')->middleware(['auth'])->group(function () {
     
     // Statistiques
     Route::get('/stats', [App\Http\Controllers\DashboardController::class, 'getDepanneurStats'])->name('depanneur.api.stats');
+    
+    // Historique des interventions
+    Route::get('/interventions/history', [App\Http\Controllers\DashboardController::class, 'getInterventionHistory'])->name('depanneur.api.interventions.history');
+    
+    // Données financières
+    Route::get('/financial', [App\Http\Controllers\DashboardController::class, 'getFinancialData'])->name('depanneur.api.financial');
 });
 
 // ==================== GÉOCODAGE ====================

@@ -8,7 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 import { register } from '@/routes';
-import { store } from '@/routes/login';
+// ✅ Correct
+import login from '@/routes/login';
+
 import { request } from '@/routes/password';
 
 type Props = {
@@ -30,7 +32,7 @@ export default function Login({
             <Head title="Log in" />
 
             <Form
-                {...store.form()}
+                {...login.post.form()}
                 resetOnSuccess={['password']}
                 className="flex flex-col gap-6"
             >
@@ -38,17 +40,18 @@ export default function Login({
                     <>
                         <div className="grid gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    name="email"
-                                    required
-                                    autoFocus
-                                    tabIndex={1}
-                                    autoComplete="email"
-                                    placeholder="email@example.com"
-                                />
+                              <Label htmlFor="login">Email or Phone</Label>
+
+<Input
+    id="login"
+    type="text"
+    name="login"
+    required
+    autoFocus
+    tabIndex={1}
+    placeholder="email@example.com or 97XXXXXX"
+/>
+
                                 <InputError message={errors.email} />
                             </div>
 

@@ -75,7 +75,7 @@ class AuthController extends Controller
             $client = Client::create([
                 'fullName' => $validated['fullName'],
                 'email' => $validated['email'],
-                'phone' => $validated['phone'],
+                'phone' => preg_replace('/[\s\-\.]/', '', $validated['phone']),
             ]);
 
             // Stocker l'ID du client pour le lien avec User
@@ -89,7 +89,7 @@ class AuthController extends Controller
                 'etablissement_name' => $validated['etablissement_name'],
                 'IFU' => $validated['IFU'],
                 'email' => $validated['email'],
-                'phone' => $validated['phone'],
+                'phone' => preg_replace('/[\s\-\.]/', '', $validated['phone']),
                 'status' => 'disponible',  // Par défaut disponible
                 'isActive' => true,        // Par défaut actif
             ]);
@@ -150,22 +150,18 @@ class AuthController extends Controller
         $login = trim($credentials['login']);
         $cleanLogin = preg_replace('/[\s\-\.]/', '', $login);
 
-        // Détecter si login est un email ou un téléphone
-        $isEmail = filter_var($login, FILTER_VALIDATE_EMAIL);
-        $isPhone = preg_match('/^(\+229|00229)?[0-9]{8,10}$/', $cleanLogin);
+        // Détecter le type de champ de connexion (email ou phone)
+        $loginFieldType = $this->detectLoginField($login);
 
-        // Rechercher l'utilisateur par email ou téléphone
+        // Rechercher l'utilisateur
         $user = null;
 
-        if ($isEmail) {
-            // Si c'est un email, chercher directement par email dans utilisateurs
+        if ($loginFieldType === 'email') {
             $user = Utilisateur::where('email', strtolower($login))->first();
-        } elseif ($isPhone) {
-            // Si c'est un téléphone, chercher dans la table clients
-            // D'abord chercher le client par téléphone
+        } elseif ($loginFieldType === 'phone') {
+            // Chercher le client par téléphone
             $client = \App\Models\Client::where('phone', $cleanLogin)->first();
             if ($client) {
-                // Puis chercher l'utilisateur associé à ce client
                 $user = Utilisateur::where('id_client', $client->id)->first();
             }
 
@@ -177,17 +173,8 @@ class AuthController extends Controller
                 }
             }
         } else {
-            // Essaye comme email en dernier recours
+            // Par défaut, essayer de le traiter comme un email
             $user = Utilisateur::where('email', strtolower($login))->first();
-        }
-
-        // Si utilisateur toujours pas trouvé, chercher par téléphone dans client même si le format n'est pas parfait
-        if (!$user) {
-            // Recherche plus flexible pour le téléphone
-            $client = \App\Models\Client::where('phone', 'like', '%' . $login . '%')->first();
-            if ($client) {
-                $user = Utilisateur::where('id_client', $client->id)->first();
-            }
         }
 
         // Vérifier les credentials

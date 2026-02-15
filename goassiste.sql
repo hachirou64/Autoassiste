@@ -182,7 +182,7 @@ CREATE TABLE `factures` (
 -- Structure de la table `failed_jobs`
 --
 
-CREATE TABLE `failed_jobs` (
+CREATE TABLE `failed_jobs' (
   `id` bigint(20) UNSIGNED NOT NULL,
   `uuid` varchar(255) NOT NULL,
   `connection` text NOT NULL,

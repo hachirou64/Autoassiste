@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { 
     DepanneurStats, 
     DemandeAvailable, 
@@ -56,11 +56,17 @@ interface UseDepanneurDataReturn {
     startIntervention: (demandeId: number) => Promise<void>;
     endIntervention: (data: { montant: number; notes: string }) => Promise<void>;
     
-    // Nouvelles fonctions pour les données dynamiques
+    // Fonctions pour les données dynamiques
     fetchHistory: (filters?: { status?: string; search?: string; date_from?: string; date_to?: string }) => Promise<InterventionHistoryData | null>;
     fetchFinancialData: () => Promise<FinancialData | null>;
     fetchNotifications: () => Promise<DepanneurNotification[] | null>;
     markNotificationRead: (notificationId: number) => Promise<boolean>;
+    
+    // Gestion du polling
+    startPolling: (interval?: number) => void;
+    stopPolling: () => void;
+    isPolling: boolean;
+    lastUpdate: Date | null;
 }
 
 // Fonction utilitaire pour les appels API
@@ -86,17 +92,16 @@ export function useDepanneurData(): UseDepanneurDataReturn {
     const [data, setData] = useState<DepanneurData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isPolling, setIsPolling] = useState(false);
+    const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+    const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
     // Fonction pour charger les données depuis le backend
-    const fetchData = useCallback(async () => {
-        setLoading(true);
+    const fetchData = useCallback(async (showLoading = false) => {
+        if (showLoading) setLoading(true);
         setError(null);
 
         try {
-            // Les données sont déjà chargées via Inertia props dans la page
-            // Mais on peut aussi les rafraîchir via API si besoin
-            // Cette fonction est principalement utilisée pour le rafraîchissement
-            
             // Récupérer les stats via API
             const statsResponse = await fetchApi<{ stats: DepanneurStats }>('/api/depanneur/stats');
             
@@ -113,20 +118,58 @@ export function useDepanneurData(): UseDepanneurDataReturn {
                 notifications: notificationsResponse.notifications,
             } : null);
             
+            setLastUpdate(new Date());
+            
         } catch (err) {
             console.error('Erreur lors du chargement des données:', err);
-            // On ne gère pas l'erreur ici pour ne pas bloquer l'affichage
-            // Les données peuvent provenir des props Inertia
+            // On ne gère pas l'erreur ici pour ne pas bloquer L'affichage
         } finally {
-            setLoading(false);
+            if (showLoading) setLoading(false);
         }
     }, []);
 
-    // Charger les données initiales - utilisé seulement si nécessaire
-    // Les données proviennent principalement des props Inertia
+    // Charger les données initiales
     useEffect(() => {
-        // Initialisation minimale - les données viennent des props
+        // Initialisation - les données viennent des props
         setLoading(false);
+    }, []);
+
+    // Démarrer le polling pour les demandes en temps réel
+    const startPolling = useCallback((interval = 10000) => {
+        if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+        }
+        
+        setIsPolling(true);
+        
+        // Fetch immédiat
+        fetchData(true);
+        
+        // Configurer le polling
+        pollingIntervalRef.current = setInterval(() => {
+            fetchData(false);
+        }, interval);
+        
+        console.log(`Polling started: every ${interval/1000}s`);
+    }, [fetchData]);
+
+    // Arrêter le polling
+    const stopPolling = useCallback(() => {
+        if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+        }
+        setIsPolling(false);
+        console.log('Polling stopped');
+    }, []);
+
+    // Nettoyer le polling au unmount
+    useEffect(() => {
+        return () => {
+            if (pollingIntervalRef.current) {
+                clearInterval(pollingIntervalRef.current);
+            }
+        };
     }, []);
 
     // Mettre à jour le statut
@@ -326,7 +369,7 @@ export function useDepanneurData(): UseDepanneurDataReturn {
         data,
         loading,
         error,
-        refresh: fetchData,
+        refresh: () => fetchData(true),
         updateStatus,
         acceptDemande,
         refuseDemande,
@@ -336,6 +379,10 @@ export function useDepanneurData(): UseDepanneurDataReturn {
         fetchFinancialData,
         fetchNotifications,
         markNotificationRead,
+        startPolling,
+        stopPolling,
+        isPolling,
+        lastUpdate,
     };
 }
 

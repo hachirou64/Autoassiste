@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Head, usePage, router } from '@inertiajs/react';
 import AppHeaderLayout from '@/layouts/app/app-header-layout';
 import type { BreadcrumbItem } from '@/types';
@@ -114,6 +114,70 @@ export default function DepanneurDashboard() {
     const [interventionStatus, setInterventionStatus] = useState<'aucune' | 'acceptee' | 'en_cours'>(
         props.interventionEnCours ? (props.interventionEnCours.status === 'acceptee' ? 'acceptee' : 'en_cours') : 'aucune'
     );
+    
+    // Polling pour les demandes en temps réel
+    const [isPolling, setIsPolling] = useState(false);
+    const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+    const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Fonction pour rafraîchir les demandes
+    const refreshDemandes = useCallback(async () => {
+        try {
+            const response = await fetch('/api/depanneur/demandes', {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+            });
+            const data = await response.json();
+            if (data.demandes) {
+                setDemandes(data.demandes);
+                setLastUpdate(new Date());
+            }
+        } catch (error) {
+            console.error('Erreur polling:', error);
+        }
+    }, []);
+
+    // Démarrer le polling
+    const startPolling = useCallback((interval = 10000) => {
+        if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+        }
+        
+        setIsPolling(true);
+        
+        // Fetch immédiat
+        refreshDemandes();
+        
+        // Configurer le polling
+        pollingIntervalRef.current = setInterval(() => {
+            refreshDemandes();
+        }, interval);
+        
+        console.log(`Polling started: every ${interval/1000}s`);
+    }, [refreshDemandes]);
+
+    // Arrêter le polling
+    const stopPolling = useCallback(() => {
+        if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+        }
+        setIsPolling(false);
+        console.log('Polling stopped');
+    }, []);
+
+    // Démarrer le polling quand le composant est prêt et disponible
+    useEffect(() => {
+        if (!loading && currentStatus === 'disponible') {
+            startPolling(10000); // Poll every 10 seconds
+        }
+        
+        return () => {
+            stopPolling();
+        };
+    }, [loading, currentStatus, startPolling, stopPolling]);
 
     // Charger les données initiales
     useEffect(() => {

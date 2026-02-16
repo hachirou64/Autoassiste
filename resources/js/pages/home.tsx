@@ -247,6 +247,14 @@ const pricingPlans = [
                 </button>
                 
                 <Button
+                  variant="outline"
+                  onClick={() => window.location.href = '/choose-register'}
+                  size="lg"
+                  className="border-amber-400 text-amber-500 hover:bg-amber-500 hover:text-white"
+                >
+                  S'inscrire
+                </Button>
+                <Button
                   variant="primary"
                   onClick={() => window.location.href = '/login'}
                   size="lg"
@@ -317,6 +325,14 @@ const pricingPlans = [
                   className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 border-2 border-amber-400"
                 >
                   Se connecter
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => window.location.href = '/choose-register'}
+                  size="lg"
+                  className="border-amber-400 text-amber-500 hover:bg-amber-500 hover:text-white"
+                >
+                  S'inscrire
                 </Button>
                 </div>
               </div>

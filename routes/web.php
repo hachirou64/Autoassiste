@@ -86,6 +86,11 @@ Route::get('/register', function () {
     return Inertia::render('register');
 })->name('register');
 
+// Route Choix inscription (client ou dépanneur)
+Route::get('/choose-register', function () {
+    return Inertia::render('choose-register');
+})->name('choose-register');
+
 // Route Inscription Dépanneur
 Route::get('/register/depanneur', function () {
     return Inertia::render('depanneur-register');

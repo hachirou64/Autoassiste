@@ -6,6 +6,7 @@ use App\Models\Depanneur;
 use App\Models\Utilisateur;
 use App\Models\TypeCompte;
 use App\Models\Zone;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -255,6 +256,17 @@ class DepanneurController extends Controller
                 $depanneur->utilisateur->update(['isActive' => true]);
             }
 
+            // Créer une notification pour le dépanneur
+            Notification::create([
+                'titre' => 'Compte activé',
+                'message' => 'Votre compte a été activé par l\'administrateur. Vous pouvez maintenant recevoir des demandes.',
+                'type' => Notification::TYPE_COMPTE_ACTIVATE,
+                'isRead' => false,
+                'id_depanneur' => $depanneur->id,
+                'createdAt' => now(),
+                'updatedAt' => now(),
+            ]);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Compte dépanneur activé avec succès.',
@@ -279,6 +291,17 @@ class DepanneurController extends Controller
             if ($depanneur->utilisateur) {
                 $depanneur->utilisateur->update(['isActive' => false]);
             }
+
+            // Créer une notification pour le dépanneur
+            Notification::create([
+                'titre' => 'Compte désactivé',
+                'message' => 'Votre compte a été désactivé par l\'administrateur. Vous ne pouvez plus recevoir de demandes.',
+                'type' => Notification::TYPE_COMPTE_DESACTIVATE,
+                'isRead' => false,
+                'id_depanneur' => $depanneur->id,
+                'createdAt' => now(),
+                'updatedAt' => now(),
+            ]);
 
             return response()->json([
                 'success' => true,

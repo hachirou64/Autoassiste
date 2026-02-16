@@ -145,9 +145,23 @@ export function DepanneurProfile({
                         </div>
                         
                         <div className="flex-1 text-center md:text-left">
-                            <h2 className="text-2xl font-bold text-white">
-                                {profile.etablissement_name}
-                            </h2>
+                            <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
+                                <h2 className="text-2xl font-bold text-white">
+                                    {profile.etablissement_name}
+                                </h2>
+                                {/* Indicateur de statut de compte (activé/désactivé par admin) */}
+                                <Badge className={profile.isActive 
+                                    ? "bg-green-500/20 text-green-400 border-green-500/30" 
+                                    : "bg-red-500/20 text-red-400 border-red-500/30"
+                                }>
+                                    {profile.isActive ? '✅ Activé' : '🚫 Désactivé'}
+                                </Badge>
+                            </div>
+                            {!profile.isActive && (
+                                <p className="text-sm text-red-400 mb-2">
+                                    Votre compte est désactivé. Veuillez contacter l'administrateur.
+                                </p>
+                            )}
                             <p className="text-slate-400">
                                 {profile.promoteur_name}
                             </p>
@@ -350,7 +364,7 @@ export function DepanneurProfile({
                                 <MapPin className="h-5 w-5 text-green-400" />
                                 Zones d'intervention
                             </CardTitle>
-                            {profile.zones.length > 0 && (
+                            {profile.zones && profile.zones.length > 0 && (
                                 <Badge variant="outline" className="bg-slate-700">
                                     {profile.zones.filter(z => z.isActive).length} active(s)
                                 </Badge>
@@ -359,7 +373,8 @@ export function DepanneurProfile({
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-2">
-                            {profile.zones
+                            {profile.zones && profile.zones.length > 0 ? (
+                                profile.zones
                                 .sort((a, b) => a.priorite - b.priorite)
                                 .map((zone) => (
                                     <div 

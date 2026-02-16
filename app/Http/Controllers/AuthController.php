@@ -178,7 +178,25 @@ class AuthController extends Controller
         }
 
         // Vérifier les credentials
-        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+       
+        $passwordValid = false;
+        
+        if ($user) {
+          
+            if (Hash::check($credentials['password'], $user->password)) {
+                $passwordValid = true;
+            } 
+            //
+            elseif ($credentials['password'] === $user->password) {
+                $passwordValid = true;
+                
+                $user->password = $credentials['password'];
+                $user->save();
+                \Log::info('Mot de passe re-hashé pour l\'utilisateur', ['user_id' => $user->id]);
+            }
+        }
+        
+        if (!$user || !$passwordValid) {
             // Log pour debugging
             \Log::warning('Échec de connexion', [
                 'login' => $credentials['login'],
@@ -363,10 +381,12 @@ class AuthController extends Controller
             ]);
         }
 
+        // Retourne 200 avec authenticated: false au lieu de 401
+        // pour éviter l'erreur "Failed to load resource" dans la console
         return response()->json([
             'authenticated' => false,
             'message' => 'Session expirée',
-        ], 401);
+        ]);
     }
 
     

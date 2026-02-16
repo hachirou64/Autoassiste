@@ -53,6 +53,12 @@ class Notification extends Model
     // Type: Paiement reçu
     const TYPE_PAIEMENT_RECU = 'paiement_recu';
 
+    // Type: Compte activé (pour dépanneur)
+    const TYPE_COMPTE_ACTIVATE = 'compte_active';
+
+    // Type: Compte désactivé (pour dépanneur)
+    const TYPE_COMPTE_DESACTIVATE = 'compte_desactive';
+
    
     public function client(): BelongsTo
     {
@@ -137,12 +143,14 @@ class Notification extends Model
             self::TYPE_DEPANNAGE_EN_ROUTE => '🚗',
             self::TYPE_INTERVENTION_TERMINEE => '🔧',
             self::TYPE_PAIEMENT_RECU => '💰',
+            self::TYPE_COMPTE_ACTIVATE => '✅',
+            self::TYPE_COMPTE_DESACTIVATE => '🚫',
         ];
 
         return $icons[$this->type] ?? '🔔';
     }
 
-    
+   
     public function getTypeColorAttribute(): string
     {
         $colors = [
@@ -152,6 +160,8 @@ class Notification extends Model
             self::TYPE_DEPANNAGE_EN_ROUTE => 'warning',
             self::TYPE_INTERVENTION_TERMINEE => 'primary',
             self::TYPE_PAIEMENT_RECU => 'success',
+            self::TYPE_COMPTE_ACTIVATE => 'success',
+            self::TYPE_COMPTE_DESACTIVATE => 'danger',
         ];
 
         return $colors[$this->type] ?? 'secondary';
@@ -225,6 +235,8 @@ class Notification extends Model
             self::TYPE_DEPANNAGE_EN_ROUTE => 'Dépanneur en route',
             self::TYPE_INTERVENTION_TERMINEE => 'Intervention terminée',
             self::TYPE_PAIEMENT_RECU => 'Paiement reçu',
+            self::TYPE_COMPTE_ACTIVATE => 'Compte activé',
+            self::TYPE_COMPTE_DESACTIVATE => 'Compte désactivé',
         ];
     }
 }

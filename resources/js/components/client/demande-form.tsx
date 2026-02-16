@@ -181,32 +181,7 @@ export function DemandeForm({ onSubmit, isLoading = false }: DemandeFormProps) {
                                 onClose={() => setShowMapModal(false)}
                             />
 
-                            {/* Alternative: Liste simple */}
-                            <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowDepanneurs(!showDepanneurs)}
-                                    className="w-full flex items-center justify-between text-white mb-3 hover:text-amber-400 transition"
-                                >
-                                    <span className="font-semibold">Ou afficher la liste des dépanneurs</span>
-                                    {showDepanneurs ? (
-                                        <ChevronUp className="h-5 w-5" />
-                                    ) : (
-                                        <ChevronDown className="h-5 w-5" />
-                                    )}
-                                </button>
-
-                                {showDepanneurs && (
-                                    <div className="space-y-2">
-                                        <DepanneursListComponent
-                                            latitude={coords.lat}
-                                            longitude={coords.lng}
-                                            vehicleType={vehicleType}
-                                            onSelectDepanneur={setSelectedDepanneur}
-                                        />
-                                    </div>
-                                )}
-                            </div>
+                          
                         </>
                     )}
 

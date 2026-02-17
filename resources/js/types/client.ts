@@ -70,9 +70,20 @@ export interface DemandeFormData {
 }
 
 // Notifications
+export type ClientNotificationType = 
+    | 'nouvelle_demande'
+    | 'demande_recue'
+    | 'demande_acceptee'
+    | 'demande_annulee'
+    | 'depannage_en_route'
+    | 'intervention_terminee'
+    | 'paiement_recu'
+    | 'compte_active'
+    | 'compte_desactivate';
+
 export interface ClientNotification {
     id: number;
-    type: 'demande_acceptee' | 'depanneur_en_route' | 'arrivee' | 'terminee' | 'annulee';
+    type: ClientNotificationType;
     titre: string;
     message: string;
     isRead: boolean;

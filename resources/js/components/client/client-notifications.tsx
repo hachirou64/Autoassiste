@@ -7,6 +7,7 @@ import {
     Bell, Check, CheckCheck, Clock, AlertTriangle, Wrench,
     CheckCircle, XCircle, Phone, MapPin, FileText, Settings
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import type { ClientNotification } from '@/types/client';
 
 interface ClientNotificationsProps {
@@ -16,13 +17,30 @@ interface ClientNotificationsProps {
     onClearAll?: () => void;
 }
 
-const NOTIFICATION_ICONS: Record<ClientNotification['type'], { icon: typeof Bell; color: string }> = {
+interface NotificationIconConfig {
+    icon: LucideIcon;
+    color: string;
+}
+
+const NOTIFICATION_ICONS: Record<string, NotificationIconConfig> = {
+    nouvelle_demande: { icon: Bell, color: 'text-blue-400 bg-blue-500/10' },
+    demande_recue: { icon: CheckCircle, color: 'text-green-400 bg-green-500/10' },
     demande_acceptee: { icon: CheckCircle, color: 'text-green-400 bg-green-500/10' },
-    depanneur_en_route: { icon: Wrench, color: 'text-blue-400 bg-blue-500/10' },
-    arrivee: { icon: MapPin, color: 'text-amber-400 bg-amber-500/10' },
-    terminee: { icon: Check, color: 'text-emerald-400 bg-emerald-500/10' },
-    annulee: { icon: XCircle, color: 'text-red-400 bg-red-500/10' },
+    demande_annulee: { icon: XCircle, color: 'text-red-400 bg-red-500/10' },
+    depannage_en_route: { icon: Wrench, color: 'text-blue-400 bg-blue-500/10' },
+    intervention_terminee: { icon: Check, color: 'text-emerald-400 bg-emerald-500/10' },
+    paiement_recu: { icon: CheckCircle, color: 'text-green-400 bg-green-500/10' },
+    compte_active: { icon: CheckCircle, color: 'text-green-400 bg-green-500/10' },
+    compte_desactivate: { icon: XCircle, color: 'text-red-400 bg-red-500/10' },
 };
+
+// Fallback icon for unknown notification types
+const DEFAULT_ICON: NotificationIconConfig = { icon: Bell, color: 'text-slate-400 bg-slate-500/10' };
+
+// Helper function to get icon config with fallback for unknown types
+function getNotificationIconConfig(type: string): NotificationIconConfig {
+    return NOTIFICATION_ICONS[type] || DEFAULT_ICON;
+}
 
 export function ClientNotifications({
     notifications,
@@ -122,7 +140,7 @@ export function ClientNotifications({
                         </div>
                     ) : (
                         filteredNotifications.map((notification) => {
-                            const { icon: Icon, color } = NOTIFICATION_ICONS[notification.type];
+                            const { icon: Icon, color } = getNotificationIconConfig(notification.type);
 
                             return (
                                 <div

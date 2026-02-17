@@ -35,8 +35,8 @@ Route::prefix('auth')->group(function () {
     Route::get('/{provider}/callback', [App\Http\Controllers\SocialAuthController::class, 'handleProviderCallback'])->name('auth.social.callback');
 });
 
-// Routes Admin - Accessible sans authentification
-Route::prefix('admin')->group(function () {
+// Routes Admin - Protégées par authentification
+Route::prefix('admin')->middleware(['auth', 'verified'])->group(function () {
     // Dashboard Admin - utilise la page React admin-dashboard
     Route::get('/dashboard', fn () => Inertia::render('admin-dashboard'))->name('admin.dashboard');
     

@@ -15,7 +15,18 @@ class ClientController extends Controller
     {
         // midleware est un méthode qui sexécute avant chaque action du controller
         $this->middleware(function ($request, $next) {
-            if (!auth()->utilisateur()->isAdmin()) {
+            $user = auth()->user();
+            if (!$user) {
+                abort(403, 'Vous devez être connecté.');
+            }
+            
+            // Charger la relation type_compte si elle n'est pas déjà chargée
+            if (!$user->relationLoaded('type_compte')) {
+                $user->load('type_compte');
+            }
+            
+            // Vérifier si l'utilisateur est admin
+            if (!$user->isAdmin()) {
                 abort(403, 'Accès réservé aux administrateurs.');
             }
             return $next($request);

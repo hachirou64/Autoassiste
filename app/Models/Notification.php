@@ -36,9 +36,12 @@ class Notification extends Model
     const UPDATED_AT = 'updatedAt';
 
    
+   
     const TYPE_NOUVELLE_DEMANDE = 'nouvelle_demande';
 
-    
+    // Type: Demande reçue (confirmation pour le client)
+    const TYPE_DEMANDE_RECUE = 'demande_recue';
+
     const TYPE_DEMANDE_ACCEPTEE = 'demande_acceptee';
 
     // Type: Demande annulée
@@ -123,6 +126,7 @@ class Notification extends Model
     {
         $labels = [
             self::TYPE_NOUVELLE_DEMANDE => 'Nouvelle demande',
+            self::TYPE_DEMANDE_RECUE => 'Demande reçue',
             self::TYPE_DEMANDE_ACCEPTEE => 'Demande acceptée',
             self::TYPE_DEMANDE_ANNULEE => 'Demande annulée',
             self::TYPE_DEPANNAGE_EN_ROUTE => 'Dépanneur en route',
@@ -138,6 +142,7 @@ class Notification extends Model
     {
         $icons = [
             self::TYPE_NOUVELLE_DEMANDE => '📋',
+            self::TYPE_DEMANDE_RECUE => '✅',
             self::TYPE_DEMANDE_ACCEPTEE => '✅',
             self::TYPE_DEMANDE_ANNULEE => '❌',
             self::TYPE_DEPANNAGE_EN_ROUTE => '🚗',
@@ -155,6 +160,7 @@ class Notification extends Model
     {
         $colors = [
             self::TYPE_NOUVELLE_DEMANDE => 'info',
+            self::TYPE_DEMANDE_RECUE => 'success',
             self::TYPE_DEMANDE_ACCEPTEE => 'success',
             self::TYPE_DEMANDE_ANNULEE => 'danger',
             self::TYPE_DEPANNAGE_EN_ROUTE => 'warning',
@@ -188,6 +194,7 @@ class Notification extends Model
     {
         $validTypes = [
             self::TYPE_NOUVELLE_DEMANDE,
+            self::TYPE_DEMANDE_RECUE,
             self::TYPE_DEMANDE_ACCEPTEE,
             self::TYPE_DEMANDE_ANNULEE,
             self::TYPE_DEPANNAGE_EN_ROUTE,
@@ -230,6 +237,7 @@ class Notification extends Model
     {
         return [
             self::TYPE_NOUVELLE_DEMANDE => 'Nouvelle demande',
+            self::TYPE_DEMANDE_RECUE => 'Demande reçue',
             self::TYPE_DEMANDE_ACCEPTEE => 'Demande acceptée',
             self::TYPE_DEMANDE_ANNULEE => 'Demande annulée',
             self::TYPE_DEPANNAGE_EN_ROUTE => 'Dépanneur en route',

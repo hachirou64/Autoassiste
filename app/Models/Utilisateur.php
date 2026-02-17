@@ -78,21 +78,22 @@ class Utilisateur extends Authenticatable
     }
 
     
+    
     public function isAdmin()
     {
-        return $this->typeCompte->name === 'Admin';
+        return $this->typeCompte && $this->typeCompte->name === 'Admin';
     }
 
     
     public function isClient()
     {
-        return $this->typeCompte->name === 'Client';
+        return $this->typeCompte && $this->typeCompte->name === 'Client';
     }
 
    
     public function isDepanneur()
     {
-        return $this->typeCompte->name === 'Depanneur';
+        return $this->typeCompte && $this->typeCompte->name === 'Depanneur';
     }
 
     /**

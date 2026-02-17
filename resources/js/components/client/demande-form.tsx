@@ -281,14 +281,25 @@ export function DemandeForm({ onSubmit, isLoading = false }: DemandeFormProps) {
                                             placeholder="Entrez votre adresse ou position"
                                             className="bg-white dark:bg-slate-700"
                                         />
-                                        <Button
-                                            onClick={handleDetectLocation}
-                                            variant="outline"
-                                            className="w-full"
-                                        >
-                                            <MapPin className="h-4 w-4 mr-2" />
-                                            Réessayer la détection
-                                        </Button>
+                                        <div className="flex gap-3">
+                                            <Button
+                                                onClick={handleDetectLocation}
+                                                variant="outline"
+                                                className="flex-1"
+                                            >
+                                                <MapPin className="h-4 w-4 mr-2" />
+                                                Réessayer
+                                            </Button>
+                                            {localisation.length > 5 && (
+                                                <Button
+                                                    onClick={() => setStep(2)}
+                                                    className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                                                >
+                                                    Continuer
+                                                    <ChevronDown className="h-4 w-4 ml-2" />
+                                                </Button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             ) : coords ? (

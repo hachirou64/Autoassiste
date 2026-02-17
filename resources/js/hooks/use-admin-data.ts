@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { AdminStats, AdminAlert, RecentActivity, Client, Depanneur, PaginationParams, TableResponse } from '@/types';
+import type { AdminStats, AdminAlert, RecentActivity, Client, Depanneur, PaginationParams, TableResponse, Demande, DemandeFilters } from '@/types';
 
 // Types pour les données admin
 interface AdminData {
@@ -341,6 +341,133 @@ export function useApi<T>(
         loading,
         error,
         refetch: fetchData,
+    };
+}
+
+// Hook pour les demandes admin
+export function useAdminDemandes(initialParams: Partial<PaginationParams> & { status?: string } = {}) {
+    const [demandesData, setDemandesData] = useState<{
+        demandes: Demande[];
+        pagination: {
+            current_page: number;
+            last_page: number;
+            total: number;
+            per_page: number;
+        };
+    }>({
+        demandes: [],
+        pagination: {
+            current_page: 1,
+            last_page: 1,
+            total: 0,
+            per_page: initialParams.per_page || 15,
+        },
+    });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [filters, setFilters] = useState<DemandeFilters>({});
+    const searchRef = useRef('');
+    const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    const fetchDemandes = useCallback(async (params: Partial<PaginationParams> = {}) => {
+        setLoading(true);
+        setError(null);
+
+        const queryParams = new URLSearchParams();
+        queryParams.set('page', String(params.page || 1));
+        queryParams.set('per_page', String(params.per_page || 15));
+        
+        if (params.sort_by) queryParams.set('sort_by', params.sort_by);
+        if (params.sort_order) queryParams.set('sort_order', params.sort_order);
+        
+        // Appliquer les filtres
+        if (searchRef.current) queryParams.set('search', searchRef.current);
+        if (filters.status) queryParams.set('status', filters.status);
+
+        try {
+            const response = await fetch(`/admin/api/demandes?${queryParams}`);
+
+            if (!response.ok) {
+                throw new Error(`Erreur ${response.status}: Erreur lors du chargement des demandes`);
+            }
+
+            const result = await response.json();
+            console.log('[useAdminDemandes] API Response:', result);
+
+            // Adapter le format selon la réponse de l'API
+            if (result.data) {
+                setDemandesData({
+                    demandes: result.data,
+                    pagination: {
+                        current_page: result.current_page,
+                        last_page: result.last_page,
+                        total: result.total,
+                        per_page: result.per_page,
+                    },
+                });
+            } else {
+                setDemandesData({
+                    demandes: result.demandes?.data || result,
+                    pagination: {
+                        current_page: result.demandes?.current_page || 1,
+                        last_page: result.demandes?.last_page || 1,
+                        total: result.demandes?.total || 0,
+                        per_page: result.demandes?.per_page || 15,
+                    },
+                });
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+        } finally {
+            setLoading(false);
+        }
+    }, [filters]);
+
+    // Effect pour charger les données au montage
+    useEffect(() => {
+        console.log('[useAdminDemandes] Composant monté, chargement initial des demandes');
+        fetchDemandes();
+    }, []); // Vide pour éviter les re-fetches inutiles
+
+    const handleSearch = (query: string) => {
+        searchRef.current = query;
+        
+        // Debounce: attendre 300ms avant de refetch
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+        }
+        debounceTimerRef.current = setTimeout(() => {
+            fetchDemandes({ page: 1 });
+        }, 300);
+    };
+
+    const handleFilterChange = (newFilters: DemandeFilters) => {
+        setFilters(newFilters);
+    };
+
+    const handlePageChange = (page: number) => {
+        fetchDemandes({ page });
+    };
+
+    // Cleanup du timer
+    useEffect(() => {
+        return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, []);
+
+    return {
+        ...demandesData,
+        loading,
+        error,
+        filters,
+        setSearch: handleSearch,
+        setFilters: handleFilterChange,
+        refresh: () => fetchDemandes(),
+        onPageChange: handlePageChange,
+        refetch: fetchDemandes,
     };
 }
 

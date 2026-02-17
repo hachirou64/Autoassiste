@@ -26,11 +26,28 @@ class DemandeController extends Controller
      */
     public function storeApi(Request $request)
     {
-        // Vérifier que l'utilisateur est un client
-        if (!Auth::check() || !$request->user()->isClient()) {
+        // Vérifier que l'utilisateur est connecté
+        if (!Auth::check()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Vous devez être connecté en tant que client pour créer une demande.'
+                'message' => 'Vous devez être connecté pour créer une demande.',
+                'code' => 'UNAUTHENTICATED'
+            ], 401);
+        }
+
+        // Vérifier que l'utilisateur est un client
+        $user = $request->user();
+        
+        // Charger la relation typeCompte si pas déjà chargée
+        if (!$user->relationLoaded('typeCompte')) {
+            $user->load('typeCompte');
+        }
+        
+        if (!$user->isClient()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vous devez être connecté en tant que client pour créer une demande.',
+                'code' => 'NOT_CLIENT'
             ], 403);
         }
 

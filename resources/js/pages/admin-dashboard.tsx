@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { AdminStats, AdminAlert, RecentActivity, TrendsData, Demande, Intervention, Facture } from '@/types';
-import { useAdminData, useAdminClients, useAdminDepanneurs } from '@/hooks/use-admin-data';
+import { useAdminData, useAdminClients, useAdminDepanneurs, useAdminDemandes } from '@/hooks/use-admin-data';
 import { useApi } from '@/hooks/use-admin-data';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -575,7 +575,66 @@ function DepanneursTab({ depanneurs, pagination, isLoading, setSearch }: { depan
 }
 
 function DemandesTab() {
-    return <DemandesTracking demandes={defaultDemandes} pagination={defaultPagination} />;
+    const { 
+        demandes: dynamicDemandes = [], 
+        pagination: demandesPagination,
+        loading: loadingDemandes,
+        refresh: refreshDemandes,
+        setSearch,
+        setFilters,
+        onPageChange
+    } = useAdminDemandes({ per_page: 15 });
+
+    const handleView = async (demande: import('@/types').Demande) => {
+        alert(`Voir les détails de la demande ${demande.codeDemande}`);
+    };
+
+    const handleEdit = async (demande: import('@/types').Demande) => {
+        alert(`Modifier la demande ${demande.codeDemande}`);
+    };
+
+    const handleReassign = async (demande: import('@/types').Demande) => {
+        alert(`Réassigner la demande ${demande.codeDemande}`);
+    };
+
+    const handleCancel = async (demande: import('@/types').Demande) => {
+        if (!confirm(`Êtes-vous sûr de vouloir annuler la demande "${demande.codeDemande}" ?`)) {
+            return;
+        }
+        try {
+            const response = await fetch(`/api/demandes/${demande.id}/cancel`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                credentials: 'include',
+            });
+            const data = await response.json();
+            if (data.success) {
+                alert('Demande annulée avec succès');
+                refreshDemandes();
+            } else {
+                alert(data.message || 'Erreur lors de l\'annulation');
+            }
+        } catch (error) {
+            console.error('Erreur annulation:', error);
+            alert('Erreur lors de l\'annulation');
+        }
+    };
+
+    return (
+        <DemandesTracking 
+            demandes={dynamicDemandes} 
+            pagination={demandesPagination}
+            isLoading={loadingDemandes}
+            onPageChange={onPageChange}
+            onView={handleView}
+            onEdit={handleEdit}
+            onReassign={handleReassign}
+            onCancel={handleCancel}
+        />
+    );
 }
 
 function InterventionsTab() {

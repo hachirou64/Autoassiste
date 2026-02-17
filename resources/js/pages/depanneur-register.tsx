@@ -1,11 +1,43 @@
-import { Head, router } from '@inertiajs/react';
+import { useState, useEffect } from 'react';
+import { Head, usePage } from '@inertiajs/react';
 import { Truck } from 'lucide-react';
 import { DepanneurRegistrationForm } from '@/components/auth/depanneur-registration-form';
+import type { SharedData } from '@/types';
 
 export default function DepanneurRegisterPage() {
+    const { auth } = usePage<SharedData>().props;
+    const [mounted, setMounted] = useState(false);
+    const [redirecting, setRedirecting] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    // Vérifier si l'utilisateur est déjà connecté (seulement après mount)
+    useEffect(() => {
+        if (!mounted) return;
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const isAdminMode = urlParams.get('admin') === 'true';
+        
+        // Ne pas rediriger si on est en mode admin
+        if (auth?.user && !isAdminMode) {
+            setRedirecting(true);
+            window.location.href = '/depanneur/dashboard';
+        }
+    }, [auth, mounted]);
+
     const handleSuccess = () => {
         // Rediriger vers le dashboard dépanneur après inscription réussie
-        router.get('/depanneur/dashboard');
+        // Vérifier si on est en mode admin
+        const urlParams = new URLSearchParams(window.location.search);
+        const isAdminMode = urlParams.get('admin') === 'true';
+        
+        if (isAdminMode) {
+            window.location.href = '/admin/dashboard';
+        } else {
+            window.location.href = '/depanneur/dashboard';
+        }
     };
 
     return (

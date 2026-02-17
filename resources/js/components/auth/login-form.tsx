@@ -8,7 +8,7 @@ import { AlertCircle, Mail, Lock, ArrowRight, RefreshCw, Eye, EyeOff, Car, Phone
 import type { SharedData } from '@/types';
 
 interface LoginFormProps {
-    onSuccess?: () => void;
+    onSuccess?: (user?: any) => void;
     onRegisterClick?: () => void;
 }
 
@@ -159,12 +159,14 @@ export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
                 // Marquer que l'utilisateur vient de se connecter
                 sessionStorage.setItem('just_logged_in', 'true');
                 
-                // Rediriger selon le type de compte
+                // Rediriger selon le type de compte en utilisant les données du serveur
+                // Le backend retourne data.user avec le bon id_type_compte
                 if (onSuccess) {
-                    onSuccess();
+                    // Passer les données de l'utilisateur au callback
+                    onSuccess(data.user);
                 } else {
-                    // Récupérer l'URL de redirection depuis la réponse ou utiliser défaut
-                    const redirectUrl = data.redirect || data.url || getRedirectUrl(auth?.user);
+                    // Récupérer l'URL de redirection depuis la réponse du serveur
+                    const redirectUrl = data.redirect || data.url || getRedirectUrl(data.user);
                     window.location.href = redirectUrl;
                 }
                 return;

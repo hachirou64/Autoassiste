@@ -41,22 +41,25 @@ export default function LoginPage() {
     }, [auth, mounted]);
 
     // Function called after successful login
-    const handleSuccess = () => {
+    const handleSuccess = (user?: any) => {
         console.log('[LoginPage] Connexion réussie!');
-        console.log('[LoginPage] Auth data:', auth);
+        console.log('[LoginPage] User data:', user);
         
         // Vérifier si l'utilisateur venait du bouton SOS (pending_demande)
         const hasPendingDemande = sessionStorage.getItem('pending_demande');
         
         // Déterminer où rediriger basé sur le type de compte
         // TypeCompte: 1 = Admin, 2 = Client, 3 = Depanneur
+        // Utiliser les données user reçues du serveur (plus fiables que auth.user)
         let redirectUrl = '/client/dashboard'; // Par défaut
         
-        if (auth?.user?.id_type_compte === 1) {
+        const userType = user?.id_type_compte || auth?.user?.id_type_compte;
+        
+        if (userType === 1) {
             redirectUrl = '/admin/dashboard';
-        } else if (auth?.user?.id_type_compte === 2) {
+        } else if (userType === 2) {
             redirectUrl = '/client/dashboard';
-        } else if (auth?.user?.id_type_compte === 3) {
+        } else if (userType === 3) {
             redirectUrl = '/depanneur/dashboard';
         } else {
             // Fallback: vérifier via l'API si le type n'est pas déterminé
@@ -64,7 +67,7 @@ export default function LoginPage() {
             redirectUrl = '/client/dashboard';
         }
         
-        console.log('[LoginPage] Redirection vers:', redirectUrl);
+        console.log('[LoginPage] Redirection vers:', redirectUrl, 'avec userType:', userType);
         
         if (hasPendingDemande) {
             // Nettoyer pending_demande

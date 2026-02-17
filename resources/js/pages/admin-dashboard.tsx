@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import AppHeaderLayout from '@/layouts/app/app-header-layout';
 import type { BreadcrumbItem } from '@/types';
 import { StatsCards } from '@/components/admin/stats-cards';
@@ -12,8 +12,8 @@ import { InterventionsTracking } from '@/components/admin/interventions-tracking
 import { FinancialReports } from '@/components/admin/financial-reports';
 import { AnalyticsCharts, StatusDistribution } from '@/components/admin/analytics-charts';
 import {
-    LayoutDashboard, Users, Wrench, MapPin, FileText,
-    DollarSign, BarChart3, Settings, ChevronRight, Hammer, RefreshCw
+    LayoutDashboard, Users, Wrench, FileText,
+    DollarSign, BarChart3, ChevronRight, Hammer, RefreshCw, LogOut, Cog, Shield
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { AdminStats, AdminAlert, RecentActivity, TrendsData, Demande, Intervention, Facture } from '@/types';
@@ -33,12 +33,12 @@ interface LocalNavItem {
 const localNavItems: LocalNavItem[] = [
     { title: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
     { title: 'Clients', href: '/admin/clients', icon: Users },
-    { title: 'Depanneurs', href: '/admin/depanneurs', icon: Wrench },
+    { title: 'Dépanneurs', href: '/admin/depanneurs', icon: Wrench },
     { title: 'Demandes', href: '/admin/demandes', icon: FileText },
     { title: 'Interventions', href: '/admin/interventions', icon: Hammer },
     { title: 'Factures', href: '/admin/factures', icon: DollarSign },
     { title: 'Analytiques', href: '/admin/analytics', icon: BarChart3 },
-    { title: 'Parametres', href: '/admin/settings', icon: Settings },
+    { title: 'Paramètres', href: '/admin/settings', icon: Cog },
 ];
 
 const defaultStats: AdminStats = {
@@ -93,6 +93,7 @@ type TabType = 'overview' | 'clients' | 'depanneurs' | 'demandes' | 'interventio
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState<TabType>('overview');
     const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
     
     const { 
         stats: dynamicStats, 
@@ -126,6 +127,15 @@ export default function AdminDashboard() {
         refreshAdminData();
         refreshClients();
         refreshDepanneurs();
+    };
+
+    const handleLogout = () => {
+        setIsLoggingOut(true);
+        if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+            router.post('/logout');
+        } else {
+            setIsLoggingOut(false);
+        }
     };
 
     const renderTabContent = () => {
@@ -176,23 +186,34 @@ export default function AdminDashboard() {
         <AppHeaderLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard Admin - GoAssist" />
             <div className="flex h-full">
-                <div className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-slate-900 border-r border-slate-700 transition-all duration-300 flex flex-col`}>
-                    <div className="p-4 border-b border-slate-700 flex items-center justify-between">
-                        <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                            <LayoutDashboard className="h-6 w-6 text-blue-400" />
-                            {sidebarOpen && <span>Admin Panel</span>}
-                        </h2>
+                {/* Sidebar */}
+                <div className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-gradient-to-b from-slate-900 via-slate-900 to-slate-800 border-r border-slate-700/50 transition-all duration-300 flex flex-col`}>
+                    {/* Header */}
+                    <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                                <Shield className="h-5 w-5 text-white" />
+                            </div>
+                            {sidebarOpen && (
+                                <div>
+                                    <h2 className="text-lg font-bold text-white">Admin</h2>
+                                    <p className="text-xs text-slate-400">GoAssist</p>
+                                </div>
+                            )}
+                        </div>
                         {sidebarOpen && (
                             <button 
                                 onClick={handleRefresh}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-                                title="Rafraîchir les données"
+                                className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all"
+                                title="Rafraichir les donnees"
                             >
                                 <RefreshCw className={`h-4 w-4 ${loadingAdminData ? 'animate-spin' : ''}`} />
                             </button>
                         )}
                     </div>
-                    <nav className="flex-1 p-2 space-y-1">
+                    
+                    {/* Navigation */}
+                    <nav className="flex-1 p-3 space-y-2">
                         {localNavItems.map((item) => {
                             const itemTab = getTabFromHref(item.href);
                             const isActive = activeTab === itemTab;
@@ -202,37 +223,64 @@ export default function AdminDashboard() {
                                 <button
                                     key={item.title}
                                     onClick={() => setActiveTab(itemTab)}
-                                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                                        isActive ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 ${
+                                        isActive 
+                                            ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30 shadow-lg shadow-blue-500/10' 
+                                            : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
                                     }`}
                                 >
-                                    <IconComponent className="h-5 w-5 flex-shrink-0" />
+                                    <IconComponent className={`h-5 w-5 flex-shrink-0 ${isActive ? 'text-blue-400' : ''}`} />
                                     {sidebarOpen && <span className="text-sm font-medium">{item.title}</span>}
                                 </button>
                             );
                         })}
                     </nav>
-                    <div className="p-2 border-t border-slate-700">
+                    
+                    {/* Logout & Collapse */}
+                    <div className="p-3 border-t border-slate-700/50 space-y-2">
+                        {/* Styled Logout Button */}
+                        <button
+                            onClick={handleLogout}
+                            disabled={isLoggingOut}
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group ${
+                                isLoggingOut 
+                                    ? 'bg-red-500/20 text-red-400 cursor-wait'
+                                    : 'bg-gradient-to-r from-red-500 to-orange-500 text-white hover:from-red-600 hover:to-orange-600 shadow-lg shadow-red-500/20 hover:shadow-red-500/40'
+                            }`}
+                        >
+                            <div className={`p-1.5 rounded-lg bg-white/20 ${isLoggingOut ? 'animate-pulse' : 'group-hover:scale-110 transition-transform'}`}>
+                                <LogOut className="h-4 w-4" />
+                            </div>
+                            {sidebarOpen && (
+                                <span className="text-sm font-semibold">
+                                    {isLoggingOut ? 'Deconnexion...' : 'Deconnexion'}
+                                </span>
+                            )}
+                        </button>
+                        
+                        {/* Collapse Button */}
                         <button
                             onClick={() => setSidebarOpen(!sidebarOpen)}
-                            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white"
+                            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-slate-400 hover:bg-slate-800/50 hover:text-white transition-all"
                         >
-                            <ChevronRight className={`h-5 w-5 transition-transform ${sidebarOpen ? 'rotate-180' : ''}`} />
+                            <ChevronRight className={`h-5 w-5 transition-transform duration-300 ${sidebarOpen ? 'rotate-180' : ''}`} />
                             {sidebarOpen && <span className="text-sm">Replier</span>}
                         </button>
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-auto bg-slate-950 p-6">
+                {/* Main Content */}
+                <div className="flex-1 overflow-auto bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6">
                     <div className="max-w-7xl mx-auto">
                         {errorAdminData && (
-                            <div className="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400">
+                            <div className="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 backdrop-blur-sm">
                                 {errorAdminData}
                             </div>
                         )}
-                        <div className="mb-6">
-                            <h1 className="text-2xl font-bold text-white">{getPageTitle()}</h1>
-                            <p className="text-slate-400 mt-1">
+                        <div className="mb-8">
+                            <h1 className="text-3xl font-bold text-white">{getPageTitle()}</h1>
+                            <p className="text-slate-400 mt-2 flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                                 Dashboard d'administration GoAssist - {new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                             </p>
                         </div>
@@ -283,7 +331,7 @@ function ClientsTab({ clients, pagination, isLoading, onSearch, onPageChange }: 
     };
 
     const handleDelete = async (client: import('@/types').Client) => {
-        if (!confirm(`Êtes-vous sûr de vouloir supprimer le client "${client.fullName}" ? Cette action est irréversible.`)) {
+        if (!confirm(`Etes-vous sur de vouloir supprimer le client "${client.fullName}" ? Cette action est irreversible.`)) {
             return;
         }
         setIsLoadingAction(true);
@@ -298,7 +346,7 @@ function ClientsTab({ clients, pagination, isLoading, onSearch, onPageChange }: 
             });
             const data = await response.json();
             if (data.success) {
-                alert('Client supprimé avec succès');
+                alert('Client supprime avec succes');
                 window.location.reload();
             } else {
                 alert(data.message || 'Erreur lors de la suppression');
@@ -328,15 +376,15 @@ function ClientsTab({ clients, pagination, isLoading, onSearch, onPageChange }: 
             });
             const data = await response.json();
             if (data.success) {
-                alert('Client mis à jour avec succès');
+                alert('Client mis a jour avec succes');
                 setShowEditModal(false);
                 window.location.reload();
             } else {
-                alert(data.message || 'Erreur lors de la mise à jour');
+                alert(data.message || 'Erreur lors de la mise a jour');
             }
         } catch (error) {
-            console.error('Erreur mise à jour:', error);
-            alert('Erreur lors de la mise à jour');
+            console.error('Erreur mise a jour:', error);
+            alert('Erreur lors de la mise a jour');
         } finally {
             setIsLoadingAction(false);
         }
@@ -357,16 +405,16 @@ function ClientsTab({ clients, pagination, isLoading, onSearch, onPageChange }: 
             
             {/* Modal View Client Details */}
             {showViewModal && selectedClient && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-slate-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-                        <h3 className="text-xl font-bold text-white mb-4">Détails du client</h3>
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+                    <div className="bg-slate-800/90 backdrop-blur-xl rounded-2xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto border border-slate-700/50">
+                        <h3 className="text-xl font-bold text-white mb-4">Details du client</h3>
                         <div className="grid grid-cols-2 gap-4">
                             <div><p className="text-slate-400 text-sm">ID</p><p className="text-white">#{selectedClient.id}</p></div>
                             <div><p className="text-slate-400 text-sm">Nom complet</p><p className="text-white">{selectedClient.fullName}</p></div>
                             <div><p className="text-slate-400 text-sm">Email</p><p className="text-white">{selectedClient.email}</p></div>
-                            <div><p className="text-slate-400 text-sm">Téléphone</p><p className="text-white">{selectedClient.phone}</p></div>
+                            <div><p className="text-slate-400 text-sm">Telephone</p><p className="text-white">{selectedClient.phone}</p></div>
                             <div><p className="text-slate-400 text-sm">Nombre de demandes</p><p className="text-white">{selectedClient.demandes_count || 0}</p></div>
-                            <div><p className="text-slate-400 text-sm">Total dépenses</p><p className="text-white">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF' }).format(selectedClient.total_depenses || 0)}</p></div>
+                            <div><p className="text-slate-400 text-sm">Total depenses</p><p className="text-white">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF' }).format(selectedClient.total_depenses || 0)}</p></div>
                             <div><p className="text-slate-400 text-sm">Date d'inscription</p><p className="text-white">{new Date(selectedClient.createdAt).toLocaleDateString('fr-FR')}</p></div>
                         </div>
                         <div className="mt-6 flex justify-end">
@@ -378,8 +426,8 @@ function ClientsTab({ clients, pagination, isLoading, onSearch, onPageChange }: 
 
             {/* Modal Edit Client */}
             {showEditModal && selectedClient && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-slate-800 rounded-lg p-6 max-w-md w-full mx-4">
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+                    <div className="bg-slate-800/90 backdrop-blur-xl rounded-2xl p-6 max-w-md w-full mx-4 border border-slate-700/50">
                         <h3 className="text-xl font-bold text-white mb-4">Modifier le client</h3>
                         <form onSubmit={handleEditSubmit}>
                             <div className="space-y-4">
@@ -404,7 +452,7 @@ function ClientsTab({ clients, pagination, isLoading, onSearch, onPageChange }: 
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm text-slate-400 mb-1">Téléphone</label>
+                                    <label className="block text-sm text-slate-400 mb-1">Telephone</label>
                                     <input
                                         type="tel"
                                         value={editFormData.phone}
@@ -449,11 +497,11 @@ function DepanneursTab({ depanneurs, pagination, isLoading, setSearch }: { depan
     };
 
     const handleEdit = async (depanneur: import('@/types').Depanneur) => {
-        alert('Fonctionnalité de modification à implémenter');
+        alert('Fonctionnalite de modification a implementer');
     };
 
     const handleValidate = async (depanneur: import('@/types').Depanneur) => {
-        if (!confirm('Êtes-vous sûr de vouloir valider l\'IFU de ce dépanneur ?')) {
+        if (!confirm('Etes-vous sur de vouloir valider l\'IFU de ce depanneur ?')) {
             return;
         }
         setIsLoadingAction(true);
@@ -468,7 +516,7 @@ function DepanneursTab({ depanneurs, pagination, isLoading, setSearch }: { depan
             });
             const data = await response.json();
             if (data.success) {
-                alert('IFU validé avec succès');
+                alert('IFU valide avec succes');
                 window.location.reload();
             } else {
                 alert(data.message || 'Erreur lors de la validation IFU');
@@ -482,7 +530,7 @@ function DepanneursTab({ depanneurs, pagination, isLoading, setSearch }: { depan
     };
 
     const handleDelete = async (depanneur: import('@/types').Depanneur) => {
-        if (!confirm(`Êtes-vous sûr de vouloir supprimer le dépanneur "${depanneur.etablissement_name}" ? Cette action est irréversible.`)) {
+        if (!confirm(`Etes-vous sur de vouloir supprimer le depanneur "${depanneur.etablissement_name}" ? Cette action est irreversible.`)) {
             return;
         }
         setIsLoadingAction(true);
@@ -497,7 +545,7 @@ function DepanneursTab({ depanneurs, pagination, isLoading, setSearch }: { depan
             });
             const data = await response.json();
             if (data.success) {
-                alert('Dépanneur supprimé avec succès');
+                alert('Depanneur supprime avec succes');
                 window.location.reload();
             } else {
                 alert(data.message || 'Erreur lors de la suppression');
@@ -549,19 +597,19 @@ function DepanneursTab({ depanneurs, pagination, isLoading, setSearch }: { depan
                 onToggleStatus={handleToggleStatus}
             />
             {showViewModal && selectedDepanneur && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-slate-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-                        <h3 className="text-xl font-bold text-white mb-4">Détails du dépanneur</h3>
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+                    <div className="bg-slate-800/90 backdrop-blur-xl rounded-2xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto border border-slate-700/50">
+                        <h3 className="text-xl font-bold text-white mb-4">Details du depanneur</h3>
                         <div className="grid grid-cols-2 gap-4">
                             <div><p className="text-slate-400 text-sm">ID</p><p className="text-white">#{selectedDepanneur.id}</p></div>
-                            <div><p className="text-slate-400 text-sm">Établissement</p><p className="text-white">{selectedDepanneur.etablissement_name}</p></div>
+                            <div><p className="text-slate-400 text-sm">Etablissement</p><p className="text-white">{selectedDepanneur.etablissement_name}</p></div>
                             <div><p className="text-slate-400 text-sm">Promoteur</p><p className="text-white">{selectedDepanneur.promoteur_name}</p></div>
                             <div><p className="text-slate-400 text-sm">IFU</p><p className="text-white">{selectedDepanneur.IFU}</p></div>
                             <div><p className="text-slate-400 text-sm">Email</p><p className="text-white">{selectedDepanneur.email}</p></div>
-                            <div><p className="text-slate-400 text-sm">Téléphone</p><p className="text-white">{selectedDepanneur.phone}</p></div>
+                            <div><p className="text-slate-400 text-sm">Telephone</p><p className="text-white">{selectedDepanneur.phone}</p></div>
                             <div><p className="text-slate-400 text-sm">Statut</p><p className="text-white">{selectedDepanneur.status}</p></div>
                             <div><p className="text-slate-400 text-sm">Compte</p><p className="text-white">{selectedDepanneur.isActive ? 'Actif' : 'Inactif'}</p></div>
-                            <div><p className="text-slate-400 text-sm">Type véhicule</p><p className="text-white">{selectedDepanneur.type_vehicule}</p></div>
+                            <div><p className="text-slate-400 text-sm">Type vehicule</p><p className="text-white">{selectedDepanneur.type_vehicule}</p></div>
                             <div><p className="text-slate-400 text-sm">Date d'inscription</p><p className="text-white">{new Date(selectedDepanneur.createdAt).toLocaleDateString('fr-FR')}</p></div>
                         </div>
                         <div className="mt-6 flex justify-end">
@@ -586,7 +634,7 @@ function DemandesTab() {
     } = useAdminDemandes({ per_page: 15 });
 
     const handleView = async (demande: import('@/types').Demande) => {
-        alert(`Voir les détails de la demande ${demande.codeDemande}`);
+        alert(`Voir les details de la demande ${demande.codeDemande}`);
     };
 
     const handleEdit = async (demande: import('@/types').Demande) => {
@@ -594,11 +642,11 @@ function DemandesTab() {
     };
 
     const handleReassign = async (demande: import('@/types').Demande) => {
-        alert(`Réassigner la demande ${demande.codeDemande}`);
+        alert(`Reassigner la demande ${demande.codeDemande}`);
     };
 
     const handleCancel = async (demande: import('@/types').Demande) => {
-        if (!confirm(`Êtes-vous sûr de vouloir annuler la demande "${demande.codeDemande}" ?`)) {
+        if (!confirm(`Etes-vous sur de vouloir annuler la demande "${demande.codeDemande}" ?`)) {
             return;
         }
         try {
@@ -612,7 +660,7 @@ function DemandesTab() {
             });
             const data = await response.json();
             if (data.success) {
-                alert('Demande annulée avec succès');
+                alert('Demande annulee avec succes');
                 refreshDemandes();
             } else {
                 alert(data.message || 'Erreur lors de l\'annulation');
@@ -661,7 +709,7 @@ function AnalyticsTab({ stats }: { stats: AdminStats }) {
         <div className="space-y-6">
             <AnalyticsCharts trends={finalTrends} />
             <div className="grid gap-6 md:grid-cols-2">
-                <StatusDistribution data={statusData} title="Répartition des demandes par statut" />
+                <StatusDistribution data={statusData} title="Repartition des demandes par statut" />
                 <StatusDistribution
                     data={[
                         { label: 'Mobile Money', value: 0, color: '#8b5cf6' },
@@ -669,7 +717,7 @@ function AnalyticsTab({ stats }: { stats: AdminStats }) {
                         { label: 'Carte bancaire', value: 0, color: '#3b82f6' },
                         { label: 'Virement', value: 0, color: '#f59e0b' },
                     ]}
-                    title="Répartition des paiements"
+                    title="Repartition des paiements"
                 />
             </div>
         </div>

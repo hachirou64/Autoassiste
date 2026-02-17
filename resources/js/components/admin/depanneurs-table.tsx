@@ -91,7 +91,7 @@ export function DepanneursTable({
                 <CardHeader>
                 <CardTitle className="text-white flex items-center justify-between">
                         <span>Depanneurs</span>
-                        <Link href="/register/depanneur">
+                        <Link href="/register/depanneur?admin=true">
                             <Button variant="outline" size="sm" className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600">
                                 <Plus className="h-4 w-4 mr-2" />
                                 Ajouter
@@ -113,7 +113,7 @@ export function DepanneursTable({
             <CardHeader>
                 <CardTitle className="text-white flex items-center justify-between">
                     <span>Depanneurs</span>
-                    <Link href="/register/depanneur">
+                    <Link href="/register/depanneur?admin=true">
                         <Button variant="outline" size="sm" className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600">
                             <Plus className="h-4 w-4 mr-2" />
                             Ajouter

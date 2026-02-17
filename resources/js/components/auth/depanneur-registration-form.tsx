@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { router } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -117,41 +116,60 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
         }
     };
 
-    // Soumission finale avec Inertia pour redirection automatique
-    const handleSubmit = () => {
+    // Soumission finale avec fetch pour éviter les erreurs DOM avec Inertia
+    const handleSubmit = async () => {
         setLoading(true);
         setError(null);
 
-        router.post('/depanneur/register', {
-            fullName: formData.fullName,
-            email: formData.email,
-            phone: formData.phone,
-            promoteur_name: formData.promoteur_name,
-            etablissement_name: formData.etablissement_name,
-            IFU: formData.IFU,
-            adresse: formData.adresse,
-            localisation_actuelle: formData.localisation_actuelle,
-            type_vehicule: formData.type_vehicule,
-            services: formData.services,
-            methode_payement: formData.methode_payement,
-            disponibilite: formData.disponibilite,
-            jours_travail: formData.jours_travail,
-            password: formData.password,
-            password_confirmation: formData.passwordConfirmation,
-        }, {
-            onSuccess: () => {
-                // La redirection sera gérée par le contrôleur
-            },
-            onError: (errors) => {
-                console.log('Erreurs:', errors);
-                if (errors.email) {
-                    setError(errors.email);
+        try {
+            const response = await fetch('/depanneur/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({
+                    fullName: formData.fullName,
+                    email: formData.email,
+                    phone: formData.phone,
+                    promoteur_name: formData.promoteur_name,
+                    etablissement_name: formData.etablissement_name,
+                    IFU: formData.IFU,
+                    adresse: formData.adresse,
+                    localisation_actuelle: formData.localisation_actuelle,
+                    type_vehicule: formData.type_vehicule,
+                    services: formData.services,
+                    methode_payement: formData.methode_payement,
+                    disponibilite: formData.disponibilite,
+                    jours_travail: formData.jours_travail,
+                    password: formData.password,
+                    password_confirmation: formData.passwordConfirmation,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                if (data.errors) {
+                    const firstError = Object.values(data.errors)[0];
+                    setError(Array.isArray(firstError) ? firstError[0] : firstError);
+                } else if (data.message) {
+                    setError(data.message);
                 } else {
                     setError('Erreur lors de l\'inscription. Veuillez réessayer.');
                 }
                 setLoading(false);
-            },
-        });
+                return;
+            }
+
+            // Redirection vers le dashboard dépanneur
+            window.location.href = '/depanneur/dashboard';
+
+        } catch (err) {
+            console.error('Erreur:', err);
+            setError('Erreur réseau. Veuillez vérifier votre connexion.');
+            setLoading(false);
+        }
     };
 
     const renderStepIndicator = () => (

@@ -356,57 +356,6 @@ export function DepanneurProfile({
                     </CardContent>
                 </Card>
 
-                {/* Zones d'intervention */}
-                <Card className="bg-slate-800/50 border-slate-700">
-                    <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <CardTitle className="text-white flex items-center gap-2">
-                                <MapPin className="h-5 w-5 text-green-400" />
-                                Zones d'intervention
-                            </CardTitle>
-                            {profile.zones && profile.zones.length > 0 && (
-                                <Badge variant="outline" className="bg-slate-700">
-                                    {profile.zones.filter(z => z.isActive).length} active(s)
-                                </Badge>
-                            )}
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-2">
-                            {profile.zones && profile.zones.length > 0 ? (
-                                profile.zones
-                                .sort((a, b) => a.priorite - b.priorite)
-                                .map((zone) => (
-                                    <div 
-                                        key={zone.id}
-                                        className={`flex items-center justify-between p-3 rounded-lg ${
-                                            zone.isActive ? 'bg-slate-700/30' : 'bg-slate-700/10 opacity-50'
-                                        }`}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <Badge className={
-                                                zone.isActive 
-                                                    ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
-                                                    : 'bg-slate-500/20 text-slate-400 border-slate-500/30'
-                                            }>
-                                                #{zone.priorite}
-                                            </Badge>
-                                            <div>
-                                                <p className="text-white font-medium">{zone.name}</p>
-                                                <p className="text-sm text-slate-400">{zone.city}</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className={`w-3 h-3 rounded-full ${
-                                                zone.isActive ? 'bg-green-500' : 'bg-slate-500'
-                                            }`} />
-                                        </div>
-                                    </div>
-                                ))}
-                        </div>
-                    </CardContent>
-                </Card>
-
                 {/* Préférences */}
                 <Card className="bg-slate-800/50 border-slate-700">
                     <CardHeader>
@@ -426,11 +375,11 @@ export function DepanneurProfile({
                                     </div>
                                 </div>
                                 <Button
-                                    variant={profile.preferences.notifications_sonores ? "default" : "outline"}
+                                    variant={profile.preferences?.notifications_sonores ? "default" : "outline"}
                                     size="sm"
-                                    className={profile.preferences.notifications_sonores ? "bg-green-500" : ""}
+                                    className={profile.preferences?.notifications_sonores ? "bg-green-500" : ""}
                                 >
-                                    {profile.preferences.notifications_sonores ? 'Oui' : 'Non'}
+                                    {profile.preferences?.notifications_sonores ? 'Oui' : 'Non'}
                                 </Button>
                             </div>
                             
@@ -443,11 +392,11 @@ export function DepanneurProfile({
                                     </div>
                                 </div>
                                 <Button
-                                    variant={profile.preferences.notifications_sms ? "default" : "outline"}
+                                    variant={profile.preferences?.notifications_sms ? "default" : "outline"}
                                     size="sm"
-                                    className={profile.preferences.notifications_sms ? "bg-green-500" : ""}
+                                    className={profile.preferences?.notifications_sms ? "bg-green-500" : ""}
                                 >
-                                    {profile.preferences.notifications_sms ? 'Oui' : 'Non'}
+                                    {profile.preferences?.notifications_sms ? 'Oui' : 'Non'}
                                 </Button>
                             </div>
                             
@@ -460,7 +409,7 @@ export function DepanneurProfile({
                                     </div>
                                 </div>
                                 <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-                                    {profile.preferences.rayon_prefere} km
+                                    {profile.preferences?.rayon_prefere ?? 10} km
                                 </Badge>
                             </div>
                         </div>

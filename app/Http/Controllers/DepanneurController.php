@@ -54,6 +54,14 @@ class DepanneurController extends Controller
         ]);
 
         if ($validator->fails()) {
+            // Vérifier si la requête attend une réponse JSON (AJAX)
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Données invalides',
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
             return back()->withErrors($validator)->withInput();
         }
 
@@ -61,6 +69,12 @@ class DepanneurController extends Controller
         $depanneurType = TypeCompte::where('name', 'Depanneur')->first();
         
         if (!$depanneurType) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erreur de configuration: Type de compte "Depanneur" non trouvé.',
+                ], 500);
+            }
             return back()->withErrors(['email' => 'Erreur de configuration: Type de compte "Depanneur" non trouvé.'])->withInput();
         }
 
@@ -102,15 +116,38 @@ class DepanneurController extends Controller
             Auth::login($user, true);
             $request->session()->regenerate();
 
+            // Vérifier si la requête attend une réponse JSON (AJAX)
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Compte créé avec succès ! Bienvenue ' . $user->fullName,
+                    'redirect' => route('depanneur.dashboard'),
+                ]);
+            }
+
             // Rediriger vers le dashboard dépanneur
             return redirect(route('depanneur.dashboard'))
                 ->with('success', 'Compte créé avec succès ! Bienvenue ' . $user->fullName);
 
         } catch (\Illuminate\Database\QueryException $e) {
             \Log::error('Erreur DB inscription dépanneur: ' . $e->getMessage());
+            
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erreur de base de données: Email déjà utilisé ou données invalides.',
+                ], 500);
+            }
             return back()->withErrors(['error' => 'Erreur de base de données: Email déjà utilisé ou données invalides.'])->withInput();
         } catch (\Exception $e) {
             \Log::error('Erreur inscription dépanneur: ' . $e->getMessage());
+            
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erreur lors de la création du compte: ' . $e->getMessage(),
+                ], 500);
+            }
             return back()->withErrors(['error' => 'Erreur lors de la création du compte: ' . $e->getMessage()])->withInput();
         }
     }

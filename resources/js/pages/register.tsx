@@ -30,7 +30,11 @@ export default function RegisterPage() {
         console.log('[RegisterPage] Vérification auth - auth.user:', auth?.user);
         
         // Si l'utilisateur est déjà connecté et n'a pas de pending_demande, rediriger
-        if (auth?.user && !sessionStorage.getItem('pending_demande')) {
+        // Ne pas rediriger si on est en mode "admin" (via query param)
+        const urlParams = new URLSearchParams(window.location.search);
+        const isAdminMode = urlParams.get('admin') === 'true';
+        
+        if (auth?.user && !sessionStorage.getItem('pending_demande') && !isAdminMode) {
             console.log('[RegisterPage] Utilisateur connecté, pas de pending_demande, redirection vers dashboard');
             setRedirecting(true);
             window.location.href = '/client/dashboard';
@@ -41,7 +45,7 @@ export default function RegisterPage() {
         // On garde le pending_demande et on affiche le formulaire
         if (sessionStorage.getItem('pending_demande')) {
             console.log('[RegisterPage] pending_demande existe, on affiche le formulaire');
-        } else {
+        } else if (!isAdminMode) {
             console.log('[RegisterPage] Pas de pending_demande, nouvel utilisateur, on affiche le formulaire');
         }
     }, [auth, mounted]);
@@ -49,8 +53,18 @@ export default function RegisterPage() {
     // Fonction appelée après inscription réussie
     const handleSuccess = () => {
         console.log('[RegisterPage] Inscription réussie!');
-        // Utiliser router.visit pour naviguer (préserve la session Inertia)
-        window.location.href = '/demande/nouvelle';
+        
+        // Vérifier si on est en mode admin
+        const urlParams = new URLSearchParams(window.location.search);
+        const isAdminMode = urlParams.get('admin') === 'true';
+        
+        if (isAdminMode) {
+            // Rediriger vers le dashboard admin
+            window.location.href = '/admin/dashboard';
+        } else {
+            // Utiliser router.visit pour naviguer (préserve la session Inertia)
+            window.location.href = '/demande/nouvelle';
+        }
     };
 
     const features = [

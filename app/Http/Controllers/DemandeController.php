@@ -360,14 +360,16 @@ class DemandeController extends Controller
                     );
                     $depanneur->distance = $distance;
                 } else {
-                    $depanneur->distance = 999; // Distance très élevée si pas de coordonnées
+                    // Si pas de coordonnées, attribuer une distance de 0 pour l'inclure
+                    // (le dépanneur devra mettre à jour sa position)
+                    $depanneur->distance = 0;
                 }
                 return $depanneur;
             });
             
-            // Filtrer par rayon et trier par distance
+            // Filtrer par rayon (inclure ceux sans coordonnées avec distance 0)
             return $depanneursWithDistance
-                ->filter(fn($d) => $d->distance < $radius)
+                ->filter(fn($d) => $d->distance <= $radius)
                 ->sortBy('distance')
                 ->take($this->maxDepanneursToNotify);
                 

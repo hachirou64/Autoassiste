@@ -192,11 +192,17 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
                 return;
             }
 
-            // Appeler le callback onSuccess si défini
-            if (onSuccess) {
+            // Le compte a été créé avec succès
+            // Comme le compte est inactif, on affiche un message d'information
+            // et on redirige vers la page de connexion
+            if (data.needsActivation) {
+                // Afficher un message de succès avec信息 sur l'activation
+                alert('Compte créé avec succès !\n\nVotre compte est en attente d\'activation par l\'administrateur. Vous recevrez une notification une fois votre compte activé.');
+                // Rediriger vers la page de connexion
+                window.location.href = '/login';
+            } else if (onSuccess) {
                 onSuccess();
             } else {
-                // Redirection vers le dashboard dépanneur par défaut
                 window.location.href = '/depanneur/dashboard';
             }
 

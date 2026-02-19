@@ -95,6 +95,8 @@ class DepanneurController extends Controller
             }
             
             // Créer le dépanneur
+            // NOTE: Le compte est créé INACTIF par défaut
+            // L'admin devra l'activer pour que le depanneur puisse recevoir des demandes
             $depanneur = Depanneur::create([
                 'promoteur_name' => $request->promoteur_name,
                 'etablissement_name' => $request->etablissement_name,
@@ -102,8 +104,8 @@ class DepanneurController extends Controller
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'adresse' => $request->adresse,
-                'status' => 'disponible',
-                'isActive' => false,
+                'status' => 'hors_service', // Statut initial: hors service car compte inactif
+                'isActive' => false, // IMPORTANT: Compte inactif par défaut - l'admin doit activer
                 'type_vehicule' => $request->type_vehicule,
                 'localisation_actuelle' => $request->localisation_actuelle,
                 // Nouveaux champs
@@ -117,6 +119,7 @@ class DepanneurController extends Controller
             // Créer l'utilisateur lié au dépanneur
             // Note: Le modèle Utilisateur gère automatiquement le hashing du mot de passe
             // via setPasswordAttribute(), donc on ne doit PAS utiliser Hash::make() ici
+            // NOTE: Le compte utilisateur est également inactif par défaut
             $user = Utilisateur::create([
                 'fullName' => $request->fullName,
                 'email' => $request->email,
@@ -125,6 +128,7 @@ class DepanneurController extends Controller
                 'id_client' => null,
                 'id_depanneur' => $depanneur->id,
                 'email_verified' => true,
+                'isActive' => false, // IMPORTANT: Compte inactif - l'admin doit activer
             ]);
 
             // Attacher les zones par défaut
@@ -136,22 +140,24 @@ class DepanneurController extends Controller
                 ]);
             }
 
-            // Connecter automatiquement l'utilisateur avec regeneration de session
-            Auth::login($user, true);
-            $request->session()->regenerate();
+            // NOTE: On ne connecte PLUS automatiquement l'utilisateur après l'inscription
+            // car le compte est inactif par défaut (doit être activé par l'admin)
+            // Auth::login($user, true);
+            // $request->session()->regenerate();
 
             // Vérifier si la requête attend une réponse JSON (AJAX)
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Compte créé avec succès ! Bienvenue ' . $user->fullName,
-                    'redirect' => route('depanneur.dashboard'),
+                    'message' => 'Compte créé avec succès ! En attente d\'activation par l\'administrateur. Vous recevrez une notification une fois votre compte activé.',
+                    'redirect' => '/login',
+                    'needsActivation' => true,
                 ]);
             }
 
-            // Rediriger vers le dashboard dépanneur
-            return redirect(route('depanneur.dashboard'))
-                ->with('success', 'Compte créé avec succès ! Bienvenue ' . $user->fullName);
+            // Rediriger vers la page de connexion avec un message
+            return redirect('/login')
+                ->with('success', 'Compte créé avec succès ! En attente d\'activation par l\'administrateur.');
 
         } catch (\Illuminate\Database\QueryException $e) {
             \Log::error('Erreur DB inscription dépanneur: ' . $e->getMessage());
@@ -281,7 +287,12 @@ class DepanneurController extends Controller
         try {
             // Inverser le statut actuel
             $newStatus = !$depanneur->isActive;
-            $depanneur->update(['isActive' => $newStatus]);
+            
+            // Mettre à jour le statut isActive et le status (disponible/hors_service)
+            $depanneur->update([
+                'isActive' => $newStatus,
+                'status' => $newStatus ? 'disponible' : 'hors_service',
+            ]);
 
             // Mettre à jour aussi l'utilisateur associé
             if ($depanneur->utilisateur) {
@@ -311,7 +322,11 @@ class DepanneurController extends Controller
     public function activate(Depanneur $depanneur)
     {
         try {
-            $depanneur->update(['isActive' => true]);
+            // Activer le compte et mettre le statut à disponible
+            $depanneur->update([
+                'isActive' => true,
+                'status' => 'disponible', // Le depanneur peut maintenant recevoir des demandes
+            ]);
 
             if ($depanneur->utilisateur) {
                 $depanneur->utilisateur->update(['isActive' => true]);
@@ -347,7 +362,11 @@ class DepanneurController extends Controller
     public function deactivate(Depanneur $depanneur)
     {
         try {
-            $depanneur->update(['isActive' => false]);
+            // Désactiver le compte et mettre le statut à hors_service
+            $depanneur->update([
+                'isActive' => false,
+                'status' => 'hors_service', // Le depanneur ne peut plus recevoir de demandes
+            ]);
 
             if ($depanneur->utilisateur) {
                 $depanneur->utilisateur->update(['isActive' => false]);

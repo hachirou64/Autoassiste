@@ -157,24 +157,46 @@ class AuthController extends Controller
         $user = null;
 
         if ($loginFieldType === 'email') {
-            $user = Utilisateur::where('email', strtolower($login))->first();
+            $user = Utilisateur::with('typeCompte')->where('email', strtolower($login))->first();
         } elseif ($loginFieldType === 'phone') {
             // Chercher le client par téléphone
             $client = \App\Models\Client::where('phone', $cleanLogin)->first();
             if ($client) {
-                $user = Utilisateur::where('id_client', $client->id)->first();
+                $user = Utilisateur::with('typeCompte')->where('id_client', $client->id)->first();
             }
 
             // Si pas trouvé par client, chercher aussi par depanneur
             if (!$user) {
                 $depanneur = \App\Models\Depanneur::where('phone', $cleanLogin)->first();
                 if ($depanneur) {
-                    $user = Utilisateur::where('id_depanneur', $depanneur->id)->first();
+                    $user = Utilisateur::with('typeCompte')->where('id_depanneur', $depanneur->id)->first();
                 }
             }
         } else {
             // Par défaut, essayer de le traiter comme un email
-            $user = Utilisateur::where('email', strtolower($login))->first();
+            $user = Utilisateur::with('typeCompte')->where('email', strtolower($login))->first();
+        }
+
+        // Vérifier si le compte existe
+        if (!$user) {
+            \Log::warning('Échec de connexion - utilisateur non trouvé', [
+                'login' => $credentials['login'],
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+
+            return $this->sendLoginFailedResponse($request, 'Les identifiants sont incorrects.');
+        }
+
+        // Vérifier si le compte est actif (isActive)
+        if (isset($user->isActive) && !$user->isActive) {
+            \Log::warning('Échec de connexion - compte désactivé', [
+                'login' => $credentials['login'],
+                'user_id' => $user->id,
+                'ip' => $request->ip(),
+            ]);
+
+            return $this->sendLoginFailedResponse($request, 'Votre compte a été désactivé. Veuillez contacter l\'administrateur.');
         }
 
         // Vérifier les credentials
@@ -274,6 +296,26 @@ class AuthController extends Controller
 
         // Par défaut, rediriger vers le dashboard client
         return route('client.dashboard');
+    }
+
+    /**
+     * Envoyer une réponse d'échec de connexion
+     */
+    protected function sendLoginFailedResponse(Request $request, string $message)
+    {
+        if ($request->expectsJson() || $request->is('api/*') || $request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+                'errors' => [
+                    'login' => $message,
+                ],
+            ], 401);
+        }
+
+        return back()->withErrors([
+            'login' => $message,
+        ])->onlyInput('login');
     }
 
     /**

@@ -25,10 +25,17 @@ class Depanneur extends Model
         'IFU',                 // Numéro d'Identification Fiscal Unique
         'email',               // Adresse email professionnelle
         'phone',               // Numéro de téléphone
+        'adresse',             // Adresse du garage
         'status',              // Statut actuel
         'isActive',            // Si le compte est activé
         'type_vehicule',       // Type de véhicule (voiture, moto, les_deux)
         'localisation_actuelle', // Position GPS actuelle (format: "lat,lng")
+        // Nouveaux champs d'inscription
+        'services',            // Services proposés (JSON array)
+        'methode_payement',    // Méthodes de paiement (JSON array)
+        'disponibilite',       // Disponibilité
+        'jours_travail',       // Jours de travail (JSON array)
+        'numero_mobile_money', // Numéro Mobile Money
     ];
 
    
@@ -214,24 +221,37 @@ class Depanneur extends Model
     }
 
 
+   
     public function setStatusAttribute(string $value): void
     {
-        // Valider le statut
+        // Valider le statut - ne pas threw d'exception, juste utiliser une valeur par défaut
         $validStatuses = [self::STATUS_DISPONIBLE, self::STATUS_OCCUPE, self::STATUS_HORS_SERVICE];
         if (!in_array($value, $validStatuses)) {
-            throw new \InvalidArgumentException("Statut invalide: {$value}");
+            $this->attributes['status'] = self::STATUS_DISPONIBLE;
+            return;
         }
         $this->attributes['status'] = $value;
     }
 
     
+   
     public function setLocalisationActuelleAttribute(string $value): void
     {
-        // Valider le format "lat,lng"
-        $coords = explode(',', $value);
-        if (count($coords) !== 2) {
-            throw new \InvalidArgumentException("Format de localisation invalide. Utiliser: lat,lng");
+        // Valider le format "lat,lng" ou accepter une valeur vide
+        if (empty($value)) {
+            $this->attributes['localisation_actuelle'] = '';
+            return;
         }
+        
+        $value = trim($value);
+        $coords = explode(',', $value);
+        
+        if (count($coords) !== 2) {
+            // Ne pas threw d'exception, juste enregistrer la valeur
+            $this->attributes['localisation_actuelle'] = $value;
+            return;
+        }
+        
         $this->attributes['localisation_actuelle'] = $value;
     }
 

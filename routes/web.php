@@ -36,7 +36,8 @@ Route::prefix('auth')->group(function () {
 });
 
 // Routes Admin - Protégées par authentification
-Route::prefix('admin')->middleware(['auth', 'verified'])->group(function () {
+// Note: Pas de middleware 'verified' pour les admins - ils ont un accès complet
+Route::prefix('admin')->middleware(['auth'])->group(function () {
     // Dashboard Admin - utilise la page React admin-dashboard
     Route::get('/dashboard', fn () => Inertia::render('admin-dashboard'))->name('admin.dashboard');
     
@@ -81,17 +82,17 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->group(function () {
     Route::get('/settings', [App\Http\Controllers\DashboardController::class, 'settings'])->name('admin.settings');
 });
 
-// Route Inscription Simplifiée (Email + OTP)
+// Route Inscription Simplifiée (Email + OTP) - Accessible à tous (connecté ou non)
 Route::get('/register', function () {
     return Inertia::render('register');
 })->name('register');
 
-// Route Choix inscription (client ou dépanneur)
+// Route Choix inscription (client ou dépanneur) - Accessible à tous
 Route::get('/choose-register', function () {
     return Inertia::render('choose-register');
 })->name('choose-register');
 
-// Route Inscription Dépanneur
+// Route Inscription Dépanneur - Accessible à tous
 Route::get('/register/depanneur', function () {
     return Inertia::render('depanneur-register');
 })->name('register.depanneur');
@@ -101,33 +102,33 @@ Route::get('/register/client', function () {
     return redirect()->route('register');
 })->name('register.client');
 
-// Route POST Inscription Dépanneur (avec redirection vers dashboard)
-Route::post('/depanneur/register', [App\Http\Controllers\DepanneurController::class, 'register'])->name('depanneur.register.post');
+// Route POST Inscription Dépanneur (avec redirection vers dashboard) - Accès restreint aux visiteurs uniquement
+Route::post('/depanneur/register', [App\Http\Controllers\DepanneurController::class, 'register'])->name('depanneur.register.post')->middleware('guest');
 
-// API Routes pour l'inscription par email
-Route::prefix('api/auth')->group(function () {
+// API Routes pour l'inscription par email - Accès restreint aux visiteurs uniquement
+Route::prefix('api/auth')->middleware('guest')->group(function () {
     Route::post('/send-otp', [App\Http\Controllers\Api\EmailRegistrationController::class, 'sendOtp'])->name('api.auth.send-otp');
     Route::post('/verify-otp', [App\Http\Controllers\Api\EmailRegistrationController::class, 'verifyOtp'])->name('api.auth.verify-otp');
     Route::post('/resend-otp', [App\Http\Controllers\Api\EmailRegistrationController::class, 'resendOtp'])->name('api.auth.resend-otp');
     Route::post('/complete-registration', [App\Http\Controllers\Api\EmailRegistrationController::class, 'completeRegistration'])->name('api.auth.complete-registration');
 });
 
-// API Routes pour l'inscription dépanneur
-Route::prefix('api/depanneur')->group(function () {
+// API Routes pour l'inscription dépanneur - Accès restreint aux visiteurs uniquement
+Route::prefix('api/depanneur')->middleware('guest')->group(function () {
     Route::post('/register', [App\Http\Controllers\DepanneurController::class, 'register'])->name('depanneur.register');
     Route::get('/profile', [App\Http\Controllers\DepanneurController::class, 'profile'])->name('depanneur.profile');
     Route::put('/profile', [App\Http\Controllers\DepanneurController::class, 'updateProfile'])->name('depanneur.profile.update');
 });
 
-// Route Client Dashboard
+// Route Client Dashboard (protégée par auth)
 Route::get('/client/dashboard', function () {
     return Inertia::render('client-dashboard');
-})->name('client.dashboard');
+})->name('client.dashboard')->middleware('auth');
 
-// Route Dashboard (alias for client dashboard)
+// Route Dashboard (alias for client dashboard) - Protégée par auth
 Route::get('/dashboard', function () {
     return Inertia::render('client-dashboard');
-})->name('dashboard');
+})->name('dashboard')->middleware('auth');
 
 // Route Nouvelle Demande (protégée - nécessite authentification)
 Route::get('/demande/nouvelle', function () {
@@ -144,8 +145,8 @@ Route::prefix('api/client')->group(function () {
     Route::get('/check-auth', [App\Http\Controllers\Api\ClientRegistrationController::class, 'checkAuth'])->name('client.check-auth');
 });
 
-// Route web pour l'inscription client (retourne une réponse Inertia)
-Route::post('/client/register', [App\Http\Controllers\Api\ClientRegistrationController::class, 'register'])->name('client.register.web');
+// Route web pour l'inscription client (retourne une réponse Inertia) - Accès restreint aux visiteurs uniquement
+Route::post('/client/register', [App\Http\Controllers\Api\ClientRegistrationController::class, 'register'])->name('client.register.web')->middleware('guest');
 
 // API Route pour les données du dashboard client
 Route::get('/api/client/dashboard', [App\Http\Controllers\DashboardController::class, 'getClientDashboardData'])->name('api.client.dashboard');
@@ -171,8 +172,8 @@ Route::prefix('api/demandes')->middleware(['auth'])->group(function () {
 // API Route pour obtenir les dépanneurs disponibles proches
 Route::get('/api/depanneurs/nearby', [App\Http\Controllers\DemandeController::class, 'getNearbyDepanneurs'])->name('api.depanneurs.nearby');
 
-// Route Dépanneur Dashboard
-Route::get('/depanneur/dashboard', [App\Http\Controllers\DashboardController::class, 'depanneurDashboard'])->name('depanneur.dashboard');
+// Route Dépanneur Dashboard (protégée par auth)
+Route::get('/depanneur/dashboard', [App\Http\Controllers\DashboardController::class, 'depanneurDashboard'])->name('depanneur.dashboard')->middleware('auth');
 
 // API Routes pour le Dépanneur
 Route::prefix('api/depanneur')->middleware(['auth'])->group(function () {

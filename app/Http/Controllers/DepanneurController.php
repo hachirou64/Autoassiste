@@ -79,6 +79,21 @@ class DepanneurController extends Controller
         }
 
         try {
+            // Validation supplémentaire de la localisation
+            $localisation = $request->localisation_actuelle;
+            if ($localisation) {
+                $coords = explode(',', $localisation);
+                if (count($coords) !== 2) {
+                    if ($request->expectsJson() || $request->ajax()) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Format de localisation invalide. Utiliser le format: latitude,longitude',
+                        ], 422);
+                    }
+                    return back()->withErrors(['localisation_actuelle' => 'Format de localisation invalide'])->withInput();
+                }
+            }
+            
             // Créer le dépanneur
             $depanneur = Depanneur::create([
                 'promoteur_name' => $request->promoteur_name,
@@ -86,17 +101,26 @@ class DepanneurController extends Controller
                 'IFU' => $request->IFU,
                 'email' => $request->email,
                 'phone' => $request->phone,
+                'adresse' => $request->adresse,
                 'status' => 'disponible',
                 'isActive' => false,
                 'type_vehicule' => $request->type_vehicule,
                 'localisation_actuelle' => $request->localisation_actuelle,
+                // Nouveaux champs
+                'services' => json_encode($request->services),
+                'methode_payement' => json_encode($request->methode_payement),
+                'disponibilite' => $request->disponibilite,
+                'jours_travail' => json_encode($request->jours_travail),
+                'numero_mobile_money' => $request->numero_mobile_money,
             ]);
 
             // Créer l'utilisateur lié au dépanneur
+            // Note: Le modèle Utilisateur gère automatiquement le hashing du mot de passe
+            // via setPasswordAttribute(), donc on ne doit PAS utiliser Hash::make() ici
             $user = Utilisateur::create([
                 'fullName' => $request->fullName,
                 'email' => $request->email,
-                'password' => Hash::make($request->password),
+                'password' => $request->password, // Le modèle va hacher automatiquement
                 'id_type_compte' => $depanneurType->id,
                 'id_client' => null,
                 'id_depanneur' => $depanneur->id,

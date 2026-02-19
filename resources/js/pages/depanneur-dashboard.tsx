@@ -115,6 +115,29 @@ export default function DepanneurDashboard() {
         props.interventionEnCours ? (props.interventionEnCours.status === 'acceptee' ? 'acceptee' : 'en_cours') : 'aucune'
     );
     
+    // Extraire la localisation du profil
+    const getProfileLocation = () => {
+        if (props.profile?.localisation_actuelle) {
+            const coords = props.profile.localisation_actuelle.split(',');
+            if (coords.length === 2) {
+                const lat = parseFloat(coords[0]);
+                const lng = parseFloat(coords[1]);
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    return { lat, lng };
+                }
+            }
+        }
+        // Valeur par défaut: Cotonou
+        return { lat: 6.366, lng: 2.433 };
+    };
+    
+    const [currentLocation, setCurrentLocation] = useState(getProfileLocation);
+    
+    // Mettre à jour la localisation quand le profil change
+    useEffect(() => {
+        setCurrentLocation(getProfileLocation());
+    }, [props.profile]);
+    
     // Polling pour les demandes en temps réel
     const [isPolling, setIsPolling] = useState(false);
     const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
@@ -378,6 +401,7 @@ export default function DepanneurDashboard() {
                     onToggleSound={() => setSoundEnabled(!soundEnabled)}
                     interventionStatus={interventionStatus}
                     profile={props.profile}
+                    currentLocation={currentLocation}
                 />;
             case 'demandes':
                 return (
@@ -392,7 +416,7 @@ export default function DepanneurDashboard() {
                             onToggleSound={() => setSoundEnabled(!soundEnabled)}
                         />
                         <DepanneurMap
-                            currentLocation={{ lat: 6.366, lng: 2.433 }}
+                            currentLocation={currentLocation}
                             demandes={demandes}
                             rayon={filters.rayon}
                             onRayonChange={(rayon) => setFilters({ ...filters, rayon })}
@@ -414,7 +438,6 @@ export default function DepanneurDashboard() {
                                 client: props.interventionEnCours.client,
                                 vehicle: props.interventionEnCours.vehicle || undefined,
                                 startedAt: props.interventionEnCours.startedAt,
-                                // Propriétés requises par le type mais pas toujours présentes
                                 coutPiece: 0,
                                 coutMainOeuvre: 0,
                                 coutTotal: 0,
@@ -429,7 +452,7 @@ export default function DepanneurDashboard() {
                             onOpenMaps={handleOpenMaps}
                         />
                         <DepanneurMap
-                            currentLocation={{ lat: 6.366, lng: 2.433 }}
+                            currentLocation={currentLocation}
                             rayon={filters.rayon}
                             onRayonChange={(rayon) => setFilters({ ...filters, rayon })}
                             interventionEnCours={props.interventionEnCours ? {
@@ -462,6 +485,7 @@ export default function DepanneurDashboard() {
                     onToggleSound={() => setSoundEnabled(!soundEnabled)}
                     interventionStatus={interventionStatus}
                     profile={props.profile}
+                    currentLocation={currentLocation}
                 />;
         }
     };
@@ -658,6 +682,7 @@ interface OverviewTabProps {
     onToggleSound: () => void;
     interventionStatus: 'aucune' | 'acceptee' | 'en_cours';
     profile?: DepanneurProfileType;
+    currentLocation: { lat: number; lng: number };
 }
 
 function OverviewTab({
@@ -673,6 +698,7 @@ function OverviewTab({
     onToggleSound,
     interventionStatus,
     profile,
+    currentLocation,
 }: OverviewTabProps) {
     return (
         <div className="space-y-6">
@@ -698,14 +724,14 @@ function OverviewTab({
                     onToggleSound={onToggleSound}
                 />
                 <DepanneurMap
-                    currentLocation={{ lat: 6.366, lng: 2.433 }}
+                    currentLocation={currentLocation}
                     demandes={demandes}
                     rayon={filters.rayon}
                     onRayonChange={(rayon) => onFiltersChange({ ...filters, rayon })}
                     interventionEnCours={interventionStatus !== 'aucune' ? {
-                        latitude: 6.366,
-                        longitude: 2.433,
-                        adresse: 'Cotonou, Rue de la Paix',
+                        latitude: currentLocation.lat,
+                        longitude: currentLocation.lng,
+                        adresse: 'Position actuelle',
                         distance: 3.5,
                         dureeEstimee: 15,
                     } : undefined}

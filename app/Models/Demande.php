@@ -1,34 +1,6 @@
 <?php
 
-/**
- * =====================================================================================
- * FILE: Demande.php
- * -------------------------------------------------------------------------------------
- * Ce fichier contient le modèle Demande qui représente les demandes d'assistance
- * créées par les clients lorsqu'ils sont en panne sur la route.
- * =====================================================================================
- *
- * FLUX D'UNE DEMANDE:
- * 1. Le client crée une demande avec sa localisation et description du problème
- * 2. La demande est en statut "en_attente"
- * 3. Un dépanneur accepte la demande → statut "acceptee"
- * 4. Le dépanneur démarre l'intervention → statut "en_cours"
- * 5. L'intervention est terminée → statut "terminee"
- * 6. Le client peut annuler si pas encore acceptée → statut "annulee"
- *
- * COLONNES DE LA TABLE 'demandes':
- * - id: Identifiant unique auto-incrémenté
- * - codeDemande: Code unique généré automatiquement (ex: DEM-20240101-00001)
- * - localisation: Position GPS au format "latitude,longitude"
- * - descriptionProbleme: Description textuelle du problème
- * - status: Statut de la demande (en_attente, acceptee, en_cours, terminee, annulee)
- * - acceptedAt: Date d'acceptation par un dépanneur
- * - completedAt: Date de completion de l'intervention
- * - id_client: FK vers le client qui a créé la demande
- * - id_depanneur: FK vers le dépanneur qui a accepté la demande
- * - createdAt: Date de création
- * - updatedAt: Date de modification
- */
+
 
 namespace App\Models;
 

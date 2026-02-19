@@ -16,8 +16,8 @@ interface DemandeInfo {
 export default function NouvelleDemandePage() {
     const { auth, flash } = usePage<SharedData>().props;
     
-    // Single view state: 'loading' | 'form' | 'confirmation'
-    const [view, setView] = useState<'loading' | 'form' | 'confirmation'>('loading');
+    // Single view state: 'loading' | 'form' | 'confirmation' | 'error'
+    const [view, setView] = useState<'loading' | 'form' | 'confirmation' | 'error'>('loading');
     
     // Store demande info
     const [demandeInfo, setDemandeInfo] = useState<DemandeInfo | null>(null);
@@ -25,11 +25,35 @@ export default function NouvelleDemandePage() {
     // Error state
     const [error, setError] = useState<string | null>(null);
 
+    // Debug: log auth state
+    console.log('[NouvelleDemandePage] Auth state:', auth);
+    console.log('[NouvelleDemandePage] Current view:', view);
+
     // Check authentication on mount
     useEffect(() => {
+        // First check if we have a pending demande from sessionStorage
+        const storedDemande = sessionStorage.getItem('pending_demande_info');
+        if (storedDemande) {
+            try {
+                const parsed = JSON.parse(storedDemande);
+                if (parsed.codeDemande) {
+                    setDemandeInfo(parsed);
+                    setView('confirmation');
+                    // Clear from sessionStorage after reading
+                    sessionStorage.removeItem('pending_demande_info');
+                    console.log('[NouvelleDemandePage] Loaded stored demande:', parsed);
+                    return;
+                }
+            } catch (e) {
+                console.error('[NouvelleDemandePage] Error parsing stored demande:', e);
+            }
+        }
+
         // Small delay to ensure client-side hydration is complete
         const timer = setTimeout(() => {
             if (typeof window !== 'undefined') {
+                console.log('[NouvelleDemandePage] Checking auth, user:', auth?.user);
+                
                 if (auth?.user) {
                     setView('form');
                 } else {
@@ -38,70 +62,101 @@ export default function NouvelleDemandePage() {
                     window.location.href = '/register';
                 }
             }
-        }, 100);
+        }, 300);
 
         return () => clearTimeout(timer);
     }, [auth]);
 
-    // Handle form submission
+    // Handle form submission - accepts both API response and simulation data
     const handleSubmit = useCallback(async (data: {
         vehicleType: string;
         typePanne: string;
         description: string;
         localisation: string;
+    } | {
+        demande?: {
+            id: number;
+            codeDemande: string;
+            status?: string;
+        };
+        id?: number;
+        codeDemande?: string;
+        status?: string;
     }) => {
+        console.log('[NouvelleDemandePage] handleSubmit called with data:', data);
         setError(null);
         
-        try {
-            const response = await fetch('/api/demandes', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    // Add CSRF token from cookie
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                credentials: 'include',
-                body: JSON.stringify(data),
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                setDemandeInfo({
-                    id: result.demande.id,
-                    codeDemande: result.demande.codeDemande,
-                });
-                setView('confirmation');
-            } else if (response.status === 401 || response.status === 403) {
-                // Not authenticated or not a client - redirect to login
-                window.sessionStorage?.setItem('pending_demande', 'true');
-                window.location.href = '/login';
-            } else if (response.status === 419) {
-                // CSRF token mismatch - use simulation mode
-                console.log('CSRF error (419) - using simulation mode');
-                handleSimulationMode();
-            } else {
-                // Other errors - try simulation mode
-                console.log('API error, using simulation mode');
-                handleSimulationMode();
-            }
-        } catch (err) {
-            console.error('Erreur réseau:', err);
-            // Network error - use simulation mode for development
-            handleSimulationMode();
+        // Extract demande info from various possible structures
+        let demandeId: number | undefined;
+        let codeDemande: string | undefined;
+        
+        // Check if data has demande property
+        if ('demande' in data && data.demande) {
+            demandeId = data.demande.id;
+            codeDemande = data.demande.codeDemande;
+        } 
+        // Check if data has id and codeDemande at root level
+        else if ('id' in data && 'codeDemande' in data) {
+            demandeId = data.id;
+            codeDemande = data.codeDemande;
         }
-    }, []);
+        
+        // If we don't have the info yet, try the API
+        if (!codeDemande) {
+            try {
+                const response = await fetch('/api/demandes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(data),
+                });
 
-    // Simulation mode for development
-    const handleSimulationMode = useCallback(() => {
-        setDemandeInfo({
-            id: Date.now(),
-            codeDemande: `DEM-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 999)).padStart(3, '0')}`,
-        });
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('[NouvelleDemandePage] API response:', result);
+                    
+                    const demandeData = result.demande || result.data || result;
+                    
+                    if (demandeData?.id && demandeData?.codeDemande) {
+                        demandeId = demandeData.id;
+                        codeDemande = demandeData.codeDemande;
+                    }
+                } else if (response.status === 401 || response.status === 403) {
+                    window.sessionStorage?.setItem('pending_demande', 'true');
+                    window.location.href = '/login';
+                    return;
+                }
+            } catch (err) {
+                console.error('[NouvelleDemandePage] API error:', err);
+            }
+        }
+        
+        // Fallback: generate a simulation code if still no code
+        if (!codeDemande) {
+            codeDemande = `DEM-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 999)).padStart(3, '0')}`;
+            demandeId = Date.now();
+            console.log('[NouvelleDemandePage] Using simulation code:', codeDemande);
+        }
+        
+        // Set the demande info and show confirmation
+        const info: DemandeInfo = {
+            id: demandeId || Date.now(),
+            codeDemande: codeDemande,
+        };
+        
+        console.log('[NouvelleDemandePage] Setting demandeInfo:', info);
+        setDemandeInfo(info);
+        sessionStorage.setItem('pending_demande_info', JSON.stringify(info));
         setView('confirmation');
     }, []);
 
     const handleGoToDashboard = () => {
+        // Clear the pending demande info
+        sessionStorage.removeItem('pending_demande_info');
         window.location.href = '/client/dashboard';
     };
 

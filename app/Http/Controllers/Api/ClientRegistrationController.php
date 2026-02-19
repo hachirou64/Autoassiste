@@ -42,10 +42,12 @@ class ClientRegistrationController extends Controller
             $typeCompteClient = TypeCompte::where('name', 'Client')->firstOrFail();
 
             // Créer le compte utilisateur associé
+            // Note: On passe le mot de passe en clair, le mutateur du modèle
+            // se chargera de le hacher automatiquement avec bcrypt()
             $utilisateur = Utilisateur::create([
                 'fullName' => $validated['fullName'],
                 'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
+                'password' => $validated['password'],
                 'id_type_compte' => $typeCompteClient->id,
                 'id_client' => $client->id,
                 'email_verified' => false,

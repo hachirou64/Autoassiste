@@ -170,10 +170,12 @@ class EmailRegistrationController extends Controller
         ]);
 
         // Créer l'utilisateur
+        // Note: On passe le mot de passe en clair, le mutateur du modèle
+        // se chargera de le hacher automatiquement avec bcrypt()
         $user = Utilisateur::create([
             'fullName' => $request->fullName,
             'email' => $sessionData['email'],
-            'password' => Hash::make($request->password),
+            'password' => $request->password,
             'id_type_compte' => $clientType->id,
             'id_client' => $client->id,
             'id_depanneur' => null,

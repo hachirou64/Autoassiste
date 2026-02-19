@@ -339,22 +339,64 @@ class DemandeController extends Controller
 
     private function findNearbyDepanneurs(float $latitude, float $longitude, int $radius = 10, string $vehicleType = 'voiture')
     {
+        try {
+            // Version simplifiée - rechercher simplement les dépanneurs actifs
+            // sans calcul de distance complexe
+            $depanneurs = Depanneur::where('isActive', true)
+                ->whereIn('status', ['disponible', 'hors_service'])
+                ->forVehicleType($vehicleType)
+                ->limit(20)
+                ->get();
+                
+            // Calculer la distance manuellement en PHP pour plus de fiabilité
+            $depanneursWithDistance = $depanleurs->map(function ($depanneur) use ($latitude, $longitude) {
+                $coords = $depanneur->coordinates;
+                if ($coords['lat'] && $coords['lng']) {
+                    $distance = $this->calculateDistance(
+                        $latitude, 
+                        $longitude, 
+                        $coords['lat'], 
+                        $coords['lng']
+                    );
+                    $depanneur->distance = $distance;
+                } else {
+                    $depanneur->distance = 999; // Distance très élevée si pas de coordonnées
+                }
+                return $depanneur;
+            });
+            
+            // Filtrer par rayon et trier par distance
+            return $depanneursWithDistance
+                ->filter(fn($d) => $d->distance < $radius)
+                ->sortBy('distance')
+                ->take($this->maxDepanneursToNotify);
+                
+        } catch (\Exception $e) {
+            \Log::error('Error finding nearby depanneurs: ' . $e->getMessage());
+            // Retourner une collection vide en cas d'erreur
+            return collect([]);
+        }
+    }
+    
+    /**
+     * Calculer la distance entre deux points en km (formule de Haversine)
+     */
+    private function calculateDistance(float $lat1, float $lon1, float $lat2, float $lon2): float
+    {
+        $earthRadius = 6371; // Rayon de la Terre en km
         
-        // Scope: status = disponible ET isActive = true ET type_vehicule compatible
-        return Depanneur::disponible() 
-            ->forVehicleType($vehicleType)  // Filtrer par type de véhicule
-            ->select('depanneurs.*')
-            ->selectRaw(
-                // Calcul de la distance en km avec la formule de Haversine
-                '(6371 * acos(cos(radians(?)) * cos(radians(SUBSTRING_INDEX(localisation_actuelle, ",", 1))) *
-                 cos(radians(SUBSTRING_INDEX(localisation_actuelle, ",", -1)) - radians(?)) +
-                 sin(radians(?)) * sin(radians(SUBSTRING_INDEX(localisation_actuelle, ",", 1))))) AS distance',
-                [$latitude, $longitude, $latitude]
-            )
-            ->having('distance', '<', $radius)  // Filtrer par rayon
-            ->orderBy('distance')               // Trier par distance croissante
-            ->limit($this->maxDepanneursToNotify)  // Limiter le nombre
-            ->get();
+        $lat1Rad = deg2rad($lat1);
+        $lat2Rad = deg2rad($lat2);
+        $deltaLat = deg2rad($lat2 - $lat1);
+        $deltaLon = deg2rad($lon2 - $lon1);
+        
+        $a = sin($deltaLat / 2) * sin($deltaLat / 2) +
+             cos($lat1Rad) * cos($lat2Rad) *
+             sin($deltaLon / 2) * sin($deltaLon / 2);
+             
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+        
+        return $earthRadius * $c;
     }
 
     /**

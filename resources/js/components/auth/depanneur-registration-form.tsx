@@ -121,13 +121,37 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
         setLoading(true);
         setError(null);
 
+        // Validation des champs requis
+        if (!formData.password || !formData.passwordConfirmation) {
+            setError('Veuillez entrer et confirmer votre mot de passe');
+            setLoading(false);
+            return;
+        }
+
+        if (formData.password.length < 8) {
+            setError('Le mot de passe doit contenir au moins 8 caractères');
+            setLoading(false);
+            return;
+        }
+
+        if (formData.password !== formData.passwordConfirmation) {
+            setError('Les mots de passe ne correspondent pas');
+            setLoading(false);
+            return;
+        }
+
         try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            console.log('CSRF Token:', csrfToken ? 'Present' : 'Missing');
+            
             const response = await fetch('/depanneur/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken || '',
                 },
+                credentials: 'include',
                 body: JSON.stringify({
                     fullName: formData.fullName,
                     email: formData.email,
@@ -137,6 +161,8 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
                     IFU: formData.IFU,
                     adresse: formData.adresse,
                     localisation_actuelle: formData.localisation_actuelle,
+                    latitude: formData.latitude,
+                    longitude: formData.longitude,
                     type_vehicule: formData.type_vehicule,
                     services: formData.services,
                     methode_payement: formData.methode_payement,
@@ -147,7 +173,11 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
                 }),
             });
 
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+
             const data = await response.json();
+            console.log('Response data:', data);
 
             if (!response.ok) {
                 if (data.errors) {
@@ -162,12 +192,17 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
                 return;
             }
 
-            // Redirection vers le dashboard dépanneur
-            window.location.href = '/depanneur/dashboard';
+            // Appeler le callback onSuccess si défini
+            if (onSuccess) {
+                onSuccess();
+            } else {
+                // Redirection vers le dashboard dépanneur par défaut
+                window.location.href = '/depanneur/dashboard';
+            }
 
         } catch (err) {
-            console.error('Erreur:', err);
-            setError('Erreur réseau. Veuillez vérifier votre connexion.');
+            console.error('Erreur complète:', err);
+            setError('Erreur réseau. Veuillez vérifier votre connexion et réessayer.');
             setLoading(false);
         }
     };

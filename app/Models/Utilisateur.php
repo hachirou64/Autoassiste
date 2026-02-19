@@ -28,6 +28,7 @@ class Utilisateur extends Authenticatable
         'id_type_compte',
         'id_client',
         'id_depanneur',
+        'isActive',
     ];
 
     // Colonnes cachées lors de la sérialisation (sécurité)
@@ -41,15 +42,23 @@ class Utilisateur extends Authenticatable
         'email_verified_at' => 'datetime',
         'createdAt' => 'datetime',
         'updatedAt' => 'datetime',
+        'isActive' => 'boolean',
     ];
 
     const CREATED_AT = 'createdAt';
     const UPDATED_AT = 'updatedAt';
 
     
+    
     public function setPasswordAttribute($value)
     {
-        $this->attributes['password'] = bcrypt($value);
+        // Vérifier si le mot de passe est déjà hashé (commence par $2y$ pour bcrypt)
+        // Si c'est déjà hashé, ne pas le hacher à nouveau
+        if (preg_match('/^\$2[ayb]\$.{56}$/', $value)) {
+            $this->attributes['password'] = $value;
+        } else {
+            $this->attributes['password'] = bcrypt($value);
+        }
     }
 
     

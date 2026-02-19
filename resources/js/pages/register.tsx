@@ -3,66 +3,25 @@ import { Head, usePage } from '@inertiajs/react';
 import AppHeaderLayout from '@/layouts/app/app-header-layout';
 import { QuickRegistrationForm } from '@/components/auth/quick-registration-form';
 import { Card, CardContent } from '@/components/ui/card';
-import { Car, Phone, MapPin, Clock, Shield } from 'lucide-react';
-import type { SharedData } from '@/types';
+import { Car, MapPin, Shield } from 'lucide-react';
 
 export default function RegisterPage() {
-    const { ziggy } = usePage().props;
-    const { auth } = usePage<SharedData>().props;
-    const [mounted, setMounted] = useState(false);
-    const [redirecting, setRedirecting] = useState(false);
+    const [mounted, setMounted] = useState<boolean>(false);
 
-    console.log('[RegisterPage] Rendu initial - auth:', auth?.user);
-
-    // Attendre que le composant soit mounted (côté client) avant de vérifier l'auth
+    // Attendre que le composant soit mounted (côté client)
     useEffect(() => {
-        console.log('[RegisterPage] Component mounted');
         setMounted(true);
     }, []);
 
-    // Vérifier si l'utilisateur est déjà connecté (seulement après mount)
-    useEffect(() => {
-        if (!mounted) {
-            console.log('[RegisterPage] Pas encore mounted');
-            return;
-        }
-        
-        console.log('[RegisterPage] Vérification auth - auth.user:', auth?.user);
-        
-        // Si l'utilisateur est déjà connecté et n'a pas de pending_demande, rediriger
-        // Ne pas rediriger si on est en mode "admin" (via query param)
-        const urlParams = new URLSearchParams(window.location.search);
-        const isAdminMode = urlParams.get('admin') === 'true';
-        
-        if (auth?.user && !sessionStorage.getItem('pending_demande') && !isAdminMode) {
-            console.log('[RegisterPage] Utilisateur connecté, pas de pending_demande, redirection vers dashboard');
-            setRedirecting(true);
-            window.location.href = '/client/dashboard';
-            return;
-        }
-        
-        // Si pending_demande existe, c'est qu'il vient du bouton SOS
-        // On garde le pending_demande et on affiche le formulaire
-        if (sessionStorage.getItem('pending_demande')) {
-            console.log('[RegisterPage] pending_demande existe, on affiche le formulaire');
-        } else if (!isAdminMode) {
-            console.log('[RegisterPage] Pas de pending_demande, nouvel utilisateur, on affiche le formulaire');
-        }
-    }, [auth, mounted]);
-
     // Fonction appelée après inscription réussie
     const handleSuccess = () => {
-        console.log('[RegisterPage] Inscription réussie!');
-        
         // Vérifier si on est en mode admin
         const urlParams = new URLSearchParams(window.location.search);
         const isAdminMode = urlParams.get('admin') === 'true';
         
         if (isAdminMode) {
-            // Rediriger vers le dashboard admin
             window.location.href = '/admin/dashboard';
         } else {
-            // Utiliser router.visit pour naviguer (préserve la session Inertia)
             window.location.href = '/demande/nouvelle';
         }
     };

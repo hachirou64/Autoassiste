@@ -104,7 +104,7 @@ class DemoDataSeeder extends Seeder
                 Utilisateur::create([
                     'fullName' => $clientData['fullName'],
                     'email' => $clientData['email'],
-                    'password' => bcrypt('password123'),
+                    'password' => 'password123', // Sera hashé automatiquement par le mutateur du modèle
                     'id_type_compte' => $typeCompteClient->id,
                     'id_client' => $client->id,
                     'email_verified' => true,
@@ -118,7 +118,7 @@ class DemoDataSeeder extends Seeder
             }
         }
 
-        $this->command->info("{$clients} clients créés ou existants.");
+        $this->command->info(count($clients) . ' clients créés ou existants.');
 
         // Créer quelques dépanneurs de test
         $this->command->info('Création des dépanneurs de test...');
@@ -130,7 +130,7 @@ class DemoDataSeeder extends Seeder
                 'IFU' => '0123456789012',
                 'email' => 'contact@autorepare.com',
                 'phone' => '+229 60 11 22 33',
-                'type_vehicule' => 'auto_moto',
+                'type_vehicule' => 'les_deux',
             ],
             [
                 'promoteur_name' => 'Patrice Lokonon',
@@ -138,7 +138,7 @@ class DemoDataSeeder extends Seeder
                 'IFU' => '0123456789013',
                 'email' => 'info@depannageexpress.com',
                 'phone' => '+229 60 44 55 66',
-                'type_vehicule' => 'auto',
+                'type_vehicule' => 'voiture',
             ],
             [
                 'promoteur_name' => 'Alain Chitou',
@@ -166,7 +166,7 @@ class DemoDataSeeder extends Seeder
                 Utilisateur::create([
                     'fullName' => $depanneurData['promoteur_name'],
                     'email' => $depanneurData['email'],
-                    'password' => bcrypt('password123'),
+                    'password' => 'password123', // Sera hashé automatiquement par le mutateur du modèle
                     'id_type_compte' => $typeCompteDepanneur->id,
                     'id_depanneur' => $depanneur->id,
                     'email_verified' => true,
@@ -217,13 +217,10 @@ class DemoDataSeeder extends Seeder
 
                 $demande = Demande::create([
                     'codeDemande' => 'DEM-' . $uniqueId,
-                    'localisation' => $zone->name . ', ' . $zone->city,
+                    'localisation' => $lat . ',' . $lng,
                     'descriptionProbleme' => $description,
-                    'latitude' => $lat,
-                    'longitude' => $lng,
                     'status' => $status,
                     'id_client' => $client->id,
-                    'id_zone' => $zone->id,
                     'id_depanneur' => $status !== 'en_attente' ? $depanneurs[array_rand($depanneurs)]->id : null,
                 ]);
 

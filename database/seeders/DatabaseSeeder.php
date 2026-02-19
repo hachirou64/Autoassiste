@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -23,7 +22,11 @@ class DatabaseSeeder extends Seeder
         // Exécuter le seeder des types de comptes et zones
         $this->call(TypeCompteSeeder::class);
 
+        // Exécuter le seeder du compte administrateur
+        $this->call(AdminAccountSeeder::class);
+
         // Exécuter le seeder des données de démonstration
         $this->call(DemoDataSeeder::class);
     }
 }
+

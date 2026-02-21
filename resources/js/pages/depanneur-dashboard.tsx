@@ -13,6 +13,7 @@ import { InterventionHistory } from '@/components/depanneur/intervention-history
 import { FinancialDashboard } from '@/components/depanneur/financial-dashboard';
 import { DepanneurNotifications } from '@/components/depanneur/depanneur-notifications';
 import { DepanneurProfile } from '@/components/depanneur/depanneur-profile';
+import { DepanneurGeolocationStatus } from '@/components/depanneur/depanneur-geolocation-status';
 import { LoadingPage } from '@/components/ui/loading-spinner';
 
 // Icons
@@ -133,10 +134,18 @@ export default function DepanneurDashboard() {
     
     const [currentLocation, setCurrentLocation] = useState(getProfileLocation);
     
-    // Mettre à jour la localisation quand le profil change
+    // State pour la géolocalisation automatique
+    const [geolocationActive, setGeolocationActive] = useState(false);
+    
+    // Mettre à jour la localisation quand le profil change ou quand la géolocalisation met à jour
     useEffect(() => {
         setCurrentLocation(getProfileLocation());
     }, [props.profile]);
+    
+    // Callback quand la position est mise à jour par la géolocalisation
+    const handleGeolocationUpdate = useCallback((position: { lat: number; lng: number }) => {
+        setCurrentLocation(position);
+    }, []);
     
     // Polling pour les demandes en temps réel
     const [isPolling, setIsPolling] = useState(false);
@@ -707,6 +716,15 @@ function OverviewTab({
                 currentStatus={currentStatus}
                 onStatusChange={onStatusChange}
                 interventionActive={interventionStatus !== 'aucune'}
+            />
+
+            {/* Composant de géolocalisation automatique */}
+            <DepanneurGeolocationStatus 
+                showControls={true}
+                onPositionUpdate={(position) => {
+                    // La position sera mise à jour automatiquement via le state
+                    console.log('Position mise à jour:', position);
+                }}
             />
 
             {/* Stats */}

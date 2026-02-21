@@ -340,12 +340,12 @@ class DemandeController extends Controller
     private function findNearbyDepanneurs(float $latitude, float $longitude, int $radius = 10, string $vehicleType = 'voiture')
     {
         try {
-            // Version simplifiée - rechercher simplement les dépanneurs actifs
-            // sans calcul de distance complexe
+            // Rechercher les dépanneurs disponibles et actifs
+            // Filtres: status = disponible, isActive = true, type_vehicule compatible
             $depanneurs = Depanneur::where('isActive', true)
-                ->whereIn('status', ['disponible', 'hors_service'])
+                ->where('status', 'disponible')
                 ->forVehicleType($vehicleType)
-                ->limit(20)
+                ->limit(50)
                 ->get();
                 
             // Calculer la distance manuellement en PHP pour plus de fiabilité
@@ -409,7 +409,7 @@ class DemandeController extends Controller
         $validated = $request->validate([
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
-            'vehicle_type' => 'required|in:voiture,moto,camion',
+            'vehicle_type' => 'required|in:voiture,moto',
             'radius' => 'nullable|integer|min:1|max:50',
         ]);
 
@@ -424,19 +424,29 @@ class DemandeController extends Controller
 
         return response()->json([
             'success' => true,
-            'depanneurs' => $depanneurs->map(fn($d) => [
-                'id' => $d->id,
-                'name' => $d->etablissement_name,
-                'rating' => $d->rating ?? 4.5,
-                'reviews' => $d->reviews_count ?? 0,
-                'distance' => round($d->distance, 1),
-                'estimated_time' => round(($d->distance ?? 0) / 40 * 60), // Estimation basée sur 40km/h
-                'price_min' => $d->price_min ?? 50,
-                'price_max' => $d->price_max ?? 80,
-                'specialities' => $d->specialites ?? '',
-                'phone' => $d->phone ?? '',
-                'avatar' => $d->avatar_url ?? null,
-            ]),
+            'depanneurs' => $depanneurs->map(function ($d) {
+                // Extraire les coordonnées réelles du dépanneur depuis la base de données
+                $coords = $d->coordinates;
+                return [
+                    'id' => $d->id,
+                    'name' => $d->etablissement_name,
+                    'rating' => $d->rating ?? 4.5,
+                    'reviews' => $d->reviews_count ?? 0,
+                    'distance' => round($d->distance, 1),
+                    'estimated_time' => round(($d->distance ?? 0) / 40 * 60), // Estimation basée sur 40km/h
+                    'price_min' => $d->price_min ?? 50,
+                    'price_max' => $d->price_max ?? 80,
+                    'specialities' => $d->specialites ?? '',
+                    'phone' => $d->phone ?? '',
+                    'avatar' => $d->avatar_url ?? null,
+                    'garage' => $d->etablissement_name,
+                    // VRAIES coordonnées GPS du dépanneur
+                    'latitude' => $coords['lat'] ?? null,
+                    'longitude' => $coords['lng'] ?? null,
+                    // Timestamp de dernière mise à jour de la position
+                    'derniere_position_at' => $d->derniere_position_at,
+                ];
+            }),
         ]);
     }
 

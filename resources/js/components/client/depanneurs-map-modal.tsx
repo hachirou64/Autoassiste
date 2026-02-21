@@ -67,12 +67,12 @@ export function DepanneursMapModal({
                 }
 
                 const data = await response.json();
-                // Ajouter des coordonnées approximatives pour la carte
-                const enrichedDepanneurs = (data.depanneurs || []).map((d: Depanneur, idx: number) => ({
+                // Utiliser les coordonnées RÉELLES du dépanneur retournées par l'API
+                const enrichedDepanneurs = (data.depanneurs || []).map((d: Depanneur) => ({
                     ...d,
-                    // Approximatif: disperser les dépanneurs autour du client
-                    latitude: latitude + (Math.random() - 0.5) * 0.05,
-                    longitude: longitude + (Math.random() - 0.5) * 0.05,
+                    // Les coordonnées réelles sont maintenant incluses dans la réponse API
+                    latitude: d.latitude || latitude + (Math.random() - 0.5) * 0.02,
+                    longitude: d.longitude || longitude + (Math.random() - 0.5) * 0.02,
                 }));
                 setDepanneurs(enrichedDepanneurs);
             } catch (err) {

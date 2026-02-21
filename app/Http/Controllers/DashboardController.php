@@ -1402,6 +1402,7 @@ class DashboardController extends Controller
 
     /**
      * Mettre à jour la position du dépanneur
+     * API: POST /api/depanneur/location
      */
     public function updateLocation()
     {
@@ -1420,18 +1421,86 @@ class DashboardController extends Controller
         $request = request();
         $latitude = $request->input('latitude');
         $longitude = $request->input('longitude');
+        $accuracy = $request->input('accuracy'); // Optionnel: précision GPS en mètres
 
         if (!$latitude || !$longitude) {
-            return response()->json(['error' => 'Coordonnées invalides'], 400);
+            return response()->json([
+                'success' => false,
+                'error' => 'Coordonnées invalides',
+                'message' => 'Latitude et longitude sont requises'
+            ], 400);
         }
 
+        // Validation des coordonnées
+        $validation = $depanneur->validerPosition((float) $latitude, (float) $longitude);
+        
+        if (!$validation['valid']) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Coordonnées invalides',
+                'message' => $validation['message']
+            ], 400);
+        }
+
+        // Vérifier le rate limiting (minimum 10 secondes entre les mises à jour)
+        if ($depanneur->derniere_position_at) {
+            $secondsSinceLastUpdate = now()->diffInSeconds($depanneur->derniere_position_at);
+            if ($secondsSinceLastUpdate < 10) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Trop de requêtes',
+                    'message' => "Attendez " . (10 - $secondsSinceLastUpdate) . " secondes avant de mettre à jour votre position.",
+                    'retry_after' => 10 - $secondsSinceLastUpdate,
+                ], 429); // Too Many Requests
+            }
+        }
+
+        // Mettre à jour la position
         $depanneur->update([
             'localisation_actuelle' => "{$latitude},{$longitude}",
+            'derniere_position_at' => now(),
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Position mise à jour',
+            'message' => 'Position mise à jour avec succès',
+            'position' => [
+                'latitude' => (float) $latitude,
+                'longitude' => (float) $longitude,
+                'accuracy' => $accuracy ? (float) $accuracy : null,
+            ],
+            'derniere_position_at' => $depanneur->derniere_position_at->toIsoString(),
+        ]);
+    }
+
+    /**
+     * Obtenir la position actuelle du dépanneur connecté
+     * API: GET /api/depanneur/location
+     */
+    public function getLocation()
+    {
+        $utilisateur = Auth::user();
+        
+        if (!$utilisateur) {
+            return response()->json(['error' => 'Aucun compte dépanneur lié'], 403);
+        }
+
+        $depanneur = $utilisateur->depanneur ?? null;
+        
+        if (!$depanneur) {
+            return response()->json(['error' => 'Aucun compte dépanneur lié'], 403);
+        }
+
+        $coords = $depanneur->coordinates;
+
+        return response()->json([
+            'success' => true,
+            'position' => [
+                'latitude' => $coords['lat'],
+                'longitude' => $coords['lng'],
+            ],
+            'derniere_position_at' => $depanneur->derniere_position_at?->toIsoString(),
+            'position_recente' => $depanneur->positionRecente(5), // Moins de 5 minutes
         ]);
     }
 

@@ -191,6 +191,7 @@ Route::prefix('api/depanneur')->middleware(['auth'])->group(function () {
     
     // Localisation
     Route::post('/location', [App\Http\Controllers\DashboardController::class, 'updateLocation'])->name('depanneur.api.location');
+    Route::get('/location', [App\Http\Controllers\DashboardController::class, 'getLocation'])->name('depanneur.api.location.get');
     
     // Notifications
     Route::get('/notifications', [App\Http\Controllers\DashboardController::class, 'getDepanneurNotifications'])->name('depanneur.api.notifications');

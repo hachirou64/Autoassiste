@@ -30,6 +30,7 @@ class Depanneur extends Model
         'isActive',            // Si le compte est activé
         'type_vehicule',       // Type de véhicule (voiture, moto, les_deux)
         'localisation_actuelle', // Position GPS actuelle (format: "lat,lng")
+        'derniere_position_at',   // Timestamp de dernière mise à jour de position
         // Nouveaux champs d'inscription
         'services',            // Services proposés (JSON array)
         'methode_payement',    // Méthodes de paiement (JSON array)
@@ -43,6 +44,7 @@ class Depanneur extends Model
         'isActive' => 'boolean',     // Cast en boolean
         'createdAt' => 'datetime',   // Cast en objet Carbon
         'updatedAt' => 'datetime',   // Cast en objet Carbon
+        'derniere_position_at' => 'datetime', // Timestamp de dernière position
     ];
 
     
@@ -272,11 +274,95 @@ class Depanneur extends Model
     }
 
     
+    
     public function mettreAJourPosition(float $latitude, float $longitude): bool
     {
         return $this->update([
-            'localisation_actuelle' => "{$latitude},{$longitude}"
+            'localisation_actuelle' => "{$latitude},{$longitude}",
+            'derniere_position_at' => now(),
         ]);
+    }
+
+    /**
+     * Mettre à jour la position avec des options avancées
+     */
+    public function mettreAJourPositionAvancee(float $latitude, float $longitude, float $accuracy = null): array
+    {
+        // Valider les coordonnées (bounds du Bénin)
+        $validation = $this->validerPosition($latitude, $longitude);
+        
+        if (!$validation['valid']) {
+            return $validation;
+        }
+
+        // Vérifier le rate limiting (minimum 10 secondes entre les mises à jour)
+        if ($this->derniere_position_at) {
+            $secondsSinceLastUpdate = now()->diffInSeconds($this->derniere_position_at);
+            if ($secondsSinceLastUpdate < 10) {
+                return [
+                    'success' => false,
+                    'valid' => false,
+                    'message' => "Trop de requêtes. Attendez " . (10 - $secondsSinceLastUpdate) . " secondes.",
+                ];
+            }
+        }
+
+        // Mettre à jour la position
+        $this->update([
+            'localisation_actuelle' => "{$latitude},{$longitude}",
+            'derniere_position_at' => now(),
+        ]);
+
+        return [
+            'success' => true,
+            'valid' => true,
+            'message' => 'Position mise à jour avec succès',
+            'coordinates' => [
+                'lat' => $latitude,
+                'lng' => $longitude,
+            ],
+            'accuracy' => $accuracy,
+            'updated_at' => $this->derniere_position_at->toIsoString(),
+        ];
+    }
+
+    /**
+     * Valider que les coordonnées sont dans les bounds du Bénin
+     */
+    public function validerPosition(float $latitude, float $longitude): array
+    {
+        // Bounds du Bénin
+        $minLat = 6.0;
+        $maxLat = 12.5;
+        $minLng = 0.5;
+        $maxLng = 3.5;
+
+        if ($latitude < $minLat || $latitude > $maxLat) {
+            return [
+                'valid' => false,
+                'message' => "Latitude hors limites (Bénin: {$minLat}° - {$maxLat}°)",
+            ];
+        }
+
+        if ($longitude < $minLng || $longitude > $maxLng) {
+            return [
+                'valid' => false,
+                'message' => "Longitude hors limites (Bénin: {$minLng}° - {$maxLng}°)",
+            ];
+        }
+
+        return ['valid' => true, 'message' => 'Coordonnées valides'];
+    }
+
+    /**
+     * Vérifier si la position est récente (moins de X minutes)
+     */
+    public function positionRecente(int $minutes = 5): bool
+    {
+        if (!$this->derniere_position_at) {
+            return false;
+        }
+        return $this->derniere_position_at->diffInMinutes(now()) <= $minutes;
     }
 
     

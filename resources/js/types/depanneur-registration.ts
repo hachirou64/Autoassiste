@@ -73,8 +73,8 @@ export const ZONES_INTERVENTION = [
 
 export const JOURS_SEMAINE = [
     { id: 'lundi', label: 'Lundi', abbrev: 'L' },
-    { id: 'mardi', label: 'Mardi', abbrev: 'Ma' },
-    { id: 'mercredi', label: 'Mercredi', abbrev: 'Me' },
+    { id: 'mardi', label: 'Mardi', abbrev: 'M' },
+    { id: 'mercredi', label: 'Mercredi', abbrev: 'M' },
     { id: 'jeudi', label: 'Jeudi', abbrev: 'J' },
     { id: 'vendredi', label: 'Vendredi', abbrev: 'V' },
     { id: 'samedi', label: 'Samedi', abbrev: 'S' },

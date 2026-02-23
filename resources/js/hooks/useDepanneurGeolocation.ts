@@ -14,10 +14,16 @@ interface UseDepanneurGeolocationOptions {
     maxAccuracy?: number;
     /** Activer la mise à jour automatique (défaut: true) */
     autoUpdate?: boolean;
+    /** État initial du suivi (depuis le serveur) */
+    initialTrackingState?: boolean;
     /** Callback appelé lors d'une mise à jour réussie */
     onLocationUpdate?: (position: GeolocationPosition) => void;
     /** Callback appelé en cas d'erreur */
     onError?: (error: string) => void;
+    /** Callback appelé quand le suivi est démarré */
+    onTrackingStart?: () => void;
+    /** Callback appelé quand le suivi est arrêté */
+    onTrackingStop?: () => void;
 }
 
 interface UseDepanneurGeolocationReturn {
@@ -66,8 +72,9 @@ export function useDepanneurGeolocation({
 
     /**
      * Détecter la position actuelle via l'API Geolocation
+     * Avec retry automatique pour améliorer la précision
      */
-    const detectPosition = useCallback(async () => {
+    const detectPosition = useCallback(async (): Promise<void> => {
         if (!navigator.geolocation) {
             const errMsg = 'La géolocalisation n\'est pas supportée par votre navigateur';
             setError(errMsg);
@@ -78,56 +85,107 @@ export function useDepanneurGeolocation({
         setIsLoading(true);
         setError(null);
 
-        return new Promise<void>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    const newPosition: GeolocationPosition = {
-                        latitude: pos.coords.latitude,
-                        longitude: pos.coords.longitude,
-                        accuracy: pos.coords.accuracy,
-                        timestamp: pos.timestamp,
-                    };
+        // Fonction interne pour tenter d'obtenir une position avec haute précision
+        const getHighAccuracyPosition = (): Promise<GeolocationPosition> => {
+            return new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        const newPosition: GeolocationPosition = {
+                            latitude: pos.coords.latitude,
+                            longitude: pos.coords.longitude,
+                            accuracy: pos.coords.accuracy,
+                            timestamp: pos.timestamp,
+                        };
+                        resolve(newPosition);
+                    },
+                    (err) => {
+                        reject(err);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 15000, // 15 secondes pour la première tentative
+                        maximumAge: 0, // Pas de cache
+                    }
+                );
+            });
+        };
 
+        // Fonction pour obtenir une position avec fallback
+        const getPositionWithRetry = async (): Promise<GeolocationPosition> => {
+            const maxRetries = 3;
+            let lastError: GeolocationPositionError | null = null;
+
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                try {
+                    console.log(`Tentative de géolocalisation ${attempt}/${maxRetries}...`);
+                    const position = await getHighAccuracyPosition();
+                    
                     // Vérifier la précision
-                    if (pos.coords.accuracy > maxAccuracy) {
-                        const warnMsg = `Précision insuffisante: ${Math.round(pos.coords.accuracy)}m (max: ${maxAccuracy}m)`;
-                        setError(warnMsg);
-                        console.warn(warnMsg);
-                        // On continue quand même car mieux vaut avoir une position approximative que rien
-                    }
-
-                    setPosition(newPosition);
-                    onLocationUpdate?.(newPosition);
-                    setIsLoading(false);
-                    resolve();
-                },
-                (err) => {
-                    let errMsg = 'Erreur de géolocalisation';
-                    
-                    switch (err.code) {
-                        case err.PERMISSION_DENIED:
-                            errMsg = 'Permission de géolocalisation refusée. Veuillez activer la localisation.';
-                            break;
-                        case err.POSITION_UNAVAILABLE:
-                            errMsg = 'Position unavailable. Vérifiez votre connexion GPS.';
-                            break;
-                        case err.TIMEOUT:
-                            errMsg = 'Délai de géolocalisation dépassé';
-                            break;
+                    if (position.accuracy && position.accuracy <= maxAccuracy) {
+                        console.log(`Position obtained with accuracy: ${position.accuracy}m`);
+                        return position;
                     }
                     
-                    setError(errMsg);
-                    onError?.(errMsg);
-                    setIsLoading(false);
-                    reject(new Error(errMsg));
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 10000, // 10 secondes
-                    maximumAge: 0, // Pas de cache
+                    // Si la précision n'est pas assez bonne, mais pas catastrophique
+                    if (position.accuracy && position.accuracy <= 5000) {
+                        console.warn(`Accuracy ${position.accuracy}m is not ideal but acceptable`);
+                        // Retourner quand même la position pour ne pas bloquer l'utilisateur
+                        return position;
+                    }
+                    
+                    // Précision trop mauvaise (> 5km), réessayer
+                    if (attempt < maxRetries) {
+                        console.warn(`Bad accuracy (${position.accuracy}m), retrying...`);
+                        await new Promise(resolve => setTimeout(resolve, 2000)); // Attendre 2s
+                    }
+                } catch (err: any) {
+                    lastError = err;
+                    console.error(`Attempt ${attempt} failed:`, err);
+                    if (attempt < maxRetries) {
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
                 }
-            );
-        });
+            }
+
+            // Si toutes les tentatives ont échoué, throw la dernière erreur
+            throw lastError || new Error('Impossible d\'obtenir la position');
+        };
+
+        try {
+            const newPosition = await getPositionWithRetry();
+
+            // Vérifier la précision finale
+            if (newPosition.accuracy && newPosition.accuracy > maxAccuracy) {
+                const warnMsg = `Précision insuffisante: ${Math.round(newPosition.accuracy)}m (max: ${maxAccuracy}m). Veuillez vous déplacer vers un endroit dégagé ou activer le GPS haute précision.`;
+                setError(warnMsg);
+                console.warn(warnMsg);
+                // On continue quand même car mieux vaut avoir une position approximative que rien
+            }
+
+            setPosition(newPosition);
+            onLocationUpdate?.(newPosition);
+            setIsLoading(false);
+        } catch (err: any) {
+            let errMsg = 'Erreur de géolocalisation';
+            
+            switch (err?.code) {
+                case err?.PERMISSION_DENIED:
+                    errMsg = 'Permission de géolocalisation refusée. Veuillez activer la localisation dans les paramètres de votre navigateur.';
+                    break;
+                case err?.POSITION_UNAVAILABLE:
+                    errMsg = 'Position non disponible. Vérifiez que le GPS est activé et que vous avez une connexion internet.';
+                    break;
+                case err?.TIMEOUT:
+                    errMsg = 'Délai de géolocalisation dépassé. Réessayez dans un endroit avec meilleure réception GPS.';
+                    break;
+                default:
+                    errMsg = err?.message || 'Erreur de géolocalisation. Assurez-vous que le GPS est activé.';
+            }
+            
+            setError(errMsg);
+            onError?.(errMsg);
+            setIsLoading(false);
+        }
     }, [maxAccuracy, onLocationUpdate, onError]);
 
     /**
@@ -174,7 +232,15 @@ export function useDepanneurGeolocation({
                     // Too Many Requests - attendre un peu
                     console.log('Rate limited par le serveur');
                 }
-                setError(data.message || 'Erreur lors de la mise à jour de la position');
+                
+                // Gérer l'erreur de précision insuffisante (422)
+                if (response.status === 422 && data.error === 'Précision insuffisante') {
+                    const precisionMsg = `Précision GPS insuffisante: ${data.accuracy}m. Veuillez vous déplacer vers un endroit dégagé et activer le GPS haute précision.`;
+                    setError(precisionMsg);
+                    console.warn(precisionMsg);
+                } else {
+                    setError(data.message || 'Erreur lors de la mise à jour de la position');
+                }
                 return false;
             }
         } catch (err) {

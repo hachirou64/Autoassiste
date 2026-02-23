@@ -123,6 +123,7 @@ class DemoDataSeeder extends Seeder
         // Créer quelques dépanneurs de test
         $this->command->info('Création des dépanneurs de test...');
 
+        // Coordonnées pour les tests: (6.517555, 2.349466)
         $depanneursData = [
             [
                 'promoteur_name' => 'Koffi Ahoué',
@@ -131,6 +132,7 @@ class DemoDataSeeder extends Seeder
                 'email' => 'contact@autorepare.com',
                 'phone' => '+229 60 11 22 33',
                 'type_vehicule' => 'les_deux',
+                'localisation_actuelle' => '6.517555,2.349466', // Zone de test
             ],
             [
                 'promoteur_name' => 'Patrice Lokonon',
@@ -139,6 +141,7 @@ class DemoDataSeeder extends Seeder
                 'email' => 'info@depannageexpress.com',
                 'phone' => '+229 60 44 55 66',
                 'type_vehicule' => 'voiture',
+                'localisation_actuelle' => '6.517555,2.349466', // Zone de test
             ],
             [
                 'promoteur_name' => 'Alain Chitou',
@@ -147,6 +150,17 @@ class DemoDataSeeder extends Seeder
                 'email' => 'contact@mecaniquepro.com',
                 'phone' => '+229 60 77 88 99',
                 'type_vehicule' => 'moto',
+                'localisation_actuelle' => '6.4963,2.6289', // Zone Porto-Novo
+            ],
+            // Nouveau dépanneur pour test de démonstration
+            [
+                'promoteur_name' => 'Demo Testeur',
+                'etablissement_name' => 'Dépanneur Test',
+                'IFU' => '0123456789015',
+                'email' => 'test@depanneur.com',
+                'phone' => '+229 60 00 00 00',
+                'type_vehicule' => 'les_deux',
+                'localisation_actuelle' => '6.517555,2.349466', // Coordonnées exactes du client
             ],
         ];
 
@@ -159,7 +173,6 @@ class DemoDataSeeder extends Seeder
                     ...$depanneurData,
                     'status' => 'disponible',
                     'isActive' => true,
-                    'localisation_actuelle' => '6.3661,2.4183', // Coordonnées par défaut (Cotonou)
                 ]);
                 
                 // Créer le compte utilisateur associé
@@ -179,8 +192,14 @@ class DemoDataSeeder extends Seeder
                 $depanneurs[] = $depanneur;
                 $this->command->info("  Dépanneur créé: {$depanneurData['etablissement_name']}");
             } else {
+                // Mettre à jour les coordonnées si le dépanneur existe déjà
+                $depanneur->update([
+                    'localisation_actuelle' => $depanneurData['localisation_actuelle'],
+                    'status' => 'disponible',
+                    'isActive' => true,
+                ]);
                 $depanneurs[] = $depanneur;
-                $this->command->warn("  Dépanneur existant: {$depanneurData['etablissement_name']}");
+                $this->command->warn("  Dépanneur existant: {$depanneurData['etablissement_name']} - coordonnées mises à jour");
             }
         }
 
@@ -235,6 +254,7 @@ class DemoDataSeeder extends Seeder
         $this->command->info('Clients: ' . count($clients));
         $this->command->info('Dépanneurs: ' . count($depanneurs));
         $this->command->info('Zones: ' . $zones->count());
+        $this->command->info('Coordonnées des dépanneurs: 6.517555, 2.349466');
         $this->command->info('=');
     }
 }

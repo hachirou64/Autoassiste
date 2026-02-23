@@ -39,51 +39,6 @@ import {
 } from 'lucide-react';
 import type { DepanneurProfile, ZoneIntervention, HorairesDisponibilite } from '@/types/depanneur';
 
-// Données mockées
-const mockProfile: DepanneurProfile = {
-    id: 1,
-    promoteur_name: 'Kouami Toto',
-    etablissement_name: 'Garage du Centre',
-    IFU: '123456789012345',
-    email: 'contact@garagecentre.bj',
-    phone: '+229 90 00 11 11',
-    photo: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Kouami',
-    status: 'disponible',
-    isActive: true,
-    createdAt: '2023-01-15',
-    
-    zones: [
-        { id: 1, name: 'Cotonou Centre', city: 'Cotonou', priorite: 1, isActive: true },
-        { id: 2, name: 'Cotonou Nord', city: 'Cotonou', priorite: 2, isActive: true },
-        { id: 3, name: 'Calavi', city: 'Abomey-Calavi', priorite: 3, isActive: true },
-        { id: 4, name: 'Porto-Novo', city: 'Porto-Novo', priorite: 4, isActive: false },
-    ],
-    
-    horaires: [
-        { jour: 'lundi', debut: '08:00', fin: '18:00', estActif: true },
-        { jour: 'mardi', debut: '08:00', fin: '18:00', estActif: true },
-        { jour: 'mercredi', debut: '08:00', fin: '18:00', estActif: true },
-        { jour: 'jeudi', debut: '08:00', fin: '18:00', estActif: true },
-        { jour: 'vendredi', debut: '08:00', fin: '18:00', estActif: true },
-        { jour: 'samedi', debut: '09:00', fin: '14:00', estActif: true },
-        { jour: 'dimanche', debut: '', fin: '', estActif: false },
-    ],
-    
-    preferences: {
-        notifications_sonores: true,
-        notifications_sms: true,
-        notifications_email: false,
-        auto_accept: false,
-        rayon_prefere: 10,
-    },
-    
-    statistiques: {
-        total_interventions: 156,
-        note_moyenne: 4.7,
-        depuis: 'janvier 2023',
-    },
-};
-
 const JOURS_SEMAINE = [
     { key: 'lundi', label: 'Lundi' },
     { key: 'mardi', label: 'Mardi' },
@@ -103,14 +58,26 @@ interface DepanneurProfileProps {
 }
 
 export function DepanneurProfile({
-    profile = mockProfile,
+    profile,
     onSaveProfile,
     onSavePreferences,
     onChangePassword,
     onLogout,
 }: DepanneurProfileProps) {
+    // Valeur par défaut si profile est undefined
+    const defaultProfile: DepanneurProfile = {
+        id: 0,
+        promoteur_name: '',
+        etablissement_name: '',
+        email: '',
+        phone: '',
+        status: 'disponible',
+        isActive: false,
+    };
+    
+    const effectiveProfile = profile || defaultProfile;
     const [isEditing, setIsEditing] = useState(false);
-    const [editedProfile, setEditedProfile] = useState(profile);
+    const [editedProfile, setEditedProfile] = useState(effectiveProfile);
 
     const handleSave = () => {
         onSaveProfile?.(editedProfile);
@@ -118,7 +85,7 @@ export function DepanneurProfile({
     };
 
     const handleCancel = () => {
-        setEditedProfile(profile);
+        setEditedProfile(effectiveProfile);
         setIsEditing(false);
     };
 
@@ -130,9 +97,9 @@ export function DepanneurProfile({
                     <div className="flex flex-col md:flex-row items-center gap-6">
                         <div className="relative">
                             <Avatar className="w-24 h-24">
-                                <AvatarImage src={profile.photo} alt={profile.etablissement_name} />
+<AvatarImage src={effectiveProfile.photo} alt={effectiveProfile.etablissement_name} />
                                 <AvatarFallback className="bg-blue-500/20 text-blue-400 text-2xl">
-                                    {profile.etablissement_name.substring(0, 2).toUpperCase()}
+                                    {effectiveProfile.etablissement_name?.substring(0, 2).toUpperCase() || 'DP'}
                                 </AvatarFallback>
                             </Avatar>
                             <Button

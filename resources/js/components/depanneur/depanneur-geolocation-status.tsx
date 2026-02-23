@@ -18,11 +18,17 @@ interface DepanneurGeolocationStatusProps {
     showControls?: boolean;
     /** Callback quand la position est mise à jour */
     onPositionUpdate?: (position: { lat: number; lng: number }) => void;
+    /** État initial du suivi de géolocalisation (depuis le serveur) */
+    initialTrackingState?: boolean;
+    /** Indique si la position du serveur est récente (moins de 5 min) */
+    isServerPositionRecent?: boolean;
 }
 
 export function DepanneurGeolocationStatus({
     showControls = true,
     onPositionUpdate,
+    initialTrackingState = false,
+    isServerPositionRecent = false,
 }: DepanneurGeolocationStatusProps) {
     const {
         position,
@@ -37,7 +43,8 @@ export function DepanneurGeolocationStatus({
     } = useDepanneurGeolocation({
         updateInterval: 30000, // 30 secondes
         maxAccuracy: 1000, // 1km
-        autoUpdate: false, // On start manuellement
+        autoUpdate: false, // On start manuellement par défaut
+        initialTrackingState: initialTrackingState,
         onLocationUpdate: (pos) => {
             onPositionUpdate?.({ lat: pos.latitude, lng: pos.longitude });
         },
@@ -45,6 +52,13 @@ export function DepanneurGeolocationStatus({
             console.error('Geolocation error:', err);
         },
     });
+
+    // Déterminer si le suivi est actif (soit local, soit via le serveur)
+    const isActive = isTracking || (isServerPositionRecent && !error);
+    
+    // Déterminer le texte du bouton et l'action
+    const buttonText = isActive ? 'Désactiver' : 'Activer';
+    const buttonAction = isActive ? stopTracking : startTracking;
 
     // Formater la précision
     const formatAccuracy = (acc: number | null) => {
@@ -80,14 +94,14 @@ export function DepanneurGeolocationStatus({
                     {/* Statut badge */}
                     <Badge 
                         className={
-                            isTracking 
+                            isActive 
                                 ? "bg-green-500/20 text-green-400 border-green-500/30"
                                 : error
                                 ? "bg-red-500/20 text-red-400 border-red-500/30"
                                 : "bg-slate-500/20 text-slate-400 border-slate-500/30"
                         }
                     >
-                        {isTracking ? (
+                        {isActive ? (
                             <>
                                 <span className="w-2 h-2 bg-green-400 rounded-full mr-1.5 animate-pulse" />
                                 Actif
@@ -172,37 +186,24 @@ export function DepanneurGeolocationStatus({
                 {/* Contrôles */}
                 {showControls && (
                     <div className="flex gap-2 pt-2 border-t border-slate-700">
-                        {!isTracking ? (
+                        <Button 
+                            onClick={buttonAction}
+                            className={`flex-1 ${isActive ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
+                            size="sm"
+                        >
+                            <LocateFixed className="h-4 w-4 mr-2" />
+                            {isActive ? 'Désactiver la géolocalisation' : 'Activer la géolocalisation'}
+                        </Button>
+                        {isActive && (
                             <Button 
-                                onClick={startTracking}
-                                className="flex-1 bg-green-600 hover:bg-green-700"
+                                onClick={detectPosition}
+                                variant="outline"
                                 size="sm"
+                                disabled={isLoading}
+                                className="border-slate-600 text-slate-300 hover:bg-slate-700"
                             >
-                                <LocateFixed className="h-4 w-4 mr-2" />
-                                Activer la géolocalisation
+                                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
                             </Button>
-                        ) : (
-                            <>
-                                <Button 
-                                    onClick={detectPosition}
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={isLoading}
-                                    className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700"
-                                >
-                                    <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                                    Actualiser
-                                </Button>
-                                <Button 
-                                    onClick={stopTracking}
-                                    variant="outline"
-                                    size="sm"
-                                    className="border-red-500/30 text-red-400 hover:bg-red-500/10"
-                                >
-                                    <Navigation className="h-4 w-4 mr-2" />
-                                    Arrêter
-                                </Button>
-                            </>
                         )}
                     </div>
                 )}

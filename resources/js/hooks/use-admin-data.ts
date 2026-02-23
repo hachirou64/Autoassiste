@@ -28,6 +28,15 @@ interface DepanneursData {
     };
 }
 
+// Fonction utilitaire pour les options d'authentification
+const getAuthOptions = () => ({
+    credentials: 'include' as RequestCredentials,
+    headers: {
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        'Content-Type': 'application/json',
+    },
+});
+
 // Hook principal pour les données admin
 export function useAdminData() {
     const [data, setData] = useState<AdminData>({
@@ -43,10 +52,11 @@ export function useAdminData() {
         setError(null);
 
         try {
+            const authOptions = getAuthOptions();
             const [statsRes, alertsRes, activitiesRes] = await Promise.all([
-                fetch('/admin/api/stats'),
-                fetch('/admin/api/alerts'),
-                fetch('/admin/api/recent-activities'),
+                fetch('/admin/api/stats', authOptions),
+                fetch('/admin/api/alerts', authOptions),
+                fetch('/admin/api/recent-activities', authOptions),
             ]);
 
             if (!statsRes.ok) throw new Error('Erreur lors du chargement des statistiques');
@@ -113,7 +123,8 @@ export function useAdminClients(initialParams: Partial<PaginationParams> = {}) {
         if (searchRef.current) queryParams.set('search', searchRef.current);
 
         try {
-            const response = await fetch(`/admin/api/clients?${queryParams}`);
+            const authOptions = getAuthOptions();
+            const response = await fetch(`/admin/api/clients?${queryParams}`, authOptions);
 
             if (!response.ok) {
                 throw new Error(`Erreur ${response.status}: Erreur lors du chargement des clients`);
@@ -227,7 +238,8 @@ export function useAdminDepanneurs(initialParams: Partial<PaginationParams> & { 
         if (statusFilter) queryParams.set('status', statusFilter);
 
         try {
-            const response = await fetch(`/admin/api/depanneurs?${queryParams}`);
+            const authOptions = getAuthOptions();
+            const response = await fetch(`/admin/api/depanneurs?${queryParams}`, authOptions);
 
             if (!response.ok) {
                 throw new Error('Erreur lors du chargement des depanneurs');
@@ -312,7 +324,8 @@ export function useApi<T>(
         setError(null);
 
         try {
-            const response = await fetch(fetchUrl || url);
+            const authOptions = getAuthOptions();
+            const response = await fetch(fetchUrl || url, authOptions);
 
             if (!response.ok) {
                 throw new Error(`Erreur HTTP: ${response.status}`);
@@ -385,7 +398,8 @@ export function useAdminDemandes(initialParams: Partial<PaginationParams> & { st
         if (filters.status) queryParams.set('status', filters.status);
 
         try {
-            const response = await fetch(`/admin/api/demandes?${queryParams}`);
+            const authOptions = getAuthOptions();
+            const response = await fetch(`/admin/api/demandes?${queryParams}`, authOptions);
 
             if (!response.ok) {
                 throw new Error(`Erreur ${response.status}: Erreur lors du chargement des demandes`);

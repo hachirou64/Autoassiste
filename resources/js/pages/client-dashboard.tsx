@@ -63,9 +63,9 @@ const mockStats: ClientStats = {
 };
 
 const mockNotifications: ClientNotification[] = [
-    { id: 1, type: 'depanneur_en_route', titre: 'Dépanneur en route', message: 'Kouami Toto est en route vers votre position', isRead: false, createdAt: new Date().toISOString() },
+    { id: 1, type: 'depannage_en_route', titre: 'Dépanneur en route', message: 'Kouami Toto est en route vers votre position', isRead: false, createdAt: new Date().toISOString() },
     { id: 2, type: 'demande_acceptee', titre: 'Demande acceptée', message: 'Votre demande DEM-2024-001 a été acceptée', isRead: false, createdAt: new Date(Date.now() - 300000).toISOString() },
-    { id: 3, type: 'terminee', titre: 'Intervention terminée', message: 'L\'intervention DEM-2023-156 est terminée', isRead: true, createdAt: new Date(Date.now() - 86400000).toISOString() },
+    { id: 3, type: 'intervention_terminee', titre: 'Intervention terminée', message: 'L\'intervention DEM-2023-156 est terminée', isRead: true, createdAt: new Date(Date.now() - 86400000).toISOString() },
 ];
 
 const mockHistory: InterventionHistoryItem[] = [
@@ -223,8 +223,64 @@ export default function ClientDashboard() {
         fetchDashboardData();
     }, [fetchDashboardData]);
 
-    const handleNewDemande = (data: { typePanne: string; description: string; localisation: string }) => {
+    // Fonction pour gérer la soumission d'une nouvelle demande
+    const handleNewDemande = async (data: { vehicleType: string; typePanne: string; description: string; localisation: string; depanneurId?: number }) => {
         console.log('Nouvelle demande:', data);
+        
+        // Extraire les coordonnées de la localisation (format: "lat,lng")
+        const coords = data.localisation.split(',');
+        const latitude = coords[0]?.trim();
+        const longitude = coords[1]?.trim();
+        
+        if (!latitude || !longitude) {
+            alert('Coordonnées GPS invalides. Veuillez sélectionner une position sur la carte.');
+            return;
+        }
+        
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            
+            const response = await fetch('/api/demandes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    vehicleType: data.vehicleType,
+                    typePanne: data.typePanne,
+                    description: data.description,
+                    localisation: data.localisation,
+                }),
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok && result.success) {
+                // Demande créée avec succès
+                alert(`Demande créée avec succès!\nCode: ${result.demande?.codeDemande || 'N/A'}`);
+                
+                // Recharger les données du dashboard pour voir la nouvelle demande
+                fetchDashboardData();
+                
+                // Revenir à l'accueil
+                setActiveTab('home');
+            } else {
+                // Erreur lors de la création
+                const errorMessage = result.message || 'Erreur lors de la création de la demande';
+                alert(errorMessage);
+                
+                // Si erreur d'authentification, rediriger vers login
+                if (response.status === 401 || response.status === 403) {
+                    window.location.href = '/login';
+                }
+            }
+        } catch (error) {
+            console.error('Erreur lors de la création de la demande:', error);
+            alert('Erreur de connexion. Veuillez réessayer.');
+        }
     };
 
     const handleViewDetails = (item: InterventionHistoryItem) => {
@@ -284,7 +340,7 @@ export default function ClientDashboard() {
 
         switch (activeTab) {
             case 'home':
-                return <HomeTab data={data} />;
+                return <HomeTab data={data} onRefresh={fetchDashboardData} />;
             case 'new-demande':
                 return <NewDemandeTab onSubmit={handleNewDemande} />;
             case 'demandes':
@@ -436,7 +492,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 // Tab: Accueil
-function HomeTab({ data }: { data: DashboardData }) {
+function HomeTab({ data, onRefresh }: { data: DashboardData; onRefresh?: () => void }) {
     return (
         <div className="space-y-6">
             <ClientStatsCards stats={data.stats} />
@@ -451,22 +507,90 @@ function HomeTab({ data }: { data: DashboardData }) {
                             console.log('Aucun numéro de téléphone disponible');
                         }
                     }}
-                    onAnnuler={() => console.log('Annuler')}
+                    onAnnuler={async () => {
+                        if (!data.stats.demande_active) return;
+                        
+                        const demandeId = data.stats.demande_active.id;
+                        if (!confirm('Êtes-vous sûr de vouloir annuler cette demande ?')) {
+                            return;
+                        }
+                        
+                        try {
+                            const response = await fetch(`/api/demandes/${demandeId}/cancel`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                                },
+                                credentials: 'include',
+                            });
+                            
+                            const result = await response.json();
+                            
+                            if (result.success) {
+                                alert('Demande annulée avec succès');
+                                // Recharger les données du dashboard
+                                if (onRefresh) onRefresh();
+                            } else {
+                                alert(result.message || 'Erreur lors de l\'annulation');
+                            }
+                        } catch (error) {
+                            console.error('Erreur:', error);
+                            alert('Erreur lors de l\'annulation');
+                        }
+                    }}
                 />
             </div>
             <ClientNotifications 
                 notifications={data.notifications.slice(0, 3)}
-                onMarkAsRead={(id) => console.log('Mark as read:', id)}
+                onMarkAsRead={async (id) => {
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                        const response = await fetch(`/api/client/notifications/${id}/read`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken,
+                            },
+                            credentials: 'include',
+                        });
+                        
+                        if (response.ok && onRefresh) {
+                            onRefresh();
+                        }
+                    } catch (error) {
+                        console.error('Erreur lors du marquage de la notification:', error);
+                    }
+                }}
+                onMarkAllAsRead={async () => {
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                        const response = await fetch('/api/client/notifications/read-all', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken,
+                            },
+                            credentials: 'include',
+                        });
+                        
+                        if (response.ok && onRefresh) {
+                            onRefresh();
+                        }
+                    } catch (error) {
+                        console.error('Erreur lors du marquage de toutes les notifications:', error);
+                    }
+                }}
             />
         </div>
     );
 }
 
 // Tab: Nouvelle demande
-function NewDemandeTab({ onSubmit }: { onSubmit: (data: { typePanne: string; description: string; localisation: string }) => void }) {
+function NewDemandeTab({ onSubmit }: { onSubmit?: (data: any) => void }) {
     return (
         <div className="max-w-2xl mx-auto space-y-6">
-            <DemandeForm onSubmit={onSubmit} />
+            <DemandeForm onSubmit={onSubmit || (() => {})} />
         </div>
     );
 }

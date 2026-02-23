@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Demande;
 use App\Models\Depanneur;
+use App\Models\Zone;
 use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class DemandeController extends Controller
 {
     
-    protected int $defaultRadius = 10;
+    protected int $defaultRadius = 25; // Augmenté à 25km pour couvrir une zone plus large au Bénin
 
     
     protected int $maxDepanneursToNotify = 5;
@@ -51,6 +52,21 @@ class DemandeController extends Controller
             ], 403);
         }
 
+        // Charger la relation client si pas déjà chargée
+        if (!$user->relationLoaded('client')) {
+            $user->load('client');
+        }
+
+        // Vérifier que l'utilisateur a un compte client lié
+        if (!$user->client) {
+            \Log::error('Client not found for user', ['user_id' => $user->id, 'email' => $user->email]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Aucun compte client lié à cet utilisateur. Veuillez contacter le support.',
+                'code' => 'NO_CLIENT_ACCOUNT'
+            ], 400);
+        }
+
         // Validation des données
         $validated = $request->validate([
             'vehicleType' => 'required|string|in:voiture,moto,camion,utilitaire',
@@ -79,7 +95,7 @@ class DemandeController extends Controller
                 'vehicle_type' => $validated['vehicleType'],
                 'typePanne' => $validated['typePanne'],
                 'status' => 'en_attente',
-                'id_client' => $request->user()->client->id,
+                'id_client' => $user->client->id,
             ]);
 
             // Trouver les dépanneurs à proximité
@@ -340,42 +356,31 @@ class DemandeController extends Controller
     private function findNearbyDepanneurs(float $latitude, float $longitude, int $radius = 10, string $vehicleType = 'voiture')
     {
         try {
-            // Rechercher les dépanneurs disponibles et actifs
-            // Filtres: status = disponible, isActive = true, type_vehicule compatible
-            $depanneurs = Depanneur::where('isActive', true)
-                ->where('status', 'disponible')
-                ->forVehicleType($vehicleType)
-                ->limit(50)
+            // Requête avec formule de Haversine et filtres stricts
+            $depanneurs = Depanneur::disponible()  // status = disponible ET isActive = true
+                ->forVehicleType($vehicleType)       // Filtrer par type de véhicule
+                ->whereNotNull('localisation_actuelle')
+                ->where('localisation_actuelle', '!=', '')
+                ->select('depanneurs.*')
+                ->selectRaw(
+                    // Calcul de la distance en km avec la formule de Haversine
+                    '(6371 * acos(cos(radians(?)) * cos(radians(SUBSTRING_INDEX(localisation_actuelle, ",", 1))) *
+                    cos(radians(SUBSTRING_INDEX(localisation_actuelle, ",", -1)) - radians(?)) +
+                    sin(radians(?)) * sin(radians(SUBSTRING_INDEX(localisation_actuelle, ",", 1))))) AS distance',
+                    [$latitude, $longitude, $latitude]
+                )
+                ->having('distance', '<', $radius)  // Filtrer par rayon
+                ->orderBy('distance')               // Trier par distance croissante
+                ->limit($this->maxDepanneursToNotify)
                 ->get();
                 
-            // Calculer la distance manuellement en PHP pour plus de fiabilité
-            $depanneursWithDistance = $depanleurs->map(function ($depanneur) use ($latitude, $longitude) {
-                $coords = $depanneur->coordinates;
-                if ($coords['lat'] && $coords['lng']) {
-                    $distance = $this->calculateDistance(
-                        $latitude, 
-                        $longitude, 
-                        $coords['lat'], 
-                        $coords['lng']
-                    );
-                    $depanneur->distance = $distance;
-                } else {
-                    // Si pas de coordonnées, attribuer une distance de 0 pour l'inclure
-                    // (le dépanneur devra mettre à jour sa position)
-                    $depanneur->distance = 0;
-                }
-                return $depanneur;
-            });
-            
-            // Filtrer par rayon (inclure ceux sans coordonnées avec distance 0)
-            return $depanneursWithDistance
-                ->filter(fn($d) => $d->distance <= $radius)
-                ->sortBy('distance')
-                ->take($this->maxDepanneursToNotify);
+            \Log::info('Dépanneurs trouvés avec Haversine: ' . $depanneurs->count() . ' pour vehicleType: ' . $vehicleType);
+                
+            return $depanneurs;
                 
         } catch (\Exception $e) {
-            \Log::error('Error finding nearby depanneurs: ' . $e->getMessage());
-            // Retourner une collection vide en cas d'erreur
+            \Log::error('Error finding nearby depaneurs with Haversine: ' . $e->getMessage());
+            // Fallback: retourner une collection vide en cas d'erreur
             return collect([]);
         }
     }
@@ -406,20 +411,24 @@ class DemandeController extends Controller
      */
     public function getNearbyDepanneurs(Request $request)
     {
+        // Accepter vehicle_type ou vehicleType
         $validated = $request->validate([
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
-            'vehicle_type' => 'required|in:voiture,moto',
+            'vehicle_type' => 'nullable|string',
+            'vehicleType' => 'nullable|string',
             'radius' => 'nullable|integer|min:1|max:50',
         ]);
 
+        // Utiliser vehicleType ou vehicle_type selon ce qui est envoyé
+        $vehicleType = $validated['vehicleType'] ?? $validated['vehicle_type'] ?? 'voiture';
         $radius = $validated['radius'] ?? 10;
         
         $depanneurs = $this->findNearbyDepanneurs(
             (float)$validated['latitude'],
             (float)$validated['longitude'],
             $radius,
-            $validated['vehicle_type']
+            $vehicleType
         );
 
         return response()->json([
@@ -448,6 +457,75 @@ class DemandeController extends Controller
                 ];
             }),
         ]);
+    }
+
+    /**
+     * API: Annuler une demande (client)
+     */
+    public function cancel(Request $request, $id)
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vous devez être connecté.',
+            ], 401);
+        }
+
+        $demande = Demande::findOrFail($id);
+
+        // Vérifier que l'utilisateur est le propriétaire de la demande
+        if (!$user->client || $demande->id_client !== $user->client->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Accès non autorisé. Vous n\'êtes pas le propriétaire de cette demande.',
+            ], 403);
+        }
+
+        // Vérifier que la demande peut être annulée (statut en_attente uniquement)
+        if ($demande->status !== 'en_attente') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cette demande ne peut plus être annulée. Statut actuel: ' . $demande->status,
+            ], 400);
+        }
+
+        try {
+            // Mettre à jour le statut
+            $demande->update(['status' => 'annulee']);
+
+            // Notifier le dépanneur si une demande était acceptée
+            if ($demande->id_depanneur) {
+                Notification::create([
+                    'message' => 'La demande ' . $demande->codeDemande . ' a été annulée par le client',
+                    'type' => 'demande_annulee',
+                    'id_depanneur' => $demande->id_depanneur,
+                    'id_demande' => $demande->id,
+                ]);
+
+                // Remettre le dépanneur en disponible
+                $depanneur = Depanneur::find($demande->id_depanneur);
+                if ($depanneur && $depanneur->status === 'occupe') {
+                    $depanneur->update(['status' => 'disponible']);
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Demande annulée avec succès.',
+                'demande' => [
+                    'id' => $demande->id,
+                    'codeDemande' => $demande->codeDemande,
+                    'status' => $demande->status,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'annulation: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**

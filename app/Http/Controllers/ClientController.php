@@ -17,6 +17,12 @@ class ClientController extends Controller
         $this->middleware(function ($request, $next) {
             $user = auth()->user();
             if (!$user) {
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Vous devez être connecté.',
+                    ], 401);
+                }
                 abort(403, 'Vous devez être connecté.');
             }
             
@@ -27,6 +33,12 @@ class ClientController extends Controller
             
             // Vérifier si l'utilisateur est admin
             if (!$user->isAdmin()) {
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Accès réservé aux administrateurs.',
+                    ], 403);
+                }
                 abort(403, 'Accès réservé aux administrateurs.');
             }
             return $next($request);
@@ -254,6 +266,75 @@ class ClientController extends Controller
     }
 
     /**
+     * Créer un nouveau client (API) - Pour l'admin
+     */
+    public function storeApi(Request $request)
+    {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'fullName' => 'required|string|max:255',
+            'email' => 'required|email|unique:clients,email',
+            'phone' => 'required|string|max:20',
+            'password' => 'required|min:6|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Données invalides.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            // Récupérer le type de compte "Client"
+            $typeCompteClient = \App\Models\TypeCompte::where('name', 'Client')->first();
+
+            // Si le type de compte n'existe pas, créer le client quand même sans utilisateur lié
+            if (!$typeCompteClient) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erreur de configuration: Type de compte "Client" non trouvé. Veuillez contacter l\'administrateur système.',
+                ], 500);
+            }
+
+            // Créer le profil client
+            $client = Client::create([
+                'fullName' => $request->fullName,
+                'email' => $request->email,
+                'phone' => $request->phone,
+            ]);
+
+            // Créer le compte utilisateur associé
+            $utilisateur = Utilisateur::create([
+                'fullName' => $request->fullName,
+                'email' => $request->email,
+                'password' => $request->password,
+                'id_type_compte' => $typeCompteClient->id,
+                'id_client' => $client->id,
+                'email_verified' => true, // Créé par admin = vérifié
+                'isActive' => true,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Client créé avec succès.',
+                'client' => [
+                    'id' => $client->id,
+                    'fullName' => $client->fullName,
+                    'email' => $client->email,
+                    'phone' => $client->phone,
+                ],
+            ], 201);
+        } catch (\Exception $e) {
+            \Log::error('Erreur création client API: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la création : ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Mettre à jour un client (API)
      */
     public function updateApi(Request $request, Client $client)
@@ -301,10 +382,11 @@ class ClientController extends Controller
     }
 
     /**
-     * Supprimer un client (API)
+     * Supprimer un client (API) - Suppression logique (soft delete)
      */
     public function destroyApi(Client $client)
     {
+        // Vérifier qu'il n'a pas de demandes en cours
         if ($client->demandes()->whereIn('status', ['en_attente', 'acceptee', 'en_cours'])->exists()) {
             return response()->json([
                 'success' => false,
@@ -312,26 +394,49 @@ class ClientController extends Controller
             ], 400);
         }
 
-        DB::beginTransaction();
-        
         try {
+            // Suppression logique (soft delete)
+            $client->delete();
+
+            // Si l'utilisateur associé existe, le supprimer aussi logiquement
             if ($client->utilisateur) {
                 $client->utilisateur->delete();
             }
 
-            $client->delete();
-
-            DB::commit();
-
             return response()->json([
                 'success' => true,
-                'message' => 'Client supprimé avec succès.',
+                'message' => 'Client supprimé avec succès (suppression logique).',
             ]);
         } catch (\Exception $e) {
-            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la suppression : ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Restaurer un client supprimé (API)
+     */
+    public function restoreApi(Client $client)
+    {
+        try {
+            // Restaurer le client
+            $client->restore();
+
+            // Restaurer l'utilisateur associé si existant
+            if ($client->utilisateur) {
+                $client->utilisateur->restore();
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Client restauré avec succès.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la restauration : ' . $e->getMessage(),
             ], 500);
         }
     }

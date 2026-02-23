@@ -8,11 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 
 class Depanneur extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'depanneurs';
 
@@ -37,6 +38,9 @@ class Depanneur extends Model
         'disponibilite',       // Disponibilité
         'jours_travail',       // Jours de travail (JSON array)
         'numero_mobile_money', // Numéro Mobile Money
+        // Champs prix
+        'price_min',           // Prix minimum d'intervention
+        'price_max',           // Prix maximum d'intervention
     ];
 
    
@@ -115,6 +119,8 @@ class Depanneur extends Model
     
     public function scopeForVehicleType($query, string $vehicleType)
     {
+        // Accepter tous les types de véhicules: voiture, moto, 
+        // Les dépanneurs avec 'les_deux' peuvent traiter tous les types
         return $query->whereIn('type_vehicule', [$vehicleType, self::VEHICULE_LES_DEUX]);
     }
 

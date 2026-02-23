@@ -49,13 +49,16 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
     
 // Clients API
     Route::get('/api/clients', [App\Http\Controllers\DashboardController::class, 'clientsApi'])->name('admin.api.clients');
+    Route::post('/api/clients', [App\Http\Controllers\ClientController::class, 'storeApi'])->name('admin.api.clients.store');
     Route::get('/api/clients/{client}', [App\Http\Controllers\ClientController::class, 'showApi'])->name('admin.api.clients.show');
     Route::put('/api/clients/{client}', [App\Http\Controllers\ClientController::class, 'updateApi'])->name('admin.api.clients.update');
     Route::delete('/api/clients/{client}', [App\Http\Controllers\ClientController::class, 'destroyApi'])->name('admin.api.clients.destroy');
+    Route::post('/api/clients/{client}/restore', [App\Http\Controllers\ClientController::class, 'restoreApi'])->name('admin.api.clients.restore');
     
     // Dépanneurs API
     Route::get('/api/depanneurs', [App\Http\Controllers\DashboardController::class, 'depanneursApi'])->name('admin.api.depanneurs');
     Route::get('/api/depanneurs/pending', [App\Http\Controllers\DashboardController::class, 'depanneursEnAttente'])->name('admin.api.depanneurs.pending');
+    Route::post('/api/depanneurs', [App\Http\Controllers\DepanneurController::class, 'storeApi'])->name('admin.api.depanneurs.store');
     
 // Activation/Désactivation compte dépanneur (Admin)
     Route::post('/api/depanneurs/{depanneur}/toggle-status', [App\Http\Controllers\DepanneurController::class, 'toggleStatus'])->name('admin.depanneur.toggle-status');
@@ -65,6 +68,7 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
     Route::put('/api/depanneurs/{depanneur}', [App\Http\Controllers\DepanneurController::class, 'update'])->name('admin.depanneur.update');
     Route::post('/api/depanneurs/{depanneur}/validate-ifu', [App\Http\Controllers\DepanneurController::class, 'validateIFU'])->name('admin.depanneur.validate-ifu');
     Route::delete('/api/depanneurs/{depanneur}', [App\Http\Controllers\DepanneurController::class, 'destroy'])->name('admin.depanneur.destroy');
+    Route::post('/api/depanneurs/{depanneur}/restore', [App\Http\Controllers\DepanneurController::class, 'restore'])->name('admin.depanneur.restore');
     
     // Demandes API
     Route::get('/api/demandes', [App\Http\Controllers\DashboardController::class, 'demandes'])->name('admin.api.demandes');
@@ -171,6 +175,15 @@ Route::prefix('api/demandes')->middleware(['auth'])->group(function () {
 
 // API Route pour obtenir les dépanneurs disponibles proches
 Route::get('/api/depanneurs/nearby', [App\Http\Controllers\DemandeController::class, 'getNearbyDepanneurs'])->name('api.depanneurs.nearby');
+
+// Routes Client - Notifications
+Route::prefix('api/client')->middleware(['auth'])->group(function () {
+    // Notifications
+    Route::get('/notifications', [App\Http\Controllers\NotificationController::class, 'indexApi'])->name('client.api.notifications');
+    Route::post('/notifications/{notification}/read', [App\Http\Controllers\NotificationController::class, 'markAsReadApi'])->name('client.api.notifications.read');
+    Route::post('/notifications/read-all', [App\Http\Controllers\NotificationController::class, 'markAllAsReadApi'])->name('client.api.notifications.read-all');
+    Route::get('/notifications/unread-count', [App\Http\Controllers\NotificationController::class, 'unreadCountApi'])->name('client.api.notifications.unread-count');
+});
 
 // Route Dépanneur Dashboard (protégée par auth)
 Route::get('/depanneur/dashboard', [App\Http\Controllers\DashboardController::class, 'depanneurDashboard'])->name('depanneur.dashboard')->middleware('auth');

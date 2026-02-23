@@ -33,6 +33,7 @@ class Demande extends Model
         'completedAt',         // Date de completion
         'id_client',           // FK client
         'id_depanneur',        // FK dépanneur (nullable)
+        'id_zone',             // FK zone géographique
     ];
 
     protected $casts = [
@@ -98,6 +99,14 @@ class Demande extends Model
     public function interventions(): HasMany
     {
         return $this->hasMany(Intervention::class, 'id_demande');
+    }
+
+    /**
+     * Relation avec la zone géographique
+     */
+    public function zone(): BelongsTo
+    {
+        return $this->belongsTo(Zone::class, 'id_zone');
     }
 
     public function interventionActive(): HasOne

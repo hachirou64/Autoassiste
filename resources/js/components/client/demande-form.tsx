@@ -180,8 +180,14 @@ export function DemandeForm({ onSubmit, isLoading = false }: DemandeFormProps) {
 
             if (response.success) {
                 setSubmitStatus('success');
-                // Appeler le callback parent avec les données
-                onSubmit(apiData);
+                // Appeler le callback parent avec les données de la réponse (demande id et code)
+                onSubmit({
+                    demande: {
+                        id: response.demande?.id || Date.now(),
+                        codeDemande: response.demande?.codeDemande || `DEM-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 999)).padStart(3, '0')}`,
+                        status: response.demande?.status || 'en_attente'
+                    }
+                });
                 return response;
             } else {
                 setSubmitStatus('error');
@@ -204,19 +210,22 @@ export function DemandeForm({ onSubmit, isLoading = false }: DemandeFormProps) {
             if (import.meta.env.DEV || error.message.includes('network') || error.message.includes('fetch')) {
                 console.log('Mode développement: simulation de la demande');
                 setSubmitStatus('success');
-                // Appeler le callback avec des données simulées
+                // Générer un code de demande simulé
+                const simCodeDemande = `DEM-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 999)).padStart(3, '0')}`;
+                const simId = Date.now();
+                // Appeler le callback avec les données simulées (id et codeDemande)
                 onSubmit({
                     demande: {
-                        id: Date.now(),
-                        codeDemande: `DEM-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 999)).padStart(3, '0')}`,
+                        id: simId,
+                        codeDemande: simCodeDemande,
                         status: 'en_attente'
                     }
                 });
                 return {
                     success: true,
                     demande: {
-                        id: Date.now(),
-                        codeDemande: `DEM-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 999)).padStart(3, '0')}`,
+                        id: simId,
+                        codeDemande: simCodeDemande,
                         status: 'en_attente'
                     }
                 };

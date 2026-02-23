@@ -494,35 +494,130 @@ class DepanneurController extends Controller
     }
 
     /**
-     * Supprimer un dépanneur
+     * Supprimer un dépanneur - Suppression logique (soft delete)
      */
     public function destroy(Depanneur $depanneur)
     {
         try {
-            // Supprimer l'utilisateur associé
+            // Supprimer logiquement l'utilisateur associé
             if ($depanneur->utilisateur) {
                 $depanneur->utilisateur->delete();
             }
 
-            // Supprimer les relations
-            $depanneur->zones()->detach();
-            $depanneur->demandes()->delete();
-            $depanneur->interventions()->delete();
-            $depanneur->notifications()->delete();
-            $depanneur->services()->delete();
-
-            // Supprimer le dépanneur
+            // Supprimer logiquement le dépanneur
             $depanneur->delete();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Dépanneur supprimé avec succès.',
+                'message' => 'Dépanneur supprimé avec succès (suppression logique).',
             ]);
         } catch (\Exception $e) {
             \Log::error('Erreur suppression depanneur: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la suppression.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Restaurer un dépanneur supprimé
+     */
+    public function restore(Depanneur $depanneur)
+    {
+        try {
+            // Restaurer le dépanneur
+            $depanneur->restore();
+
+            // Restaurer l'utilisateur associé si existant
+            if ($depanneur->utilisateur) {
+                $depanneur->utilisateur->restore();
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Dépanneur restauré avec succès.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la restauration.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Créer un nouveau dépanneur (API) - Pour l'admin
+     */
+    public function storeApi(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'fullName' => 'nullable|string|max:255',
+            'email' => 'required|email|unique:depanneurs,email',
+            'phone' => 'required|string|max:20',
+            'promoteur_name' => 'required|string|max:255',
+            'etablissement_name' => 'required|string|max:255',
+            'IFU' => 'required|string|max:50',
+            'adresse' => 'nullable|string|max:500',
+            'type_vehicule' => 'required|in:voiture,moto,les_deux',
+            'password' => 'required|min:6|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Données invalides.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            // Récupérer le type de compte "Depanneur"
+            $depanneurType = TypeCompte::where('name', 'Depanneur')->first();
+
+            // Utiliser fullName s'il est fourni, sinon utiliser promoteur_name
+            $nomComplet = $request->fullName ?: $request->promoteur_name;
+
+            // Créer le dépanneur (actif par défaut car créé par admin)
+            $depanneur = Depanneur::create([
+                'promoteur_name' => $request->promoteur_name,
+                'etablissement_name' => $request->etablissement_name,
+                'IFU' => $request->IFU,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'adresse' => $request->adresse ?? $request->etablissement_name,
+                'status' => 'disponible',
+                'isActive' => true,
+                'type_vehicule' => $request->type_vehicule,
+                'localisation_actuelle' => $request->localisation_actuelle ?? '6.366,2.433', // Cotonou par défaut
+                'jours_travail' => json_encode(['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi']),
+            ]);
+
+            // Créer l'utilisateur associé
+            $user = Utilisateur::create([
+                'fullName' => $nomComplet,
+                'email' => $request->email,
+                'password' => $request->password,
+                'id_type_compte' => $depanneurType->id,
+                'id_depanneur' => $depanneur->id,
+                'email_verified' => true,
+                'isActive' => true,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Dépanneur créé avec succès.',
+                'depanneur' => [
+                    'id' => $depanneur->id,
+                    'etablissement_name' => $depanneur->etablissement_name,
+                    'email' => $depanneur->email,
+                    'phone' => $depanneur->phone,
+                ],
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la création : ' . $e->getMessage(),
             ], 500);
         }
     }

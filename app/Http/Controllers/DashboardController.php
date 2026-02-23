@@ -1005,6 +1005,9 @@ class DashboardController extends Controller
             'interventionEnCours' => $interventionData,
             'notifications' => $notifications,
             'currentStatus' => $depanneur->status,
+            // Nouvelles props pour la géolocalisation dynamique
+            'geolocationActive' => !empty($depanneur->localisation_actuelle),
+            'positionRecente' => $depanneur->positionRecente(5), // Position mise à jour il y a moins de 5 min
         ]);
     }
 
@@ -1148,6 +1151,7 @@ class DashboardController extends Controller
 
     /**
      * Récupérer les demandes disponibles pour le dépanneur
+     * API: GET /api/depanneur/demandes
      */
     public function getDepanneurDemandes()
     {
@@ -1163,18 +1167,60 @@ class DashboardController extends Controller
             return response()->json(['error' => 'Aucun compte dépanneur lié'], 403);
         }
 
-        $zoneIds = $depanneur->zones()->pluck('zones.id')->toArray();
-        $rayon = request()->input('rayon', 50); // km
+        $rayon = request()->input('rayon', 50); // km - rayon par défaut
 
-        $demandes = Demande::enAttente()
-            ->whereIn('id_zone', $zoneIds)
+        // CORRECTION: Supprimer le filtre par zone qui causait le problème
+        // Les demandes avec id_zone NULL n'étaient pas affichées
+        // Maintenant on retourne toutes les demandes en attente, triées par distance
+        // si le dépanneur a sa position géographique définie
+        
+        $demandesQuery = Demande::enAttente()
             ->with(['client'])
             ->orderBy('createdAt', 'desc')
-            ->limit(20)
-            ->get()
-            ->map(fn($d) => $this->formatDemandeForApi($d, $depanneur));
+            ->limit(50);
 
-        return response()->json(['demandes' => $demandes]);
+        $depanneurPosition = null;
+        
+        // Si le dépanneur a une position définie, calculer la distance
+        if ($depanneur->localisation_actuelle) {
+            $depanneurCoords = $depanneur->coordinates;
+            $depanneurPosition = [
+                'latitude' => $depanneurCoords['lat'] ?? null,
+                'longitude' => $depanneurCoords['lng'] ?? null,
+            ];
+            
+            // Ajouter la distance calculée pour chaque demande
+            $demandes = $demandesQuery->get()->map(function($d) use ($depanneur, $depanneurCoords) {
+                // Calculer la distance si la demande a des coordonnées
+                $distance = null;
+                if ($d->latitude && $d->longitude) {
+                    $distance = $this->calculateDistance(
+                        $depanneurCoords['lat'],
+                        $depanneurCoords['lng'],
+                        $d->latitude,
+                        $d->longitude
+                    );
+                }
+                
+                return array_merge(
+                    $this->formatDemandeForApi($d, $depanneur),
+                    ['distance_km' => $distance]
+                );
+            })->filter(function($d) use ($rayon) {
+                // Filtrer par rayon si la distance est disponible
+                return $d['distance_km'] === null || $d['distance_km'] <= $rayon;
+            })->sortBy('distance_km')->take(20)->values();
+        } else {
+            // Pas de position définie, retourner les demandes sans tri par distance
+            $demandes = $demandesQuery->limit(20)->get()
+                ->map(fn($d) => $this->formatDemandeForApi($d, $depanneur));
+        }
+
+        return response()->json([
+            'demandes' => $demandes,
+            'rayon' => $rayon,
+            'depanneur_position' => $depanneurPosition,
+        ]);
     }
 
     /**
@@ -1206,8 +1252,22 @@ class DashboardController extends Controller
         }
 
         // Vérifier que la demande est dans une zone du dépanneur
+        // CORRECTION: Permettre au dépanneur d'accepter la demande si:
+        // 1. La demande n'a pas de zone définie (id_zone est NULL)
+        // 2. Le dépanneur n'a pas de zones assignées (peut accepter toutes les demandes)
+        // 3. La zone de la demande correspond à une des zones du dépanneur
         $zoneIds = $depanneur->zones()->pluck('zones.id')->toArray();
-        if (!in_array($demande->id_zone, $zoneIds)) {
+        
+        // Si la demande n'a pas de zone, on autorise l'acceptation
+        if ($demande->id_zone === null) {
+            // OK - la demande n'a pas de zone, on autorise
+        }
+        // Si le dépanneur n'a pas de zones assignées, on autorise l'acceptation
+        elseif (empty($zoneIds)) {
+            // OK - le dépanneur n'a pas de zones, il peut accepter toutes les demandes
+        }
+        // Sinon, vérifier que la zone de la demande est dans les zones du dépanneur
+        elseif (!in_array($demande->id_zone, $zoneIds)) {
             return response()->json(['error' => 'Cette demande n\'est pas dans votre zone d\'intervention'], 400);
         }
 
@@ -1421,7 +1481,7 @@ class DashboardController extends Controller
         $request = request();
         $latitude = $request->input('latitude');
         $longitude = $request->input('longitude');
-        $accuracy = $request->input('accuracy'); // Optionnel: précision GPS en mètres
+        $accuracy = $request->input('accuracy'); // Précision GPS en mètres
 
         if (!$latitude || !$longitude) {
             return response()->json([
@@ -1430,6 +1490,10 @@ class DashboardController extends Controller
                 'message' => 'Latitude et longitude sont requises'
             ], 400);
         }
+
+        // Convertir les coordonnées si elles sont au format français (virgule comme séparateur décimal)
+        $latitude = $this->convertFrenchDecimal($latitude);
+        $longitude = $this->convertFrenchDecimal($longitude);
 
         // Validation des coordonnées
         $validation = $depanneur->validerPosition((float) $latitude, (float) $longitude);
@@ -1440,6 +1504,19 @@ class DashboardController extends Controller
                 'error' => 'Coordonnées invalides',
                 'message' => $validation['message']
             ], 400);
+        }
+
+        // VALIDATION CRITIQUE: Vérifier la précision GPS
+        // Si la précision est supérieure à 1000m (1km), on refuse la position
+        $maxAccuracy = 1000; // 1km en mètres
+        if ($accuracy && (float) $accuracy > $maxAccuracy) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Précision insuffisante',
+                'message' => "Précision insuffisante: {$accuracy}m (max: {$maxAccuracy}m)",
+                'accuracy' => (float) $accuracy,
+                'required_accuracy' => $maxAccuracy,
+            ], 422); // Unprocessable Entity
         }
 
         // Vérifier le rate limiting (minimum 10 secondes entre les mises à jour)
@@ -1471,6 +1548,25 @@ class DashboardController extends Controller
             ],
             'derniere_position_at' => $depanneur->derniere_position_at->toIsoString(),
         ]);
+    }
+
+    /**
+     * Convertir les coordonnées du format français (virgule) au format standard (point)
+     */
+    private function convertFrenchDecimal($value): string
+    {
+        if ($value === null || $value === '') {
+            return $value;
+        }
+        
+        // Si la valeur contient une virgule comme séparateur décimal
+        // et pas de point (pour éviter de convertir plusieurs fois)
+        if (strpos($value, ',') !== false && strpos($value, '.') === false) {
+            // Remplacer la virgule par un point
+            return str_replace(',', '.', $value);
+        }
+        
+        return $value;
     }
 
     /**

@@ -77,6 +77,9 @@ interface DepanneurDashboardProps {
     } | null;
     notifications: DepanneurNotification[];
     currentStatus: string;
+    // Nouvelles props pour la géolocalisation dynamique
+    geolocationActive?: boolean;
+    positionRecente?: boolean;
     error?: string;
 }
 
@@ -146,6 +149,9 @@ export default function DepanneurDashboard() {
     const handleGeolocationUpdate = useCallback((position: { lat: number; lng: number }) => {
         setCurrentLocation(position);
     }, []);
+    
+    // State pour le suivi de géolocalisation (synchrone avec le hook)
+    const [isGeolocationTracking, setIsGeolocationTracking] = useState(false);
     
     // Polling pour les demandes en temps réel
     const [isPolling, setIsPolling] = useState(false);
@@ -411,6 +417,8 @@ export default function DepanneurDashboard() {
                     interventionStatus={interventionStatus}
                     profile={props.profile}
                     currentLocation={currentLocation}
+                    geolocationActive={props.geolocationActive}
+                    positionRecente={props.positionRecente}
                 />;
             case 'demandes':
                 return (
@@ -495,6 +503,8 @@ export default function DepanneurDashboard() {
                     interventionStatus={interventionStatus}
                     profile={props.profile}
                     currentLocation={currentLocation}
+                    geolocationActive={props.geolocationActive}
+                    positionRecente={props.positionRecente}
                 />;
         }
     };
@@ -692,6 +702,9 @@ interface OverviewTabProps {
     interventionStatus: 'aucune' | 'acceptee' | 'en_cours';
     profile?: DepanneurProfileType;
     currentLocation: { lat: number; lng: number };
+    // Nouvelles props pour la géolocalisation
+    geolocationActive?: boolean;
+    positionRecente?: boolean;
 }
 
 function OverviewTab({
@@ -708,6 +721,8 @@ function OverviewTab({
     interventionStatus,
     profile,
     currentLocation,
+    geolocationActive = false,
+    positionRecente = false,
 }: OverviewTabProps) {
     return (
         <div className="space-y-6">
@@ -721,6 +736,8 @@ function OverviewTab({
             {/* Composant de géolocalisation automatique */}
             <DepanneurGeolocationStatus 
                 showControls={true}
+                initialTrackingState={geolocationActive}
+                isServerPositionRecent={positionRecente}
                 onPositionUpdate={(position) => {
                     // La position sera mise à jour automatiquement via le state
                     console.log('Position mise à jour:', position);

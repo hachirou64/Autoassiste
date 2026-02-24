@@ -30,7 +30,8 @@ import {
     Menu,
     X,
     ChevronRight,
-    AlertCircle
+    AlertCircle,
+    LogOut
 } from 'lucide-react';
 
 // Types
@@ -383,6 +384,11 @@ export default function DepanneurDashboard() {
         router.post('/logout');
     }, []);
 
+    // Fonction pour naviguer vers la page de changement de mot de passe
+    const handleChangePassword = useCallback(() => {
+        router.visit('/settings/password');
+    }, []);
+
     const renderTabContent = () => {
         if (loading) {
             return <LoadingPage text="Chargement de votre espace..." />;
@@ -487,7 +493,7 @@ export default function DepanneurDashboard() {
             case 'finances':
                 return <FinancialDashboard />;
             case 'profile':
-                return <DepanneurProfile profile={props.profile || undefined} onLogout={handleLogout} />;
+                return <DepanneurProfile profile={props.profile || undefined} onChangePassword={handleChangePassword} onLogout={handleLogout} />;
             default:
                 return <OverviewTab 
                     stats={stats} 
@@ -599,6 +605,18 @@ export default function DepanneurDashboard() {
                             );
                         })}
                     </nav>
+                    
+                    {/* Bouton de déconnexion */}
+                    <div className="p-2">
+                        <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors"
+                        >
+                            <LogOut className="h-5 w-5 flex-shrink-0" />
+                            {sidebarOpen && <span className="text-sm font-medium">Déconnexion</span>}
+                        </button>
+                    </div>
+                    
                     <div className="p-2 border-t border-slate-700">
                         <button
                             onClick={() => setSidebarOpen(!sidebarOpen)}

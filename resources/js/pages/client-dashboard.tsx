@@ -11,9 +11,14 @@ import { ClientNotifications } from '@/components/client/client-notifications';
 import { InterventionHistory } from '@/components/client/intervention-history';
 import { UserProfile } from '@/components/client/user-profile';
 import { LoadingPage, LoadingGrid } from '@/components/ui/loading-spinner';
+import { useAppearance } from '@/hooks/use-appearance';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
     Home, PlusCircle, FileText, User, Bell,
-    MapPin, Clock, ChevronRight, Menu, X, AlertCircle
+    MapPin, Clock, ChevronRight, Menu, X, AlertCircle,
+    LogOut, Sun, Moon
 } from 'lucide-react';
 import type { ClientStats, ClientNotification, InterventionHistoryItem, UserProfile as UserProfileType } from '@/types/client';
 
@@ -300,7 +305,8 @@ export default function ClientDashboard() {
     };
 
     const handleChangePassword = () => {
-        console.log('Changer mot de passe');
+        // Naviguer vers la page de changement de mot de passe
+        router.visit('/settings/password');
     };
 
     const handleLogout = () => {
@@ -348,7 +354,7 @@ export default function ClientDashboard() {
             case 'history':
                 return <HistoryTab data={data} onViewDetails={handleViewDetails} onDownloadFacture={handleDownloadFacture} onEvaluer={handleEvaluer} />;
             case 'profile':
-                return <ProfileTab data={data} onSaveProfile={handleSaveProfile} onChangePassword={handleChangePassword} onLogout={handleLogout} />;
+                return <ProfileTab data={data} onSaveProfile={handleSaveProfile} onChangePassword={handleChangePassword} />;
             default:
                 return <HomeTab data={data} />;
         }
@@ -415,10 +421,19 @@ export default function ClientDashboard() {
                             );
                         })}
                     </nav>
-                    <div className="p-2 border-t border-slate-700">
+                    <div className="p-3 border-t border-slate-700 bg-slate-800/50 space-y-2">
+                        {/* Theme Toggle Button */}
+                        <ThemeToggleButton sidebarOpen={sidebarOpen} />
+                        <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all duration-200 border border-red-500/20 hover:border-red-500/40 group"
+                        >
+                            <LogOut className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                            {sidebarOpen && <span className="text-sm font-semibold">Déconnexion</span>}
+                        </button>
                         <button
                             onClick={() => setSidebarOpen(!sidebarOpen)}
-                            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white"
+                            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-slate-500 hover:bg-slate-800 hover:text-white transition-colors"
                         >
                             <ChevronRight className={`h-5 w-5 transition-transform ${sidebarOpen ? 'rotate-180' : ''}`} />
                             {sidebarOpen && <span className="text-sm">Replier</span>}
@@ -486,11 +501,6 @@ export default function ClientDashboard() {
     );
 }
 
-// Imports nécessaires pour les sous-composants
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-
 // Tab: Accueil
 function HomeTab({ data, onRefresh }: { data: DashboardData; onRefresh?: () => void }) {
     return (
@@ -529,7 +539,6 @@ function HomeTab({ data, onRefresh }: { data: DashboardData; onRefresh?: () => v
                             
                             if (result.success) {
                                 alert('Demande annulée avec succès');
-                                // Recharger les données du dashboard
                                 if (onRefresh) onRefresh();
                             } else {
                                 alert(result.message || 'Erreur lors de l\'annulation');
@@ -648,12 +657,10 @@ function ProfileTab({
     data,
     onSaveProfile, 
     onChangePassword, 
-    onLogout 
 }: { 
     data: DashboardData
     onSaveProfile: (data: Partial<UserProfileType>) => void
     onChangePassword: () => void
-    onLogout: () => void
 }) {
     return (
         <div className="space-y-6">
@@ -662,9 +669,27 @@ function ProfileTab({
                 stats={data.profileStats}
                 onSaveProfile={onSaveProfile}
                 onChangePassword={onChangePassword}
-                onLogout={onLogout}
             />
         </div>
+    );
+}
+
+// Composant Theme Toggle (manquant)
+function ThemeToggleButton({ sidebarOpen }: { sidebarOpen: boolean }) {
+    const { appearance, updateAppearance } = useAppearance();
+    
+    return (
+        <button
+            onClick={() => updateAppearance(appearance === 'dark' ? 'light' : 'dark')}
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-all duration-200 group"
+        >
+            {appearance === 'dark' ? (
+                <Sun className="h-5 w-5 group-hover:rotate-180 transition-transform duration-500" />
+            ) : (
+                <Moon className="h-5 w-5 group-hover:-rotate-180 transition-transform duration-500" />
+            )}
+            {sidebarOpen && <span className="text-sm">{appearance === 'dark' ? 'Mode clair' : 'Mode sombre'}</span>}
+        </button>
     );
 }
 

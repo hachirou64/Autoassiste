@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 
 export default function ChooseRegister() {
     const features = [
-        { text: 'Inscription rapide en 30 secondes' },
+        { text: 'Inscription Client rapide' },
         { text: 'Aucun engagement' },
         { text: 'Service disponible 24/7' },
         { text: 'Paiement sécurisé' },
@@ -22,17 +22,17 @@ export default function ChooseRegister() {
         <>
             <Head title="S'inscrire - GoAssist" />
             
-            <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
                 <div className="container mx-auto max-w-4xl">
                     {/* Header */}
                     <div className="text-center mb-12">
                         <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl mb-6">
                             <Car className="h-8 w-8 text-white" />
                         </div>
-                        <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
                             Rejoignez GoAssist
                         </h1>
-                        <p className="text-lg text-slate-400">
+                        <p className="text-lg text-gray-600">
                             Choisissez le type de compte qui vous convient
                         </p>
                     </div>
@@ -40,23 +40,23 @@ export default function ChooseRegister() {
                     {/* Two Cards */}
                     <div className="grid md:grid-cols-2 gap-8">
                         {/* Card 1: Client */}
-                        <Card className="bg-white/5 backdrop-blur-sm border border-white/10 hover:border-amber-500/50 transition-all duration-300 hover:-translate-y-1">
+                        <Card className="bg-white border-gray-200 hover:border-amber-400 transition-all duration-300 hover:-translate-y-1 shadow-md">
                             <CardContent className="p-8">
                                 <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center mb-6">
                                     <Car className="h-7 w-7 text-white" />
                                 </div>
                                 
-                                <h2 className="text-2xl font-bold text-white mb-3">
+                                <h2 className="text-2xl font-bold text-gray-900 mb-3">
                                     Créer un compte client
                                 </h2>
-                                <p className="text-slate-400 mb-6">
+                                <p className="text-gray-600 mb-6">
                                     Accédez à nos services de dépannage rapide et professionnel.
                                 </p>
 
                                 <ul className="space-y-3 mb-8">
                                     {features.map((feature, index) => (
-                                        <li key={index} className="flex items-center gap-3 text-slate-300">
-                                            <CheckCircle className="h-5 w-5 text-amber-400 flex-shrink-0" />
+                                        <li key={index} className="flex items-center gap-3 text-gray-700">
+                                            <CheckCircle className="h-5 w-5 text-amber-500 flex-shrink-0" />
                                             <span>{feature.text}</span>
                                         </li>
                                     ))}
@@ -73,23 +73,23 @@ export default function ChooseRegister() {
                         </Card>
 
                         {/* Card 2: Dépanneur */}
-                        <Card className="bg-white/5 backdrop-blur-sm border border-white/10 hover:border-blue-500/50 transition-all duration-300 hover:-translate-y-1">
+                        <Card className="bg-white border-gray-200 hover:border-blue-400 transition-all duration-300 hover:-translate-y-1 shadow-md">
                             <CardContent className="p-8">
                                 <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mb-6">
                                     <Wrench className="h-7 w-7 text-white" />
                                 </div>
                                 
-                                <h2 className="text-2xl font-bold text-white mb-3">
+                                <h2 className="text-2xl font-bold text-gray-900 mb-3">
                                     Créer un compte dépanneur
                                 </h2>
-                                <p className="text-slate-400 mb-6">
+                                <p className="text-gray-600 mb-6">
                                     Rejoignez notre réseau de professionnels et développez votre activité.
                                 </p>
 
                                 <ul className="space-y-3 mb-8">
                                     {proFeatures.map((feature, index) => (
-                                        <li key={index} className="flex items-center gap-3 text-slate-300">
-                                            <CheckCircle className="h-5 w-5 text-blue-400 flex-shrink-0" />
+                                        <li key={index} className="flex items-center gap-3 text-gray-700">
+                                            <CheckCircle className="h-5 w-5 text-blue-500 flex-shrink-0" />
                                             <span>{feature.text}</span>
                                         </li>
                                     ))}
@@ -106,16 +106,7 @@ export default function ChooseRegister() {
                         </Card>
                     </div>
 
-                    {/* Login Link */}
-                    <p className="text-center text-slate-400 mt-8">
-                        Déjà inscrit?{' '}
-                        <button 
-                            onClick={() => window.location.href = '/login'}
-                            className="text-amber-400 hover:text-amber-300 font-semibold"
-                        >
-                            Se connecter
-                        </button>
-                    </p>
+                    
                 </div>
             </div>
         </>

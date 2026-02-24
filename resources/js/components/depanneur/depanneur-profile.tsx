@@ -408,14 +408,6 @@ export function DepanneurProfile({
                             <FileText className="h-4 w-4 mr-2" />
                             Mes documents
                         </Button>
-                        <Button
-                            variant="outline"
-                            onClick={onLogout}
-                            className="border-red-500/30 text-red-400 hover:bg-red-500/10 ml-auto"
-                        >
-                            <LogOut className="h-4 w-4 mr-2" />
-                            Déconnexion
-                        </Button>
                     </div>
                 </CardContent>
             </Card>

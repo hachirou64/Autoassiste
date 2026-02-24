@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, User, Mail, Phone, Lock, ArrowRight, CheckCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, User, Mail, Phone, Lock, ArrowRight, RefreshCw } from 'lucide-react';
 
 interface QuickRegistrationFormProps {
     onSuccess: () => void;
@@ -34,7 +34,6 @@ export function QuickRegistrationForm({ onSuccess, onLoginClick }: QuickRegistra
         e.preventDefault();
         setError(null);
 
-        // Validation
         if (!formData.fullName.trim()) {
             setError('Veuillez entrer votre nom complet');
             return;
@@ -45,7 +44,6 @@ export function QuickRegistrationForm({ onSuccess, onLoginClick }: QuickRegistra
             return;
         }
 
-        // Validation email simple
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(formData.email)) {
             setError('Veuillez entrer une adresse email valide');
@@ -74,7 +72,6 @@ export function QuickRegistrationForm({ onSuccess, onLoginClick }: QuickRegistra
 
         setLoading(true);
 
-        // Utiliser router.post d'Inertia pour préserver la session et obtenir une réponse Inertia
         router.post('/client/register', {
             fullName: formData.fullName,
             email: formData.email,
@@ -83,9 +80,7 @@ export function QuickRegistrationForm({ onSuccess, onLoginClick }: QuickRegistra
             password_confirmation: formData.passwordConfirmation,
         }, {
             onSuccess: () => {
-                // Nettoyer le pending_demande de sessionStorage
                 sessionStorage.removeItem('pending_demande');
-                // Appeler onSuccess qui redirigera vers nouvelle-demande
                 onSuccess();
             },
             onError: (errors) => {
@@ -107,20 +102,20 @@ export function QuickRegistrationForm({ onSuccess, onLoginClick }: QuickRegistra
     };
 
     return (
-        <Card className="w-full max-w-md mx-auto bg-slate-800/50 border-slate-700">
-            <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-bold text-white">
+        <Card className="w-full max-w-md mx-auto bg-white border-gray-200 shadow-lg">
+            <CardHeader className="text-center pb-2">
+                <CardTitle className="text-2xl font-bold text-gray-900">
                     Créer un compte GoAssist
                 </CardTitle>
-                <CardDescription className="text-slate-400">
-                    Inscription rapide en 30 secondes
+                <CardDescription className="text-gray-500">
+                    Inscription Client rapide
                 </CardDescription>
             </CardHeader>
             
             <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {error && (
-                        <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center gap-2">
+                        <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm flex items-center gap-2">
                             <AlertCircle className="h-4 w-4 flex-shrink-0" />
                             {error}
                         </div>
@@ -128,18 +123,18 @@ export function QuickRegistrationForm({ onSuccess, onLoginClick }: QuickRegistra
 
                     {/* Nom complet */}
                     <div className="space-y-2">
-                        <Label htmlFor="fullName" className="text-slate-300">
+                        <Label htmlFor="fullName" className="text-gray-700">
                             Nom complet *
                         </Label>
                         <div className="relative">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <Input
                                 id="fullName"
                                 type="text"
                                 placeholder="Jean Dupont"
                                 value={formData.fullName}
                                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                                className="pl-10 bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+                                className="pl-10 bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
                                 required
                             />
                         </div>
@@ -147,18 +142,18 @@ export function QuickRegistrationForm({ onSuccess, onLoginClick }: QuickRegistra
 
                     {/* Email */}
                     <div className="space-y-2">
-                        <Label htmlFor="email" className="text-slate-300">
+                        <Label htmlFor="email" className="text-gray-700">
                             Adresse email *
                         </Label>
                         <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <Input
                                 id="email"
                                 type="email"
                                 placeholder="jean@example.com"
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                className="pl-10 bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+                                className="pl-10 bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
                                 required
                             />
                         </div>
@@ -166,18 +161,18 @@ export function QuickRegistrationForm({ onSuccess, onLoginClick }: QuickRegistra
 
                     {/* Téléphone */}
                     <div className="space-y-2">
-                        <Label htmlFor="phone" className="text-slate-300">
+                        <Label htmlFor="phone" className="text-gray-700">
                             Numéro de téléphone *
                         </Label>
                         <div className="relative">
-                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <Input
                                 id="phone"
                                 type="tel"
                                 placeholder="+229 XX XX XX XX"
                                 value={formData.phone}
                                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                className="pl-10 bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+                                className="pl-10 bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
                                 required
                             />
                         </div>
@@ -185,18 +180,18 @@ export function QuickRegistrationForm({ onSuccess, onLoginClick }: QuickRegistra
 
                     {/* Mot de passe */}
                     <div className="space-y-2">
-                        <Label htmlFor="password" className="text-slate-300">
+                        <Label htmlFor="password" className="text-gray-700">
                             Mot de passe *
                         </Label>
                         <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <Input
                                 id="password"
                                 type="password"
                                 placeholder="••••••••"
                                 value={formData.password}
                                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                className="pl-10 bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+                                className="pl-10 bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
                                 required
                                 minLength={6}
                             />
@@ -205,18 +200,18 @@ export function QuickRegistrationForm({ onSuccess, onLoginClick }: QuickRegistra
 
                     {/* Confirmer mot de passe */}
                     <div className="space-y-2">
-                        <Label htmlFor="passwordConfirmation" className="text-slate-300">
+                        <Label htmlFor="passwordConfirmation" className="text-gray-700">
                             Confirmer le mot de passe *
                         </Label>
                         <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <Input
                                 id="passwordConfirmation"
                                 type="password"
                                 placeholder="••••••••"
                                 value={formData.passwordConfirmation}
                                 onChange={(e) => setFormData({ ...formData, passwordConfirmation: e.target.value })}
-                                className="pl-10 bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+                                className="pl-10 bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
                                 required
                             />
                         </div>
@@ -226,7 +221,7 @@ export function QuickRegistrationForm({ onSuccess, onLoginClick }: QuickRegistra
                     <Button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium py-6"
+                        className="w-full bg-amber-500 hover:bg-amber-600 text-white font-medium py-6"
                     >
                         {loading ? (
                             <>
@@ -241,70 +236,42 @@ export function QuickRegistrationForm({ onSuccess, onLoginClick }: QuickRegistra
                         )}
                     </Button>
 
+                    {/* Séparateur */}
+                    <div className="relative my-4">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-gray-300"></div>
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                            <span className="px-2 bg-white text-gray-500">ou</span>
+                        </div>
+                    </div>
+
+                    {/* Bouton Google */}
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => window.location.href = '/auth/google'}
+                        className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-5"
+                    >
+                        <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        S'inscrire avec Google
+                    </Button>
+
                     {/* Lien vers connexion */}
-                    <p className="text-center text-sm text-slate-400 mt-4">
+                    <p className="text-center text-sm text-gray-600 mt-4">
                         Déjà un compte ?{' '}
                         <button
                             type="button"
                             onClick={onLoginClick}
-                            className="text-amber-400 hover:text-amber-300 font-medium"
+                            className="text-amber-600 hover:text-amber-700 font-medium"
                         >
                             Se connecter
                         </button>
-                    </p>
-
-                    {/* Séparateur */}
-                    <div className="relative my-6">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-slate-600"></div>
-                        </div>
-                        <div className="relative flex justify-center text-sm">
-                            <span className="px-2 bg-slate-800/50 text-slate-400">OU</span>
-                        </div>
-                    </div>
-
-                    {/* Boutons Inscription Sociale */}
-                    <div className="space-y-3">
-                        {/* Google */}
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                                window.location.href = '/auth/google';
-                            }}
-                            className="w-full bg-white hover:bg-gray-100 text-gray-900 border-gray-300 py-3 flex items-center justify-center gap-3"
-                        >
-                            <svg className="w-5 h-5" viewBox="0 0 24 24">
-                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                            </svg>
-                            <span className="font-medium">S'inscrire avec Google</span>
-                        </Button>
-
-                        {/* Facebook */}
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                                window.location.href = '/auth/facebook';
-                            }}
-                            className="w-full bg-[#1877F2] hover:bg-[#166FE5] text-white border-[#1877F2] py-3 flex items-center justify-center gap-3"
-                        >
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                            </svg>
-                            <span className="font-medium">S'inscrire avec Facebook</span>
-                        </Button>
-                    </div>
-
-                    {/* Conditions */}
-                    <p className="text-center text-xs text-slate-500 mt-4">
-                        En vous inscrivant, vous acceptez nos{' '}
-                        <a href="#" className="text-amber-400 hover:underline">
-                            Conditions d'utilisation
-                        </a>
                     </p>
                 </form>
             </CardContent>

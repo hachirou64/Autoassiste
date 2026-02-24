@@ -412,24 +412,30 @@ class DemandeController extends Controller
     public function getNearbyDepanneurs(Request $request)
     {
         // Accepter vehicle_type ou vehicleType
-        $validated = $request->validate([
-            'latitude' => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
-            'vehicle_type' => 'nullable|string',
-            'vehicleType' => 'nullable|string',
-            'radius' => 'nullable|integer|min:1|max:50',
+        $latitude = (float) ($request->input("latitude", 0));
+        $longitude = (float) ($request->input("longitude", 0));
+        $vehicleType = $request->input("vehicle_type") ?: ($request->input("vehicleType") ?: "voiture");
+        $radius = (int) ($request->input("radius", 10));
+
+        // Debug logging
+        \Log::info('getNearbyDepanneurs called', [
+            "latitude" => $latitude,
+            "longitude" => $longitude,
+            "vehicleType" => $vehicleType,
+            "radius" => $radius
         ]);
 
-        // Utiliser vehicleType ou vehicle_type selon ce qui est envoyé
-        $vehicleType = $validated['vehicleType'] ?? $validated['vehicle_type'] ?? 'voiture';
-        $radius = $validated['radius'] ?? 10;
-        
         $depanneurs = $this->findNearbyDepanneurs(
-            (float)$validated['latitude'],
-            (float)$validated['longitude'],
+            $latitude,
+            $longitude,
             $radius,
             $vehicleType
         );
+
+        // Debug: loguer les dépanneurs trouvés avec leur distance
+        foreach ($depanneurs as $d) {
+            \Log::info('Dépanneur trouvé: ' . $d->etablissement_name . ' - distance: ' . ($d->distance ?? 'NULL'));
+        }
 
         return response()->json([
             'success' => true,

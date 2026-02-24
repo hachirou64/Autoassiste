@@ -289,13 +289,13 @@ class AuthController extends Controller
         if ($user->isAdmin()) {
             return route('admin.dashboard');
         } elseif ($user->isClient()) {
-            return route('client.dashboard');
+            return route('demande.nouvelle');
         } elseif ($user->isDepanneur()) {
             return route('depanneur.dashboard');
         }
 
-        // Par défaut, rediriger vers le dashboard client
-        return route('client.dashboard');
+        // Par défaut, rediriger vers la nouvelle demande
+        return route('demande.nouvelle');
     }
 
     /**

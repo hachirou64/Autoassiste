@@ -68,9 +68,25 @@ export function DepanneursMapModal({
 
                 const data = await response.json();
                 
-                // Debug: log la réponse API
+                // Debug: log la réponse API complète
                 console.log('API Response:', data);
                 console.log('Nombre de dépanneurs trouvés:', data.depanneurs?.length || 0);
+                
+                // Log détaillé de chaque dépanneur
+                if (data.depanneurs && data.depanneurs.length > 0) {
+                    data.depanneurs.forEach((d: Depanneur, index: number) => {
+                        console.log(`Dépanneur ${index + 1}:`, {
+                            id: d.id,
+                            name: d.name,
+                            distance: d.distance,
+                            estimated_time: d.estimated_time,
+                            price_min: d.price_min,
+                            price_max: d.price_max,
+                            latitude: d.latitude,
+                            longitude: d.longitude
+                        });
+                    });
+                }
                 
                 // Utiliser les coordonnées RÉELLES du dépanneur retournées par l'API
                 const enrichedDepanneurs = (data.depanneurs || []).map((d: Depanneur) => ({

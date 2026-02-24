@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, usePage, Link } from '@inertiajs/react';
 import AppHeaderLayout from '@/layouts/app/app-header-layout';
 import { DemandeForm } from '@/components/client/demande-form';
 import { LoadingPage } from '@/components/ui/loading-spinner';
-import { AlertTriangle, ArrowLeft, CheckCircle } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle, LayoutDashboard, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { SharedData } from '@/types';
@@ -171,36 +171,62 @@ export default function NouvelleDemandePage() {
             <AppHeaderLayout>
                 <Head title="Demande créée - GoAssist" />
                 
-                <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-                    <Card className="max-w-md w-full bg-slate-800/50 border-slate-700">
-                        <CardHeader className="text-center">
-                            <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <CheckCircle className="h-8 w-8 text-green-400" />
+                {/* Header with user info and dashboard link */}
+                <div className="bg-white border-b border-gray-200 px-4 py-3">
+                    <div className="max-w-md mx-auto flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                                <User className="h-5 w-5 text-amber-600" />
                             </div>
-                            <CardTitle className="text-white text-xl">
+                            <div>
+                                <p className="text-sm font-medium text-gray-900">
+                                    Client
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                    Bienvenue sur GoAssist
+                                </p>
+                            </div>
+                        </div>
+                        <Link
+                            href="/client/dashboard"
+                            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
+                        >
+                            <LayoutDashboard className="h-4 w-4" />
+                            Dashboard
+                        </Link>
+                    </div>
+                </div>
+
+                <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+                    <Card className="max-w-md w-full bg-white border-gray-200 shadow-lg">
+                        <CardHeader className="text-center">
+                            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <CheckCircle className="h-8 w-8 text-green-600" />
+                            </div>
+                            <CardTitle className="text-gray-900 text-xl">
                                 Demande créée avec succès!
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="bg-slate-700/50 rounded-lg p-4 text-center">
-                                <p className="text-slate-400 text-sm mb-1">Numéro de demande</p>
-                                <p className="text-amber-400 font-bold text-2xl">{demandeInfo.codeDemande}</p>
+                            <div className="bg-gray-50 rounded-lg p-4 text-center">
+                                <p className="text-gray-500 text-sm mb-1">Numéro de demande</p>
+                                <p className="text-amber-600 font-bold text-2xl">{demandeInfo.codeDemande}</p>
                             </div>
                             
-                            <p className="text-slate-400 text-center text-sm">
+                            <p className="text-gray-600 text-center text-sm">
                                 Un dépanneur va être affecté à votre demande. 
                                 Vous reciproez une notification lorsqu'un dépanneur sera en route.
                             </p>
 
-                            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-                                <p className="text-blue-400 text-sm text-center">
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <p className="text-blue-700 text-sm text-center">
                                     Temps moyen d&apos;attente: <span className="font-bold">15-30 minutes</span>
                                 </p>
                             </div>
 
                             <Button
                                 onClick={handleGoToDashboard}
-                                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold"
+                                className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold"
                             >
                                 Accéder à mon dashboard
                             </Button>
@@ -216,11 +242,37 @@ export default function NouvelleDemandePage() {
         <AppHeaderLayout>
             <Head title="Nouvelle demande - GoAssist" />
             
-            <div className="min-h-screen bg-slate-950 p-4 lg:p-8">
+            {/* Header with user info and dashboard link */}
+            <div className="bg-white border-b border-gray-200 px-4 py-3">
+                <div className="max-w-2xl mx-auto flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                            <User className="h-5 w-5 text-amber-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-gray-900">
+                                Client
+                            </p>
+                            <p className="text-xs text-gray-500">
+                                Bienvenue sur GoAssist
+                            </p>
+                        </div>
+                    </div>
+                    <Link
+                        href="/client/dashboard"
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
+                    >
+                        <LayoutDashboard className="h-4 w-4" />
+                        Dashboard
+                    </Link>
+                </div>
+            </div>
+            
+            <div className="min-h-screen bg-gray-50 p-4 lg:p-8">
                 <div className="max-w-2xl mx-auto">
                     {/* Error message */}
                     {error && (
-                        <div className="mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400">
+                        <div className="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-600">
                             {error}
                         </div>
                     )}

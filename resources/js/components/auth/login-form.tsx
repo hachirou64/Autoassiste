@@ -1,25 +1,23 @@
 import { useState, useEffect } from 'react';
-import { router, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, Mail, Lock, ArrowRight, RefreshCw, Eye, EyeOff, Car, Phone, MapPin, Shield, CheckCircle } from 'lucide-react';
+import { AlertCircle, Mail, Lock, ArrowRight, RefreshCw, Eye, EyeOff } from 'lucide-react';
 import type { SharedData } from '@/types';
 
 interface LoginFormProps {
     onSuccess?: (user?: any) => void;
-    onRegisterClick?: () => void;
 }
 
 interface LoginFormData {
-    login: string; // email or phone
+    login: string;
     password: string;
     remember: boolean;
 }
 
-export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
-    const { ziggy } = usePage().props;
+export function LoginForm({ onSuccess }: LoginFormProps) {
     const { auth } = usePage<SharedData>().props;
     const [formData, setFormData] = useState<LoginFormData>({
         login: '',
@@ -32,52 +30,31 @@ export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
     const [mounted, setMounted] = useState(false);
     const [inputType, setInputType] = useState<'email' | 'phone'>('email');
     const [attemptCount, setAttemptCount] = useState(0);
-    const [showSessionExpiredWarning, setShowSessionExpiredWarning] = useState(false);
 
-    
     useEffect(() => {
         setMounted(true);
-
-        // Vérifier si l'utilisateur vient d'une déconnexion ou session expirée
         const sessionExpired = sessionStorage.getItem('session_expired');
         const justLoggedOut = sessionStorage.getItem('just_logged_out');
         
         if (sessionExpired) {
-            setShowSessionExpiredWarning(true);
             sessionStorage.removeItem('session_expired');
             setError('Votre session a expiré. Veuillez vous reconnecter.');
         } else if (justLoggedOut) {
             sessionStorage.removeItem('just_logged_out');
-            // Pas d'erreur, juste une déconnexion normale
         }
     }, []);
 
-    // Redirect if already logged in (client-side only)
     useEffect(() => {
         if (!mounted) return;
-
         if (auth?.user) {
-            // User is already logged in, redirect to appropriate dashboard based on user type
-            let redirectUrl = '/client/dashboard';
-
-            // Check user type for universal redirection
+            let redirectUrl = '/demande/nouvelle';
             if (auth.user.id_type_compte) {
-                // TypeCompte: 1 = Admin, 2 = Client, 3 = Depanneur
                 switch (auth.user.id_type_compte) {
-                    case 1:
-                        redirectUrl = '/admin/dashboard';
-                        break;
-                    case 2:
-                        redirectUrl = '/client/dashboard';
-                        break;
-                    case 3:
-                        redirectUrl = '/depanneur/dashboard';
-                        break;
-                    default:
-                        redirectUrl = '/client/dashboard';
+                    case 1: redirectUrl = '/admin/dashboard'; break;
+                    case 2: redirectUrl = '/demande/nouvelle'; break;
+                    case 3: redirectUrl = '/depanneur/dashboard'; break;
                 }
             }
-
             if (onSuccess) {
                 onSuccess();
             } else {
@@ -86,11 +63,8 @@ export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
         }
     }, [auth, mounted, onSuccess]);
 
-    // Détecter si l'input est un email ou un téléphone
     const handleLoginChange = (value: string) => {
         setFormData({ ...formData, login: value });
-        
-        // Détecter le type d'input
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const phonePattern = /^(\+229|00229)?[0-9]{8,10}$/;
         const cleanValue = value.replace(/[\s\-\.]/g, '');
@@ -110,7 +84,6 @@ export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
         e.preventDefault();
         setError(null);
 
-        // Validation
         if (!formData.login.trim()) {
             setError('Veuillez entrer votre adresse email ou numéro de téléphone');
             return;
@@ -121,7 +94,6 @@ export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
             return;
         }
 
-        // Vérifier si trop de tentatives échouées
         if (attemptCount >= 5) {
             setError('Trop de tentatives échouées. Veuillez réessayer dans quelques minutes.');
             return;
@@ -130,9 +102,7 @@ export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
         setLoading(true);
 
         try {
-            // Nettoyer les anciennes données de session potentiellement invalides
             sessionStorage.removeItem('login_attempts');
-
             const response = await fetch('/login', {
                 method: 'POST',
                 headers: {
@@ -148,37 +118,27 @@ export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
                 credentials: 'include',
             });
 
-            // Réinitialiser le compteur de tentatives en cas de succès
             setAttemptCount(0);
             sessionStorage.removeItem('login_attempts');
 
             if (response.ok) {
-                // Login réussi
                 const data = await response.json();
-                
-                // Marquer que l'utilisateur vient de se connecter
                 sessionStorage.setItem('just_logged_in', 'true');
                 
-                // Rediriger selon le type de compte en utilisant les données du serveur
-                // Le backend retourne data.user avec le bon id_type_compte
                 if (onSuccess) {
-                    // Passer les données de l'utilisateur au callback
                     onSuccess(data.user);
                 } else {
-                    // Récupérer l'URL de redirection depuis la réponse du serveur
                     const redirectUrl = data.redirect || data.url || getRedirectUrl(data.user);
                     window.location.href = redirectUrl;
                 }
                 return;
             }
 
-            // Login échoué
             const errorData = await response.json().catch(() => ({}));
             const newAttemptCount = attemptCount + 1;
             setAttemptCount(newAttemptCount);
             sessionStorage.setItem('login_attempts', newAttemptCount.toString());
 
-            // Déterminer le message d'erreur
             let errorMessage = 'Les identifiants sont incorrects. Veuillez réessayer.';
             
             if (errorData.errors?.login) {
@@ -191,7 +151,6 @@ export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
                 errorMessage = 'Erreur serveur. Veuillez réessayer plus tard.';
             }
 
-            // Ajouter des messages différents selon le nombre de tentatives
             if (newAttemptCount >= 3) {
                 const remainingAttempts = 5 - newAttemptCount;
                 errorMessage = `${errorMessage} (${remainingAttempts} tentative${remainingAttempts > 1 ? 's' : ''} restante${remainingAttempts > 1 ? 's' : ''})`;
@@ -207,252 +166,131 @@ export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
         }
     };
 
-    // Déterminer l'URL de redirection basée sur le type de compte
     const getRedirectUrl = (user: any): string => {
-        if (!user) return '/client/dashboard';
-        
+        if (!user) return '/demande/nouvelle';
         switch (user.id_type_compte) {
             case 1: return '/admin/dashboard';
-            case 2: return '/client/dashboard';
+            case 2: return '/demande/nouvelle';
             case 3: return '/depanneur/dashboard';
-            default: return '/client/dashboard';
+            default: return '/demande/nouvelle';
         }
     };
 
-    // Handle Facebook login
-    const handleFacebookLogin = () => {
-        // Redirect to Facebook OAuth
-        window.location.href = '/auth/facebook';
-    };
-
-    const features = [
-        {
-            icon: Car,
-            title: 'Dépannage rapide',
-            description: 'Des dépanneurs disponibles 24h/24',
-        },
-        {
-            icon: MapPin,
-            title: 'Géolocalisation',
-            description: 'Nous trouvons votre position exacte',
-        },
-        {
-            icon: Shield,
-            title: 'Paiement sécurisé',
-            description: 'Transactions sécurisées',
-        },
-    ];
-
     return (
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left: Branding & Features */}
-            <div className="hidden lg:block space-y-8">
-                <div>
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-amber-500/20">
-                            <Car size={28} />
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+            <Card className="w-full max-w-md bg-white border-gray-300 shadow-lg">
+                <CardHeader className="text-center pb-4">
+                    <CardTitle className="text-2xl font-bold text-gray-900">
+                        Connexion
+                    </CardTitle>
+                    <CardDescription className="text-gray-500">
+                        Entrez vos identifiants pour accéder à votre compte
+                    </CardDescription>
+                </CardHeader>
+                
+                <CardContent>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        {error && (
+                            <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm flex items-center gap-2">
+                                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                                {error}
+                            </div>
+                        )}
+
+                        <div className="space-y-2">
+                            <Label htmlFor="login" className="text-gray-700">
+                                Email ou téléphone
+                            </Label>
+                            <div className="relative">
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Input
+                                    id="login"
+                                    type="text"
+                                    placeholder="Entrez votre email ou numéro de téléphone (+229 XX XX XX XX)"
+                                    value={formData.login}
+                                    onChange={(e) => setFormData({ ...formData, login: e.target.value })}
+                                    className="pl-10 bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
+                                    required
+                                    autoComplete="username"
+                                />
+                            </div>
                         </div>
-                        <span className="font-black text-3xl tracking-tighter text-white">
-                            GoAssist<span className="text-amber-500">.</span>
-                        </span>
-                    </div>
-                    <h1 className="text-4xl font-bold text-white mb-4">
-                        Content de vous revoir !
-                    </h1>
-                    <p className="text-xl text-slate-400">
-                        Connectez-vous pour accéder à votre compte et obtenir de l&apos;aide rapidement
-                    </p>
-                </div>
-                
-                <div className="grid gap-6">
-                    {features.map((feature, index) => (
-                        <Card key={index} className="bg-slate-800/30 border-slate-700">
-                            <CardContent className="flex items-start gap-4 p-4">
-                                <div className="w-12 h-12 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-                                    <feature.icon className="h-6 w-6 text-amber-400" />
-                                </div>
-                                <div>
-                                    <h3 className="font-semibold text-white">
-                                        {feature.title}
-                                    </h3>
-                                    <p className="text-sm text-slate-400">
-                                        {feature.description}
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-                
-                <div className="bg-slate-800/30 rounded-xl p-6 border border-slate-700">
-                    <h3 className="font-semibold text-white mb-4">
-                        Pourquoi choisir GoAssist ?
-                    </h3>
-                    <ul className="space-y-3 text-slate-400">
-                        <li className="flex items-center gap-2">
-                            <span className="text-amber-400">✓</span>
-                            Intervention en moins de 30 minutes
-                        </li>
-                        <li className="flex items-center gap-2">
-                            <span className="text-amber-400">✓</span>
-                            Prix transparents et connus à l&apos;avance
-                        </li>
-                        <li className="flex items-center gap-2">
-                            <span className="text-amber-400">✓</span>
-                            Suivi en temps réel de votre dépanneur
-                        </li>
-                        <li className="flex items-center gap-2">
-                            <span className="text-amber-400">✓</span>
-                            Notation des dépanneurs
-                        </li>
-                    </ul>
-                </div>
-            </div>
 
-            {/* Right: Login Form */}
-            <div className="lg:pl-8">
-                <Card className="w-full max-w-md mx-auto bg-slate-800/50 border-slate-700">
-                    <CardHeader className="text-center">
-                    <CardTitle className="text-2xl font-bold text-white">
-                            Connexion à GoAssist
-                        </CardTitle>
-                        <CardDescription className="text-slate-400">
-                            Entrez vos identifiants pour accéder à votre compte
-                        </CardDescription>
-                    </CardHeader>
-                    
-                    <CardContent>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            {error && (
-                                <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center gap-2">
-                                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                                    {error}
-                                </div>
-                            )}
-
-                            {/* Email / Téléphone */}
-                            <div className="space-y-2">
-                                <Label htmlFor="login" className="text-slate-300">
-                                    {inputType === 'email' ? 'Adresse email' : 'Numéro de téléphone'}
-                                </Label>
-                                <div className="relative">
-                                    {inputType === 'email' ? (
-                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                    ) : (
-                                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                    )}
-                                    <Input
-                                        id="login"
-                                        type={inputType === 'email' ? 'email' : 'tel'}
-                                        placeholder={inputType === 'email' ? 'jean@example.com' : '+229 XX XX XX XX'}
-                                        value={formData.login}
-                                        onChange={(e) => handleLoginChange(e.target.value)}
-                                        className="pl-10 bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
-                                        required
-                                        autoComplete="username"
-                                    />
-                                </div>
-                                <p className="text-xs text-slate-500">
-                                    Entrez votre email ou numéro de téléphone (+229 XX XX XX XX)
-                                </p>
-                            </div>
-
-                            {/* Mot de passe */}
-                            <div className="space-y-2">
-                                <Label htmlFor="password" className="text-slate-300">
-                                    Mot de passe *
-                                </Label>
-                                <div className="relative">
-                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                    <Input
-                                        id="password"
-                                        type={showPassword ? 'text' : 'password'}
-                                        placeholder="••••••••"
-                                        value={formData.password}
-                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                        className="pl-10 pr-10 bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
-                                        required
-                                        autoComplete="current-password"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
-                                    >
-                                        {showPassword ? (
-                                            <EyeOff className="h-4 w-4" />
-                                        ) : (
-                                            <Eye className="h-4 w-4" />
-                                        )}
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Remember me & Forgot password */}
-                            <div className="flex items-center justify-between">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={formData.remember}
-                                        onChange={(e) => setFormData({ ...formData, remember: e.target.checked })}
-                                        className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-amber-500 focus:ring-amber-500 focus:ring-offset-slate-800"
-                                    />
-                                    <span className="text-sm text-slate-400">Se souvenir de moi</span>
-                                </label>
-                                <a 
-                                    href="/forgot-password" 
-                                    className="text-sm text-amber-400 hover:text-amber-300"
+                        <div className="space-y-2">
+                            <Label htmlFor="password" className="text-gray-700">
+                                Mot de passe *
+                            </Label>
+                            <div className="relative">
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Input
+                                    id="password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    placeholder="••••••••"
+                                    value={formData.password}
+                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                    className="pl-10 pr-10 bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
+                                    required
+                                    autoComplete="current-password"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                                 >
-                                    Mot de passe oublié ?
-                                </a>
+                                    {showPassword ? (
+                                        <EyeOff className="h-4 w-4" />
+                                    ) : (
+                                        <Eye className="h-4 w-4" />
+                                    )}
+                                </button>
                             </div>
+                        </div>
 
-                            {/* Bouton soumettre */}
-                            <Button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium py-6"
+                        <div className="flex items-center justify-between">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.remember}
+                                    onChange={(e) => setFormData({ ...formData, remember: e.target.checked })}
+                                    className="w-4 h-4 rounded border-gray-300 text-amber-500 focus:ring-amber-500"
+                                />
+                                <span className="text-sm text-gray-600">Se souvenir de moi</span>
+                            </label>
+                            <a 
+                                href="/forgot-password" 
+                                className="text-sm text-amber-600 hover:text-amber-700"
                             >
-                                {loading ? (
-                                    <>
-                                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                        Connexion en cours...
-                                    </>
-                                ) : (
-                                    <>
-                                        Se connecter
-                                        <ArrowRight className="h-4 w-4 ml-2" />
-                                    </>
-                                )}
-                            </Button>
+                                Mot de passe oublié ?
+                            </a>
+                        </div>
 
-                            {/* Conditions */}
-                            <p className="text-center text-xs text-slate-500 mt-4">
-                                En vous connectant, vous acceptez nos{' '}
-                                <a href="#" className="text-amber-400 hover:underline">
-                                    Conditions d&apos;utilisation
-                                </a>
-                            </p>
-                        </form>
-                    </CardContent>
-                </Card>
+                        <Button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full bg-amber-500 hover:bg-amber-600 text-white font-medium py-6"
+                        >
+                            {loading ? (
+                                <>
+                                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                    Connexion en cours...
+                                </>
+                            ) : (
+                                <>
+                                    Se connecter
+                                    <ArrowRight className="h-4 w-4 ml-2" />
+                                </>
+                            )}
+                        </Button>
 
-                {/* Mobile-only features */}
-                <div className="lg:hidden mt-8">
-                    <div className="grid grid-cols-3 gap-4 text-center">
-                        {features.map((feature, index) => (
-                            <div key={index} className="space-y-2">
-                                <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center mx-auto">
-                                    <feature.icon className="h-5 w-5 text-amber-400" />
-                                </div>
-                                <p className="text-xs text-slate-400">
-                                    {feature.title}
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
+                        <p className="text-center text-xs text-gray-500 mt-4">
+                            En vous connectant, vous acceptez nos{' '}
+                            <a href="#" className="text-amber-600 hover:underline">
+                                Conditions d'utilisation
+                            </a>
+                        </p>
+                    </form>
+                </CardContent>
+            </Card>
         </div>
     );
 }

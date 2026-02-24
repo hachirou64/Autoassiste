@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
     User, Mail, Phone, CreditCard, Bell,
-    Camera, Save, Edit2, Lock, LogOut,
+    Camera, Save, Edit2, Lock,
     Star, Award
 } from 'lucide-react';
 import type { UserProfile } from '@/types/client';
@@ -21,7 +21,6 @@ interface UserProfileProps {
     };
     onSaveProfile?: (data: Partial<UserProfile>) => void;
     onChangePassword?: () => void;
-    onLogout?: () => void;
 }
 
 type PaymentMethod = 'cash' | 'mobile_money' | 'carte_bancaire';
@@ -37,7 +36,6 @@ export function UserProfile({
     stats,
     onSaveProfile,
     onChangePassword,
-    onLogout,
 }: UserProfileProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [editedProfile, setEditedProfile] = useState(profile);
@@ -346,15 +344,6 @@ export function UserProfile({
                         >
                             <Lock className="h-4 w-4 mr-2" />
                             Changer le mot de passe
-                        </Button>
-
-                        <Button
-                            variant="outline"
-                            className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10"
-                            onClick={onLogout}
-                        >
-                            <LogOut className="h-4 w-4 mr-2" />
-                            Se déconnecter
                         </Button>
                     </CardContent>
                 </Card>

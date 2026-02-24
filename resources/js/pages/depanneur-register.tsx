@@ -10,10 +10,7 @@ export default function DepanneurRegisterPage() {
         setMounted(true);
     }, []);
 
-    // NOTE: La page d'inscription est accessible à tous, même si un utilisateur est connecté.
-    // Le backend (middleware 'guest' sur les routes) gère la protection appropriée.
-    // Si un utilisateur connecté essaie de s'inscrire, il sera redirigé par le backend.
-
+    
     const handleSuccess = () => {
         // Rediriger vers le dashboard dépanneur après inscription réussie
         // Vérifier si on est en mode admin
@@ -28,17 +25,17 @@ export default function DepanneurRegisterPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950">
+        <div className="min-h-screen bg-gray-100">
             <Head title="Inscription Dépanneur - GoAssist" />
             
             {/* Header simple */}
-            <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm">
+            <header className="border-b border-gray-200 bg-white">
                 <div className="container mx-auto px-4 py-4 flex items-center justify-between">
                     <a href="/" className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center text-white">
                             <Truck size={24} />
                         </div>
-                        <span className="font-black text-2xl text-white">
+                        <span className="font-black text-2xl text-gray-900">
                             GoAssist<span className="text-amber-500">.</span>
                         </span>
                     </a>
@@ -48,10 +45,10 @@ export default function DepanneurRegisterPage() {
             {/* Contenu principal */}
             <main className="container mx-auto px-4 py-8">
                 <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-white mb-2">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
                         Rejoignez notre réseau de dépanneurs
                     </h1>
-                    <p className="text-slate-400">
+                    <p className="text-gray-600">
                         Créez votre compte et commencez à accepter des demandes d'assistance
                     </p>
                 </div>
@@ -62,13 +59,13 @@ export default function DepanneurRegisterPage() {
             </main>
 
             {/* Footer simple */}
-            <footer className="border-t border-slate-800 mt-12 py-6">
-                <div className="container mx-auto px-4 text-center text-slate-500 text-sm">
+            <footer className="border-t border-gray-200 mt-12 py-6">
+                <div className="container mx-auto px-4 text-center text-gray-500 text-sm">
                     <p>© {new Date().getFullYear()} GoAssist. Tous droits réservés.</p>
                     <p className="mt-1">
-                        <a href="/mentions-legales" className="hover:text-slate-400">Mentions légales</a>
+                        <a href="/mentions-legales" className="hover:text-gray-700">Mentions légales</a>
                         {' • '}
-                        <a href="/confidentialite" className="hover:text-slate-400">Confidentialité</a>
+                        <a href="/confidentialite" className="hover:text-gray-700">Confidentialité</a>
                     </p>
                 </div>
             </footer>

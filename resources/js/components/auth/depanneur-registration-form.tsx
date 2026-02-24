@@ -222,7 +222,7 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
                             ? 'bg-amber-500 text-white'
                             : step > s
                                 ? 'bg-green-500 text-white'
-                                : 'bg-slate-700 text-slate-400'
+                                : 'bg-gray-200 text-gray-600'
                     }`}>
                         {step > s ? (
                             <CheckCircle className="h-5 w-5" />
@@ -232,7 +232,7 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
                     </div>
                     {index < 4 && (
                         <div className={`w-16 h-1 mx-2 ${
-                            step > s ? 'bg-green-500' : 'bg-slate-700'
+                            step > s ? 'bg-green-500' : 'bg-gray-200'
                         }`} />
                     )}
                 </div>
@@ -249,13 +249,13 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
     ];
 
     return (
-        <Card className="w-full max-w-4xl mx-auto bg-slate-800/50 border-slate-700">
+        <Card className="w-full max-w-4xl mx-auto bg-white border-gray-200 shadow-lg">
             <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-bold text-white flex items-center justify-center gap-3">
+                <CardTitle className="text-2xl font-bold text-gray-900 flex items-center justify-center gap-3">
                     <Truck className="h-8 w-8 text-amber-500" />
                     Inscription Dépanneur
                 </CardTitle>
-                <p className="text-slate-400">
+                <p className="text-gray-600">
                     Rejoignez notre réseau de professionnels
                 </p>
                 {renderStepIndicator()}
@@ -264,7 +264,7 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
                         <Badge 
                             key={index} 
                             variant={step === index + 1 ? 'default' : step > index + 1 ? 'default' : 'outline'}
-                            className={step === index + 1 ? 'bg-amber-500' : step > index + 1 ? 'bg-green-500' : ''}
+                            className={step === index + 1 ? 'bg-amber-500' : step > index + 1 ? 'bg-green-500' : 'bg-gray-100 text-gray-600'}
                         >
                             {label}
                         </Badge>
@@ -274,7 +274,7 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
             
             <CardContent className="space-y-6">
                 {error && (
-                    <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center gap-2">
+                    <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm flex items-center gap-2">
                         <AlertCircle className="h-4 w-4 flex-shrink-0" />
                         {error}
                     </div>
@@ -285,40 +285,40 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
                     <div className="space-y-4">
                         <div className="grid md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label className="text-slate-300">Nom complet *</Label>
+                                <Label className="text-gray-700">Nom complet *</Label>
                                 <div className="relative">
-                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                     <Input
                                         value={formData.fullName}
                                         onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                                         placeholder="Votre nom complet"
-                                        className="pl-10 bg-slate-700 border-slate-600 text-white"
+                                        className="pl-10 bg-white border-gray-300 text-gray-900"
                                     />
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-slate-300">Email *</Label>
+                                <Label className="text-gray-700">Email *</Label>
                                 <div className="relative">
-                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                     <Input
                                         type="email"
                                         value={formData.email}
                                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                         placeholder="votre@email.com"
-                                        className="pl-10 bg-slate-700 border-slate-600 text-white"
+                                        className="pl-10 bg-white border-gray-300 text-gray-900"
                                     />
                                 </div>
                             </div>
                             <div className="space-y-2 md:col-span-2">
-                                <Label className="text-slate-300">Téléphone *</Label>
+                                <Label className="text-gray-700">Téléphone *</Label>
                                 <div className="relative">
-                                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                     <Input
                                         type="tel"
                                         value={formData.phone}
                                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                         placeholder="+229 XX XX XX XX"
-                                        className="pl-10 bg-slate-700 border-slate-600 text-white"
+                                        className="pl-10 bg-white border-gray-300 text-gray-900"
                                     />
                                 </div>
                             </div>
@@ -338,55 +338,55 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
                     <div className="space-y-4">
                         <div className="grid md:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label className="text-slate-300">Nom du promoteur/responsable *</Label>
+                                <Label className="text-gray-700">Nom du promoteur/responsable *</Label>
                                 <div className="relative">
-                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                     <Input
                                         value={formData.promoteur_name}
                                         onChange={(e) => setFormData({ ...formData, promoteur_name: e.target.value })}
                                         placeholder="Nom du promoteur"
-                                        className="pl-10 bg-slate-700 border-slate-600 text-white"
+                                        className="pl-10 bg-white border-gray-300 text-gray-900"
                                     />
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-slate-300">Nom du garage/établissement *</Label>
+                                <Label className="text-gray-700">Nom du garage/établissement *</Label>
                                 <div className="relative">
-                                    <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                    <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                     <Input
                                         value={formData.etablissement_name}
                                         onChange={(e) => setFormData({ ...formData, etablissement_name: e.target.value })}
                                         placeholder="Nom de l'établissement"
-                                        className="pl-10 bg-slate-700 border-slate-600 text-white"
+                                        className="pl-10 bg-white border-gray-300 text-gray-900"
                                     />
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-slate-300">IFU *</Label>
+                                <Label className="text-gray-700">IFU *</Label>
                                 <Input
                                     value={formData.IFU}
                                     onChange={(e) => setFormData({ ...formData, IFU: e.target.value })}
                                     placeholder="Numéro IFU"
-                                    className="bg-slate-700 border-slate-600 text-white"
+                                    className="bg-white border-gray-300 text-gray-900"
                                 />
                             </div>
                             <div className="space-y-2 md:col-span-2">
-                                <Label className="text-slate-300">Adresse du garage *</Label>
+                                <Label className="text-gray-700">Adresse du garage *</Label>
                                 <Input
                                     value={formData.adresse}
                                     onChange={(e) => setFormData({ ...formData, adresse: e.target.value })}
                                     placeholder="Adresse complète"
-                                    className="bg-slate-700 border-slate-600 text-white"
+                                    className="bg-white border-gray-300 text-gray-900"
                                 />
                             </div>
                             <div className="space-y-2 md:col-span-2">
-                                <Label className="text-slate-300">Position GPS actuelle *</Label>
+                                <Label className="text-gray-700">Position GPS actuelle *</Label>
                                 <div className="flex gap-2">
                                     <Input
                                         value={formData.localisation_actuelle}
                                         onChange={(e) => setFormData({ ...formData, localisation_actuelle: e.target.value })}
                                         placeholder="Cliquez sur 'Utiliser ma position'"
-                                        className="flex-1 bg-slate-700 border-slate-600 text-white"
+                                        className="flex-1 bg-white border-gray-300 text-gray-900"
                                         readOnly
                                     />
                                     <Button
@@ -394,7 +394,7 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
                                         variant="outline"
                                         onClick={handleGetLocation}
                                         disabled={locationLoading}
-                                        className="bg-slate-700 border-slate-600 text-white"
+                                        className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                                     >
                                         <Navigation className={`h-4 w-4 ${locationLoading ? 'animate-spin' : ''}`} />
                                     </Button>
@@ -404,7 +404,7 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
 
                         {/* Type de véhicules */}
                         <div className="space-y-2">
-                            <Label className="text-slate-300">Type de véhicules que vous dépannez *</Label>
+                            <Label className="text-gray-700">Type de véhicules que vous dépannez *</Label>
                             <div className="grid grid-cols-3 gap-4">
                                 {[
                                     { value: 'voiture', label: 'Voiture', icon: '🚗' },
@@ -417,8 +417,8 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
                                         onClick={() => setFormData({ ...formData, type_vehicule: type.value as VehicleTypeDepanneur })}
                                         className={`p-4 rounded-lg border-2 transition-all ${
                                             formData.type_vehicule === type.value
-                                                ? 'border-amber-500 bg-amber-500/10 text-white'
-                                                : 'border-slate-600 bg-slate-700/50 text-slate-400 hover:border-slate-500'
+                                                ? 'border-amber-500 bg-amber-50 text-gray-900'
+                                                : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400'
                                         }`}
                                     >
                                         <span className="text-2xl block mb-1">{type.icon}</span>
@@ -432,7 +432,7 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
                             <Button
                                 variant="outline"
                                 onClick={() => setStep(1)}
-                                className="flex-1 bg-slate-700 border-slate-600 text-white"
+                                className="flex-1 bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                             >
                                 Retour
                             </Button>
@@ -449,7 +449,7 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
                 {/* ÉTAPE 3: Services */}
                 {step === 3 && (
                     <div className="space-y-4">
-                        <Label className="text-slate-300 text-lg">Services proposés *</Label>
+                        <Label className="text-gray-700 text-lg">Services proposés *</Label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                             {SERVICES_DISPONIBLES.map((service) => (
                                 <button
@@ -458,8 +458,8 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
                                     onClick={() => toggleService(service.id)}
                                     className={`p-3 rounded-lg border transition-all text-left ${
                                         formData.services.includes(service.id)
-                                            ? 'border-amber-500 bg-amber-500/10 text-white'
-                                            : 'border-slate-600 bg-slate-700/50 text-slate-400 hover:border-slate-500'
+                                            ? 'border-amber-500 bg-amber-50 text-gray-900'
+                                            : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400'
                                     }`}
                                 >
                                     <span className="text-xl mr-2">{service.icon}</span>
@@ -475,7 +475,7 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
                             <Button
                                 variant="outline"
                                 onClick={() => setStep(2)}
-                                className="flex-1 bg-slate-700 border-slate-600 text-white"
+                                className="flex-1 bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                             >
                                 Retour
                             </Button>
@@ -494,7 +494,7 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
                 {step === 4 && (
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label className="text-slate-300 text-lg">Méthodes de paiement acceptées *</Label>
+                            <Label className="text-gray-700 text-lg">Méthodes de paiement acceptées *</Label>
                             <div className="grid grid-cols-2 gap-3">
                                 {PAYMENT_METHODS.map((method) => (
                                     <button
@@ -503,8 +503,8 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
                                         onClick={() => togglePayment(method.id)}
                                         className={`p-3 rounded-lg border transition-all ${
                                             formData.methode_payement.includes(method.id as PaymentMethod)
-                                                ? 'border-amber-500 bg-amber-500/10 text-white'
-                                                : 'border-slate-600 bg-slate-700/50 text-slate-400 hover:border-slate-500'
+                                                ? 'border-amber-500 bg-amber-50 text-gray-900'
+                                                : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400'
                                         }`}
                                     >
                                         <span className="text-xl mr-2">{method.icon}</span>
@@ -516,18 +516,18 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
 
                         {formData.methode_payement.includes('mobile_money') && (
                             <div className="space-y-2">
-                                <Label className="text-slate-300">Numéro Mobile Money</Label>
+                                <Label className="text-gray-700">Numéro Mobile Money</Label>
                                 <Input
                                     value={formData.numero_mobile_money}
                                     onChange={(e) => setFormData({ ...formData, numero_mobile_money: e.target.value })}
                                     placeholder="+229 XX XX XX XX"
-                                    className="bg-slate-700 border-slate-600 text-white"
+                                    className="bg-white border-gray-300 text-gray-900"
                                 />
                             </div>
                         )}
 
                         <div className="space-y-2">
-                            <Label className="text-slate-300 text-lg">Disponibilité *</Label>
+                            <Label className="text-gray-700 text-lg">Disponibilité *</Label>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                 {[
                                     { id: '24h', label: '24h/24', icon: '⏰' },
@@ -541,8 +541,8 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
                                         onClick={() => setFormData({ ...formData, disponibilite: item.id as AvailabilityType })}
                                         className={`p-3 rounded-lg border transition-all ${
                                             formData.disponibilite === item.id
-                                                ? 'border-amber-500 bg-amber-500/10 text-white'
-                                                : 'border-slate-600 bg-slate-700/50 text-slate-400 hover:border-slate-500'
+                                                ? 'border-amber-500 bg-amber-50 text-gray-900'
+                                                : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400'
                                         }`}
                                     >
                                         <span className="text-xl mr-2">{item.icon}</span>
@@ -554,18 +554,18 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
 
                         {formData.disponibilite === 'personnalise' && (
                             <div className="space-y-2">
-                                <Label className="text-slate-300">Horaires personnalisés</Label>
+                                <Label className="text-gray-700">Horaires personnalisés</Label>
                                 <Input
                                     value={formData.horaires_personnalises}
                                     onChange={(e) => setFormData({ ...formData, horaires_personnalises: e.target.value })}
                                     placeholder="Ex: Lun-Ven: 9h-18h, Sam: 9h-13h"
-                                    className="bg-slate-700 border-slate-600 text-white"
+                                    className="bg-white border-gray-300 text-gray-900"
                                 />
                             </div>
                         )}
 
                         <div className="space-y-2">
-                            <Label className="text-slate-300 text-lg">Jours de travail *</Label>
+                            <Label className="text-gray-700 text-lg">Jours de travail *</Label>
                             <div className="flex gap-2 flex-wrap">
                                 {JOURS_SEMAINE.map((jour) => (
                                     <button
@@ -574,8 +574,8 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
                                         onClick={() => toggleJour(jour.id)}
                                         className={`w-10 h-10 rounded-lg border transition-all ${
                                             formData.jours_travail.includes(jour.id)
-                                                ? 'border-amber-500 bg-amber-500/10 text-white'
-                                                : 'border-slate-600 bg-slate-700/50 text-slate-400 hover:border-slate-500'
+                                                ? 'border-amber-500 bg-amber-50 text-gray-900'
+                                                : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400'
                                         }`}
                                     >
                                         <span className="text-sm font-medium">{jour.abbrev}</span>
@@ -588,7 +588,7 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
                             <Button
                                 variant="outline"
                                 onClick={() => setStep(3)}
-                                className="flex-1 bg-slate-700 border-slate-600 text-white"
+                                className="flex-1 bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                             >
                                 Retour
                             </Button>
@@ -607,40 +607,40 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
                 {step === 5 && (
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label className="text-slate-300">Mot de passe *</Label>
+                            <Label className="text-gray-700">Mot de passe *</Label>
                             <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                 <Input
                                     type="password"
                                     value={formData.password}
                                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                     placeholder="••••••••"
-                                    className="pl-10 bg-slate-700 border-slate-600 text-white"
+                                    className="pl-10 bg-white border-gray-300 text-gray-900"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <Label className="text-slate-300">Confirmer le mot de passe *</Label>
+                            <Label className="text-gray-700">Confirmer le mot de passe *</Label>
                             <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                 <Input
                                     type="password"
                                     value={formData.passwordConfirmation}
                                     onChange={(e) => setFormData({ ...formData, passwordConfirmation: e.target.value })}
                                     placeholder="••••••••"
-                                    className="pl-10 bg-slate-700 border-slate-600 text-white"
+                                    className="pl-10 bg-white border-gray-300 text-gray-900"
                                 />
                             </div>
                         </div>
 
-                        <div className="p-4 bg-slate-900/50 rounded-lg">
-                            <h4 className="text-sm font-medium text-slate-300 mb-2">Récapitulatif</h4>
-                            <div className="grid grid-cols-2 gap-2 text-xs text-slate-400">
-                                <p>Établissement: <span className="text-white">{formData.etablissement_name}</span></p>
-                                <p>Services: <span className="text-white">{formData.services.length}</span></p>
-                                <p>Véhicules: <span className="text-white capitalize">{formData.type_vehicule}</span></p>
-                                <p>Jours: <span className="text-white">{formData.jours_travail.length}</span></p>
+                        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h4 className="text-sm font-medium text-gray-700 mb-2">Récapitulatif</h4>
+                            <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                                <p>Établissement: <span className="text-gray-900">{formData.etablissement_name}</span></p>
+                                <p>Services: <span className="text-gray-900">{formData.services.length}</span></p>
+                                <p>Véhicules: <span className="text-gray-900 capitalize">{formData.type_vehicule}</span></p>
+                                <p>Jours: <span className="text-gray-900">{formData.jours_travail.length}</span></p>
                             </div>
                         </div>
 
@@ -648,7 +648,7 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
                             <Button
                                 variant="outline"
                                 onClick={() => setStep(4)}
-                                className="flex-1 bg-slate-700 border-slate-600 text-white"
+                                className="flex-1 bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                             >
                                 Retour
                             </Button>
@@ -674,11 +674,11 @@ export function DepanneurRegistrationForm({ onSuccess }: DepanneurRegistrationFo
                 )}
 
                 {/* Lien vers connexion */}
-                <p className="text-center text-sm text-slate-400">
+                <p className="text-center text-sm text-gray-600">
                     Déjà un compte dépanneur ?{' '}
                     <a
                         href="/login"
-                        className="text-amber-400 hover:text-amber-300 font-medium"
+                        className="text-amber-600 hover:text-amber-700 font-medium"
                     >
                         Se connecter
                     </a>

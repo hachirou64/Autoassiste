@@ -66,9 +66,9 @@ export function ClientStatsCards({ stats }: ClientStatsCardsProps) {
     return (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {cards.map((card) => (
-                <Card key={card.title} className="bg-slate-800/50 border-slate-700">
+                <Card key={card.title} className="bg-white border-gray-200 shadow-sm">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-slate-300">
+                        <CardTitle className="text-sm font-medium text-gray-600">
                             {card.title}
                         </CardTitle>
                         <div className={`p-2 rounded-lg ${card.bgColor}`}>
@@ -76,8 +76,8 @@ export function ClientStatsCards({ stats }: ClientStatsCardsProps) {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-white">{card.value}</div>
-                        <p className="text-xs text-slate-400">{card.subtitle}</p>
+                        <div className="text-2xl font-bold text-gray-900">{card.value}</div>
+                        <p className="text-xs text-gray-500">{card.subtitle}</p>
                     </CardContent>
                 </Card>
             ))}

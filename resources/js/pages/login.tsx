@@ -58,13 +58,9 @@ export default function LoginPage() {
         if (userType === 1) {
             redirectUrl = '/admin/dashboard';
         } else if (userType === 2) {
-            redirectUrl = '/client/dashboard';
+            redirectUrl = '/demande/nouvelle';;
         } else if (userType === 3) {
             redirectUrl = '/depanneur/dashboard';
-        } else {
-            // Fallback: vérifier via l'API si le type n'est pas déterminé
-            // Rediriger vers le dashboard client par défaut
-            redirectUrl = '/client/dashboard';
         }
         
         console.log('[LoginPage] Redirection vers:', redirectUrl, 'avec userType:', userType);

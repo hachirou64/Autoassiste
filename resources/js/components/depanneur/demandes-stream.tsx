@@ -212,13 +212,13 @@ export function DemandesStream({
     return (
         <div className="space-y-4">
             {/* Header avec filtres */}
-            <Card className="bg-slate-800/50 border-slate-700">
+            <Card className="bg-white border-gray-200">
                 <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                        <CardTitle className="text-white flex items-center gap-2">
-                            <MapPin className="h-5 w-5 text-blue-400" />
+                        <CardTitle className="text-gray-900 flex items-center gap-2">
+                            <MapPin className="h-5 w-5 text-blue-500" />
                             Demandes disponibles
-                            <Badge variant="outline" className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                            <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">
                                 {filteredDemandes.length}
                             </Badge>
                         </CardTitle>
@@ -229,7 +229,7 @@ export function DemandesStream({
                                 variant="ghost"
                                 size="icon"
                                 onClick={onToggleSound}
-                                className="text-slate-400 hover:text-white"
+                                className="text-gray-500 hover:text-gray-900"
                             >
                                 {soundEnabled ? (
                                     <Volume2 className="h-5 w-5" />
@@ -242,7 +242,7 @@ export function DemandesStream({
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="text-slate-400 hover:text-white"
+                                className="text-gray-500 hover:text-gray-900"
                             >
                                 <RefreshCw className="h-5 w-5" />
                             </Button>
@@ -253,7 +253,7 @@ export function DemandesStream({
                 <CardContent className="pb-3">
                     {/* Filtres par rayon et type de véhicule */}
                     <div className="flex flex-wrap gap-2 mb-3">
-                        <span className="text-sm text-slate-400 flex items-center">
+                        <span className="text-sm text-gray-600 flex items-center">
                             <Navigation className="h-4 w-4 mr-1" />
                             Rayon:
                         </span>
@@ -266,7 +266,7 @@ export function DemandesStream({
                                 className={
                                     filters.rayon === rayon
                                         ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                                        : 'bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600'
+                                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
                                 }
                             >
                                 {rayon} km
@@ -276,7 +276,7 @@ export function DemandesStream({
                     
                     {/* Filtre par type de véhicule */}
                     <div className="flex flex-wrap gap-2">
-                        <span className="text-sm text-slate-400 flex items-center">
+                        <span className="text-sm text-gray-600 flex items-center">
                             {filters.vehicleType === 'voiture' ? (
                                 <Car className="h-4 w-4 mr-1" />
                             ) : filters.vehicleType === 'moto' ? (
@@ -293,7 +293,7 @@ export function DemandesStream({
                             className={
                                 filters.vehicleType === undefined || filters.vehicleType === 'all'
                                     ? 'bg-amber-500 hover:bg-amber-600 text-white'
-                                    : 'bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600'
+                                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
                             }
                         >
                             Tous
@@ -307,7 +307,7 @@ export function DemandesStream({
                                 className={
                                     filters.vehicleType === type.value
                                         ? 'bg-amber-500 hover:bg-amber-600 text-white'
-                                        : 'bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600'
+                                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
                                 }
                             >
                                 {type.icon} {type.label}
@@ -317,7 +317,7 @@ export function DemandesStream({
                     
                     {/* Filtre par type de panne */}
                     <div className="flex flex-wrap gap-2 mt-2">
-                        <span className="text-sm text-slate-400 flex items-center">
+                        <span className="text-sm text-gray-600 flex items-center">
                             <AlertCircle className="h-4 w-4 mr-1" />
                             Panne:
                         </span>
@@ -328,7 +328,7 @@ export function DemandesStream({
                             className={
                                 !filters.typePanne
                                     ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                                    : 'bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600'
+                                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
                             }
                         >
                             Toutes
@@ -342,7 +342,7 @@ export function DemandesStream({
                                 className={
                                     filters.typePanne === type.value
                                         ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                                        : 'bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600'
+                                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
                                 }
                             >
                                 {type.icon} {type.label}
@@ -355,16 +355,16 @@ export function DemandesStream({
             {/* Liste des demandes */}
             <div className="space-y-3">
                 {filteredDemandes.length === 0 ? (
-                    <Card className="bg-slate-800/50 border-slate-700">
+                    <Card className="bg-white border-gray-200">
                         <CardContent className="py-12">
                             <div className="text-center">
-                                <div className="w-16 h-16 bg-slate-700/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <MapPin className="h-8 w-8 text-slate-500" />
+                                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <MapPin className="h-8 w-8 text-gray-400" />
                                 </div>
-                                <h3 className="text-white font-medium text-lg mb-2">
+                                <h3 className="text-gray-900 font-medium text-lg mb-2">
                                     Aucune demande disponible
                                 </h3>
-                                <p className="text-slate-400 text-sm">
+                                <p className="text-gray-500 text-sm">
                                     Aucune demande dans votre zone pour le moment.
                                     Élargissez votre rayon de recherche ou attendez de nouvelles demandes.
                                 </p>
@@ -380,8 +380,8 @@ export function DemandesStream({
                         return (
                             <Card 
                                 key={demande.id}
-                                className={`bg-slate-800/50 border-slate-700 relative overflow-hidden transition-all ${
-                                    isSelected ? 'ring-2 ring-blue-500' : 'hover:bg-slate-800'
+                                className={`bg-white border-gray-200 relative overflow-hidden transition-all ${
+                                    isSelected ? 'ring-2 ring-blue-500' : 'hover:bg-gray-50'
                                 } ${isAnimating ? 'animate-pulse' : ''}`}
                             >
                                 {isAnimating && <NewDemandeAnimation onComplete={() => {
@@ -392,7 +392,7 @@ export function DemandesStream({
                                     {/* Header avec code et timer */}
                                     <div className="flex items-center justify-between mb-3">
                                         <div className="flex items-center gap-2">
-                                            <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                                            <Badge className="bg-blue-50 text-blue-600 border-blue-200">
                                                 {demande.codeDemande}
                                             </Badge>
                                             <Badge variant="outline" className={DEMANDE_STATUS_COLORS.en_attente}>
@@ -401,8 +401,8 @@ export function DemandesStream({
                                         </div>
                                         
                                         <div className={`flex items-center gap-1 text-sm font-mono ${
-                                            demande.tempsRestant < 60 ? 'text-red-400' : 
-                                            demande.tempsRestant < 180 ? 'text-orange-400' : 'text-slate-400'
+                                            demande.tempsRestant < 60 ? 'text-red-500' : 
+                                            demande.tempsRestant < 180 ? 'text-orange-500' : 'text-gray-500'
                                         }`}>
                                             <Clock className="h-4 w-4" />
                                             <span>{formatTempsRestant(demande.tempsRestant)}</span>
@@ -414,7 +414,7 @@ export function DemandesStream({
                                         {/* Avatar ou icône type panne */}
                                         <div className="flex-shrink-0">
                                             <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ${
-                                                'bg-slate-700/50'
+                                                'bg-gray-100'
                                             }`}>
                                                 {typeInfo.icon}
                                             </div>
@@ -422,37 +422,37 @@ export function DemandesStream({
                                         
                                         {/* Détails */}
                                         <div className="flex-1 min-w-0">
-                                            <h4 className="font-medium text-white flex items-center gap-2">
+                                            <h4 className="font-medium text-gray-900 flex items-center gap-2">
                                                 <span>{typeInfo.label}</span>
                                             </h4>
                                             
-                                            <div className="flex items-center gap-2 mt-1 text-sm text-slate-400">
+                                            <div className="flex items-center gap-2 mt-1 text-sm text-gray-500">
                                                 <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
                                                 <span className="truncate">{demande.localisation}</span>
                                             </div>
                                             
                                             <div className="flex items-center gap-2 mt-2">
-                                                <Badge variant="secondary" className="bg-slate-700/50 text-slate-300">
+                                                <Badge variant="secondary" className="bg-gray-100 text-gray-600">
                                                     {formatDistance(demande.distance)}
                                                 </Badge>
                                                 {demande.vehicle && (
-                                                    <Badge variant="secondary" className="bg-slate-700/50 text-slate-300">
+                                                    <Badge variant="secondary" className="bg-gray-100 text-gray-600">
                                                         <Car className="h-3.5 w-3.5 mr-1" />
                                                         {demande.vehicle.brand} {demande.vehicle.model}
                                                     </Badge>
                                                 )}
                                             </div>
                                             
-                                            <p className="text-sm text-slate-400 mt-2 line-clamp-2">
+                                            <p className="text-sm text-gray-500 mt-2 line-clamp-2">
                                                 {demande.descriptionProbleme}
                                             </p>
                                         </div>
                                     </div>
 
                                     {/* Info client */}
-                                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-700">
+                                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-200">
                                         <div className="flex items-center gap-2">
-                                            <div className="w-8 h-8 bg-slate-700 rounded-full flex items-center justify-center">
+                                            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
                                                 {demande.client.photo ? (
                                                     <img 
                                                         src={demande.client.photo} 
@@ -460,12 +460,12 @@ export function DemandesStream({
                                                         className="w-8 h-8 rounded-full"
                                                     />
                                                 ) : (
-                                                    <span className="text-sm text-slate-300">
+                                                    <span className="text-sm text-gray-600">
                                                         {demande.client.fullName.charAt(0)}
                                                     </span>
                                                 )}
                                             </div>
-                                            <span className="text-sm text-slate-300">
+                                            <span className="text-sm text-gray-700">
                                                 {demande.client.fullName}
                                             </span>
                                         </div>
@@ -476,7 +476,7 @@ export function DemandesStream({
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={() => handleRefuse(demande.id)}
-                                                className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                                                className="border-red-300 text-red-600 hover:bg-red-50"
                                             >
                                                 <X className="h-4 w-4 mr-1" />
                                                 Refuser

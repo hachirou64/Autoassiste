@@ -398,9 +398,9 @@ export default function DepanneurDashboard() {
         if (!props.profile && !props.error) {
             return (
                 <div className="flex flex-col items-center justify-center h-64 text-center">
-                    <AlertCircle className="h-12 w-12 text-yellow-500 mb-4" />
-                    <h2 className="text-xl font-semibold text-white mb-2">Compte non configuré</h2>
-                    <p className="text-slate-400">
+                    <AlertCircle className="h-12 w-12 text-amber-500 mb-4" />
+                    <h2 className="text-xl font-semibold text-gray-900 mb-2">Compte non configuré</h2>
+                    <p className="text-gray-500">
                         Vous n'avez pas encore de compte dépanneur lié à votre profil.
                     </p>
                 </div>
@@ -532,11 +532,11 @@ export default function DepanneurDashboard() {
             <Head title="Dashboard Dépanneur - GoAssist" />
             
             {/* Header mobile avec menu toggle */}
-            <div className="lg:hidden bg-slate-900 border-b border-slate-700 p-4 flex items-center justify-between">
-                <h1 className="text-white font-bold">{getPageTitle()}</h1>
+            <div className="lg:hidden bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+                <h1 className="text-gray-900 font-bold">{getPageTitle()}</h1>
                 <button
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    className="text-slate-400 hover:text-white p-2"
+                    className="text-gray-600 hover:text-gray-900 p-2"
                 >
                     {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                 </button>
@@ -544,19 +544,19 @@ export default function DepanneurDashboard() {
 
             <div className="flex h-full">
                 {/* Sidebar Desktop */}
-                <div className={`${sidebarOpen ? 'w-64' : 'w-16'} hidden lg:flex bg-slate-900 border-r border-slate-700 flex-col transition-all duration-300`}>
-                    <div className="p-4 border-b border-slate-700">
-                        <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                            <Wrench className="h-6 w-6 text-amber-400" />
+                <div className={`${sidebarOpen ? 'w-64' : 'w-16'} hidden lg:flex bg-white border-r border-gray-200 flex-col transition-all duration-300`}>
+                    <div className="p-4 border-b border-gray-200">
+                        <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            <Wrench className="h-6 w-6 text-amber-500" />
                             {sidebarOpen && <span>GoAssist Pro</span>}
                         </h2>
                     </div>
                     
                     {/* Indicateur de statut */}
-                    <div className="px-4 py-3 border-b border-slate-700">
+                    <div className="px-4 py-3 border-b border-gray-200">
                         <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
-                            currentStatus === 'disponible' ? 'bg-green-500/10' :
-                            currentStatus === 'occupe' ? 'bg-orange-500/10' : 'bg-red-500/10'
+                            currentStatus === 'disponible' ? 'bg-green-50' :
+                            currentStatus === 'occupe' ? 'bg-orange-50' : 'bg-red-50'
                         }`}>
                             <span className={`w-2.5 h-2.5 rounded-full ${
                                 currentStatus === 'disponible' ? 'bg-green-500' :
@@ -564,8 +564,8 @@ export default function DepanneurDashboard() {
                             } ${currentStatus === 'disponible' ? 'animate-pulse' : ''}`} />
                             {sidebarOpen && (
                                 <span className={`text-sm font-medium ${
-                                    currentStatus === 'disponible' ? 'text-green-400' :
-                                    currentStatus === 'occupe' ? 'text-orange-400' : 'text-red-400'
+                                    currentStatus === 'disponible' ? 'text-green-600' :
+                                    currentStatus === 'occupe' ? 'text-orange-600' : 'text-red-600'
                                 }`}>
                                     {currentStatus === 'disponible' ? 'Disponible' :
                                      currentStatus === 'occupe' ? 'En intervention' : 'Hors service'}
@@ -585,8 +585,8 @@ export default function DepanneurDashboard() {
                                     onClick={() => setActiveTab(item.id as TabType)}
                                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                                         isActive 
-                                            ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' 
-                                            : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                            ? 'bg-amber-50 text-amber-700 border border-amber-200' 
+                                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                                     }`}
                                 >
                                     <IconComponent className="h-5 w-5 flex-shrink-0" />
@@ -610,17 +610,17 @@ export default function DepanneurDashboard() {
                     <div className="p-2">
                         <button
                             onClick={handleLogout}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors"
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
                         >
                             <LogOut className="h-5 w-5 flex-shrink-0" />
                             {sidebarOpen && <span className="text-sm font-medium">Déconnexion</span>}
                         </button>
                     </div>
                     
-                    <div className="p-2 border-t border-slate-700">
+                    <div className="p-2 border-t border-gray-200">
                         <button
                             onClick={() => setSidebarOpen(!sidebarOpen)}
-                            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white"
+                            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-700"
                         >
                             <ChevronRight className={`h-5 w-5 transition-transform ${sidebarOpen ? 'rotate-180' : ''}`} />
                             {sidebarOpen && <span className="text-sm">Replier</span>}
@@ -631,10 +631,10 @@ export default function DepanneurDashboard() {
                 {/* Mobile Menu Overlay */}
                 {mobileMenuOpen && (
                     <div className="lg:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setMobileMenuOpen(false)}>
-                        <div className="absolute right-0 top-0 h-full w-64 bg-slate-900 p-4" onClick={(e) => e.stopPropagation()}>
+                        <div className="absolute right-0 top-0 h-full w-64 bg-white p-4" onClick={(e) => e.stopPropagation()}>
                             <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-lg font-bold text-white">Menu</h2>
-                                <button onClick={() => setMobileMenuOpen(false)} className="text-slate-400 p-2">
+                                <h2 className="text-lg font-bold text-gray-900">Menu</h2>
+                                <button onClick={() => setMobileMenuOpen(false)} className="text-gray-500 p-2">
                                     <X className="h-5 w-5" />
                                 </button>
                             </div>
@@ -652,8 +652,8 @@ export default function DepanneurDashboard() {
                                             }}
                                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                                                 isActive 
-                                                    ? 'bg-amber-500/20 text-amber-400' 
-                                                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                                    ? 'bg-amber-50 text-amber-700' 
+                                                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                                             }`}
                                         >
                                             <IconComponent className="h-5 w-5" />
@@ -667,18 +667,32 @@ export default function DepanneurDashboard() {
                                     );
                                 })}
                             </nav>
+                            
+                            {/* Bouton Déconnexion - Visible sur mobile */}
+                            <div className="mt-6 pt-4 border-t border-gray-200">
+                                <button
+                                    onClick={() => {
+                                        setMobileMenuOpen(false);
+                                        handleLogout();
+                                    }}
+                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition-colors"
+                                >
+                                    <LogOut className="h-5 w-5" />
+                                    <span className="text-sm font-medium">Déconnexion</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
 
                 {/* Main Content */}
-                <div className="flex-1 overflow-auto bg-slate-950 p-4 lg:p-6">
+                <div className="flex-1 overflow-auto bg-gray-50 p-4 lg:p-6">
                     <div className="max-w-7xl mx-auto space-y-6">
                         {/* Page Title */}
                         <div className="hidden lg:flex items-center justify-between">
                             <div>
-                                <h1 className="text-2xl font-bold text-white">{getPageTitle()}</h1>
-                                <p className="text-slate-400 mt-1">
+                                <h1 className="text-2xl font-bold text-gray-900">{getPageTitle()}</h1>
+                                <p className="text-gray-500 mt-1">
                                     {props.profile 
                                         ? `Bienvenue, ${props.profile.etablissement_name || props.profile.fullName}`
                                         : 'Bienvenue sur votre espace dépanneur'}
@@ -687,7 +701,7 @@ export default function DepanneurDashboard() {
                             
                             {/* Notifications quick access */}
                             <div className="flex items-center gap-2">
-                                <button className="relative p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg">
+                                <button className="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
                                     <Bell className="h-5 w-5" />
                                     {props.notifications.length > 0 && (
                                         <span className="absolute top-1 right-1 w-2 h-2 bg-amber-500 rounded-full" />

@@ -46,31 +46,31 @@ export function DemandeList({ demandes, demandeActive, onViewDetails, onCancel }
     };
 
     return (
-        <Card className="bg-slate-800/50 border-slate-700">
+        <Card className="bg-white border-gray-200 shadow-sm">
             <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-blue-400" />
+                <CardTitle className="text-gray-900 flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-blue-600" />
                     Mes demandes
                 </CardTitle>
             </CardHeader>
             <CardContent>
                 {/* Filtres */}
                 <Tabs defaultValue={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
-                    <TabsList className="bg-slate-700">
-                        <TabsTrigger value="all" className="data-[state=active]:bg-blue-500">Toutes</TabsTrigger>
-                        <TabsTrigger value="en_cours" className="data-[state=active]:bg-blue-500">En cours</TabsTrigger>
-                        <TabsTrigger value="terminees" className="data-[state=active]:bg-blue-500">Terminées</TabsTrigger>
+                    <TabsList className="bg-gray-100">
+                        <TabsTrigger value="all" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">Toutes</TabsTrigger>
+                        <TabsTrigger value="en_cours" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">En cours</TabsTrigger>
+                        <TabsTrigger value="terminees" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">Terminées</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value={filter} className="mt-4">
                         {/* Demande active */}
                         {demandeActive && (
-                            <div className="mb-4 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                            <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-sm text-amber-400 font-medium">Intervention en cours</p>
-                                        <p className="text-white font-bold">{demandeActive.codeDemande}</p>
-                                        <p className="text-slate-400 text-sm">{DEMANDE_STATUS_LABELS[demandeActive.status]}</p>
+                                        <p className="text-sm text-amber-600 font-medium">Intervention en cours</p>
+                                        <p className="text-gray-900 font-bold">{demandeActive.codeDemande}</p>
+                                        <p className="text-gray-500 text-sm">{DEMANDE_STATUS_LABELS[demandeActive.status]}</p>
                                     </div>
                                     <Badge className={DEMANDE_STATUS_COLORS[demandeActive.status]}>
                                         {DEMANDE_STATUS_LABELS[demandeActive.status]}
@@ -82,32 +82,32 @@ export function DemandeList({ demandes, demandeActive, onViewDetails, onCancel }
                         {/* Liste des demandes */}
                         <div className="space-y-3">
                             {filteredDemandes.length === 0 ? (
-                                <p className="text-slate-400 text-center py-4">Aucune demande</p>
+                                <p className="text-gray-500 text-center py-4">Aucune demande</p>
                             ) : (
                                 filteredDemandes.map((demande) => (
                                     <div
                                         key={demande.id}
-                                        className="p-4 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-colors"
+                                        className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200"
                                     >
                                         <div className="flex items-start justify-between">
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2 mb-1">
-                                                    <span className="font-mono text-white">{demande.codeDemande}</span>
+                                                    <span className="font-mono text-gray-900">{demande.codeDemande}</span>
                                                     <Badge className={DEMANDE_STATUS_COLORS[demande.status]}>
                                                         {DEMANDE_STATUS_LABELS[demande.status]}
                                                     </Badge>
                                                 </div>
-                                                <p className="text-sm text-slate-300">{demande.typePanne}</p>
-                                                <div className="flex items-center gap-1 text-xs text-slate-400 mt-1">
+                                                <p className="text-sm text-gray-600">{demande.typePanne}</p>
+                                                <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
                                                     <MapPin className="h-3 w-3" />
                                                     {demande.localisation}
                                                 </div>
-                                                <div className="flex items-center gap-1 text-xs text-slate-400 mt-1">
+                                                <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
                                                     <Clock className="h-3 w-3" />
                                                     {formatDate(demande.date)}
                                                 </div>
                                                 {demande.depanneur && (
-                                                    <div className="flex items-center gap-1 text-xs text-amber-400 mt-1">
+                                                    <div className="flex items-center gap-1 text-xs text-amber-600 mt-1">
                                                         <Wrench className="h-3 w-3" />
                                                         {demande.depanneur.etablissement_name}
                                                     </div>
@@ -118,7 +118,7 @@ export function DemandeList({ demandes, demandeActive, onViewDetails, onCancel }
                                                     variant="ghost"
                                                     size="icon"
                                                     onClick={() => onViewDetails?.(demande)}
-                                                    className="h-8 w-8 text-slate-400 hover:text-white"
+                                                    className="h-8 w-8 text-gray-600 hover:text-gray-900"
                                                 >
                                                     <Eye className="h-4 w-4" />
                                                 </Button>
@@ -127,7 +127,7 @@ export function DemandeList({ demandes, demandeActive, onViewDetails, onCancel }
                                                         variant="ghost"
                                                         size="icon"
                                                         onClick={() => onCancel?.(demande)}
-                                                        className="h-8 w-8 text-slate-400 hover:text-red-400"
+                                                        className="h-8 w-8 text-gray-600 hover:text-red-600"
                                                     >
                                                         <XCircle className="h-4 w-4" />
                                                     </Button>

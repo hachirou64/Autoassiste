@@ -83,11 +83,11 @@ export function DepanneurGeolocationStatus({
     };
 
     return (
-        <Card className="bg-slate-800/50 border-slate-700">
+        <Card className="bg-white border-gray-200">
             <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                    <CardTitle className="text-white flex items-center gap-2 text-base">
-                        <MapPin className="h-4 w-4 text-blue-400" />
+                    <CardTitle className="text-gray-900 flex items-center gap-2 text-base">
+                        <MapPin className="h-4 w-4 text-blue-500" />
                         Géolocalisation
                     </CardTitle>
                     
@@ -95,15 +95,15 @@ export function DepanneurGeolocationStatus({
                     <Badge 
                         className={
                             isActive 
-                                ? "bg-green-500/20 text-green-400 border-green-500/30"
+                                ? "bg-green-50 text-green-600 border-green-200"
                                 : error
-                                ? "bg-red-500/20 text-red-400 border-red-500/30"
-                                : "bg-slate-500/20 text-slate-400 border-slate-500/30"
+                                ? "bg-red-50 text-red-600 border-red-200"
+                                : "bg-gray-100 text-gray-600 border-gray-200"
                         }
                     >
                         {isActive ? (
                             <>
-                                <span className="w-2 h-2 bg-green-400 rounded-full mr-1.5 animate-pulse" />
+                                <span className="w-2 h-2 bg-green-500 rounded-full mr-1.5 animate-pulse" />
                                 Actif
                             </>
                         ) : error ? (
@@ -113,7 +113,7 @@ export function DepanneurGeolocationStatus({
                             </>
                         ) : (
                             <>
-                                <span className="w-2 h-2 bg-slate-400 rounded-full mr-1.5" />
+                                <span className="w-2 h-2 bg-gray-400 rounded-full mr-1.5" />
                                 Inactif
                             </>
                         )}
@@ -123,25 +123,25 @@ export function DepanneurGeolocationStatus({
             
             <CardContent className="space-y-4">
                 {/* Position actuelle */}
-                <div className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center gap-3">
                         {isLoading ? (
-                            <Loader2 className="h-5 w-5 text-blue-400 animate-spin" />
+                            <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />
                         ) : position ? (
-                            <MapPin className="h-5 w-5 text-green-400" />
+                            <MapPin className="h-5 w-5 text-green-500" />
                         ) : (
-                            <MapPin className="h-5 w-5 text-slate-500" />
+                            <MapPin className="h-5 w-5 text-gray-400" />
                         )}
                         
                         <div>
-                            <p className="text-sm font-medium text-white">
+                            <p className="text-sm font-medium text-gray-900">
                                 {position 
                                     ? `${position.latitude.toFixed(6)}, ${position.longitude.toFixed(6)}`
                                     : 'Position non disponible'
                                 }
                             </p>
                             {position && (
-                                <p className="text-xs text-slate-400">
+                                <p className="text-xs text-gray-500">
                                     Précision: {formatAccuracy(position.accuracy)}
                                 </p>
                             )}
@@ -150,7 +150,7 @@ export function DepanneurGeolocationStatus({
                     
                     {/* Indicateur de positionnement en cours */}
                     {isLoading && (
-                        <span className="text-xs text-blue-400 flex items-center gap-1">
+                        <span className="text-xs text-blue-500 flex items-center gap-1">
                             <Loader2 className="h-3 w-3 animate-spin" />
                             Détection...
                         </span>

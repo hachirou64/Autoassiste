@@ -131,16 +131,16 @@ export function CurrentIntervention({
     // Pas d'intervention en cours
     if (status === 'aucune') {
         return (
-            <Card className="bg-slate-800/50 border-slate-700">
+            <Card className="bg-white border-gray-200">
                 <CardContent className="py-12">
                     <div className="text-center">
-                        <div className="w-20 h-20 bg-slate-700/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Wrench className="h-10 w-10 text-slate-500" />
+                        <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Wrench className="h-10 w-10 text-gray-400" />
                         </div>
-                        <h3 className="text-white font-medium text-lg mb-2">
+                        <h3 className="text-gray-900 font-medium text-lg mb-2">
                             Aucune intervention en cours
                         </h3>
-                        <p className="text-slate-400 text-sm">
+                        <p className="text-gray-500 text-sm">
                             Acceptez une demande pour démarrer une intervention
                         </p>
                     </div>
@@ -152,25 +152,25 @@ export function CurrentIntervention({
     return (
         <div className="space-y-4">
             {/* Header de l'intervention */}
-            <Card className={`bg-slate-800/50 border-slate-700 ${
+            <Card className={`bg-white border-gray-200 ${
                 status === 'en_cours' ? 'ring-2 ring-orange-500/50' : ''
             }`}>
                 <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                         <div>
-                            <CardTitle className="text-white flex items-center gap-2">
-                                <Wrench className="h-5 w-5 text-orange-400" />
+                            <CardTitle className="text-gray-900 flex items-center gap-2">
+                                <Wrench className="h-5 w-5 text-orange-500" />
                                 Intervention #{intervention.codeIntervention}
                             </CardTitle>
-                            <CardDescription className="text-slate-400">
+                            <CardDescription className="text-gray-500">
                                 Demande {intervention.demande.codeDemande}
                             </CardDescription>
                         </div>
                         
                         <Badge className={
                             status === 'en_cours' 
-                                ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
-                                : 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                                ? 'bg-orange-50 text-orange-600 border-orange-200'
+                                : 'bg-blue-50 text-blue-600 border-blue-200'
                         }>
                             {status === 'en_cours' ? 'En cours' : 'Acceptée'}
                         </Badge>
@@ -179,9 +179,9 @@ export function CurrentIntervention({
                 
                 <CardContent className="space-y-4">
                     {/* Info client */}
-                    <div className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg">
+                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                         <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center">
+                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                                 {intervention.client.photo ? (
                                     <img 
                                         src={intervention.client.photo} 
@@ -189,14 +189,14 @@ export function CurrentIntervention({
                                         className="w-12 h-12 rounded-full"
                                     />
                                 ) : (
-                                    <User className="h-6 w-6 text-blue-400" />
+                                    <User className="h-6 w-6 text-blue-500" />
                                 )}
                             </div>
                             <div>
-                                <h4 className="font-medium text-white">
+                                <h4 className="font-medium text-gray-900">
                                     {intervention.client.fullName}
                                 </h4>
-                                <div className="flex items-center gap-2 text-sm text-slate-400">
+                                <div className="flex items-center gap-2 text-sm text-gray-500">
                                     <Car className="h-3.5 w-3.5" />
                                     {intervention.vehicle && (
                                         <span>{intervention.vehicle.brand} {intervention.vehicle.model} - {intervention.vehicle.plate}</span>
@@ -210,7 +210,7 @@ export function CurrentIntervention({
                                 variant="outline"
                                 size="icon"
                                 onClick={onCallClient}
-                                className="border-green-500/30 text-green-400 hover:bg-green-500/10"
+                                className="border-green-300 text-green-600 hover:bg-green-50"
                             >
                                 <Phone className="h-4 w-4" />
                             </Button>
@@ -218,7 +218,7 @@ export function CurrentIntervention({
                                 variant="outline"
                                 size="icon"
                                 onClick={onOpenMaps}
-                                className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                                className="border-blue-300 text-blue-600 hover:bg-blue-50"
                             >
                                 <Navigation className="h-4 w-4" />
                             </Button>

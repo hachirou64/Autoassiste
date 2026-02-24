@@ -23,19 +23,19 @@ interface NotificationIconConfig {
 }
 
 const NOTIFICATION_ICONS: Record<string, NotificationIconConfig> = {
-    nouvelle_demande: { icon: Bell, color: 'text-blue-400 bg-blue-500/10' },
-    demande_recue: { icon: CheckCircle, color: 'text-green-400 bg-green-500/10' },
-    demande_acceptee: { icon: CheckCircle, color: 'text-green-400 bg-green-500/10' },
-    demande_annulee: { icon: XCircle, color: 'text-red-400 bg-red-500/10' },
-    depannage_en_route: { icon: Wrench, color: 'text-blue-400 bg-blue-500/10' },
-    intervention_terminee: { icon: Check, color: 'text-emerald-400 bg-emerald-500/10' },
-    paiement_recu: { icon: CheckCircle, color: 'text-green-400 bg-green-500/10' },
-    compte_active: { icon: CheckCircle, color: 'text-green-400 bg-green-500/10' },
-    compte_desactivate: { icon: XCircle, color: 'text-red-400 bg-red-500/10' },
+    nouvelle_demande: { icon: Bell, color: 'text-blue-600 bg-blue-50' },
+    demande_recue: { icon: CheckCircle, color: 'text-green-600 bg-green-50' },
+    demande_acceptee: { icon: CheckCircle, color: 'text-green-600 bg-green-50' },
+    demande_annulee: { icon: XCircle, color: 'text-red-600 bg-red-50' },
+    depannage_en_route: { icon: Wrench, color: 'text-blue-600 bg-blue-50' },
+    intervention_terminee: { icon: Check, color: 'text-emerald-600 bg-emerald-50' },
+    paiement_recu: { icon: CheckCircle, color: 'text-green-600 bg-green-50' },
+    compte_active: { icon: CheckCircle, color: 'text-green-600 bg-green-50' },
+    compte_desactivate: { icon: XCircle, color: 'text-red-600 bg-red-50' },
 };
 
 // Fallback icon for unknown notification types
-const DEFAULT_ICON: NotificationIconConfig = { icon: Bell, color: 'text-slate-400 bg-slate-500/10' };
+const DEFAULT_ICON: NotificationIconConfig = { icon: Bell, color: 'text-gray-400 bg-gray-50' };
 
 // Helper function to get icon config with fallback for unknown types
 function getNotificationIconConfig(type: string): NotificationIconConfig {
@@ -73,15 +73,15 @@ export function ClientNotifications({
     };
 
     return (
-        <Card className="bg-slate-800/50 border-slate-700">
+        <Card className="bg-white border-gray-200 shadow-sm">
             <CardHeader>
-                <CardTitle className="text-white flex items-center justify-between">
+                <CardTitle className="text-gray-900 flex items-center justify-between">
                     <span className="flex items-center gap-2">
-                        <Bell className="h-5 w-5 text-blue-400" />
+                        <Bell className="h-5 w-5 text-blue-600" />
                         Notifications
                     </span>
                     {unreadCount > 0 && (
-                        <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">
+                        <Badge variant="secondary" className="bg-blue-50 text-blue-600">
                             {unreadCount} non lue{unreadCount > 1 ? 's' : ''}
                         </Badge>
                     )}
@@ -91,11 +91,11 @@ export function ClientNotifications({
                 {/* Actions */}
                 <div className="flex items-center justify-between mb-4">
                     <Tabs defaultValue={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
-                        <TabsList className="bg-slate-700">
-                            <TabsTrigger value="all" className="data-[state=active]:bg-blue-500">
+                        <TabsList className="bg-gray-100">
+                            <TabsTrigger value="all" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
                                 Toutes ({notifications.length})
                             </TabsTrigger>
-                            <TabsTrigger value="unread" className="data-[state=active]:bg-blue-500">
+                            <TabsTrigger value="unread" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
                                 Non lues ({unreadCount})
                             </TabsTrigger>
                         </TabsList>
@@ -106,7 +106,7 @@ export function ClientNotifications({
                                 variant="ghost"
                                 size="sm"
                                 onClick={onMarkAllAsRead}
-                                className="text-slate-400 hover:text-white"
+                                className="text-gray-500 hover:text-gray-900"
                             >
                                 <CheckCheck className="h-4 w-4 mr-1" />
                                 Tout marquer lu
@@ -117,7 +117,7 @@ export function ClientNotifications({
                                 variant="ghost"
                                 size="sm"
                                 onClick={onClearAll}
-                                className="text-slate-400 hover:text-red-400"
+                                className="text-gray-500 hover:text-red-600"
                             >
                                 <Settings className="h-4 w-4" />
                             </Button>
@@ -129,10 +129,10 @@ export function ClientNotifications({
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                     {filteredNotifications.length === 0 ? (
                         <div className="text-center py-8">
-                            <div className="w-12 h-12 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <Bell className="h-6 w-6 text-slate-400" />
+                            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <Bell className="h-6 w-6 text-gray-400" />
                             </div>
-                            <p className="text-slate-400">
+                            <p className="text-gray-500">
                                 {filter === 'unread'
                                     ? 'Aucune notification non lue'
                                     : 'Aucune notification'}
@@ -147,8 +147,8 @@ export function ClientNotifications({
                                     key={notification.id}
                                     className={`p-4 rounded-lg transition-colors ${
                                         notification.isRead
-                                            ? 'bg-slate-700/30'
-                                            : 'bg-blue-500/5 border border-blue-500/20'
+                                            ? 'bg-gray-50'
+                                            : 'bg-blue-50 border border-blue-200'
                                     }`}
                                 >
                                     <div className="flex items-start gap-3">
@@ -158,15 +158,15 @@ export function ClientNotifications({
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-start justify-between gap-2">
                                                 <h4 className={`font-medium ${
-                                                    notification.isRead ? 'text-slate-300' : 'text-white'
+                                                    notification.isRead ? 'text-gray-600' : 'text-gray-900'
                                                 }`}>
                                                     {notification.titre}
                                                 </h4>
-                                                <span className="text-xs text-slate-500 flex-shrink-0">
+                                                <span className="text-xs text-gray-400 flex-shrink-0">
                                                     {formatTime(notification.createdAt)}
                                                 </span>
                                             </div>
-                                            <p className="text-sm text-slate-400 mt-1">
+                                            <p className="text-sm text-gray-500 mt-1">
                                                 {notification.message}
                                             </p>
                                             {!notification.isRead && onMarkAsRead && (
@@ -174,7 +174,7 @@ export function ClientNotifications({
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => onMarkAsRead(notification.id)}
-                                                    className="mt-2 text-blue-400 hover:text-blue-300 h-auto p-0"
+                                                    className="mt-2 text-blue-600 hover:text-blue-700 h-auto p-0"
                                                 >
                                                     <Check className="h-3 w-3 mr-1" />
                                                     Marquer comme lu

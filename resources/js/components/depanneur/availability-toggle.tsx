@@ -50,14 +50,14 @@ export function AvailabilityToggle({
     };
 
     return (
-        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                        <CircleDot className="h-5 w-5 text-blue-400" />
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <CircleDot className="h-5 w-5 text-blue-500" />
                         Gestion de la disponibilité
                     </h3>
-                    <p className="text-sm text-slate-400 mt-1">
+                    <p className="text-sm text-gray-500 mt-1">
                         Mettez à jour votre statut pour recevoir des demandes
                     </p>
                 </div>
@@ -65,14 +65,14 @@ export function AvailabilityToggle({
                 {/* Indicateur visuel global */}
                 <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${
                     interventionActive 
-                        ? 'bg-orange-500/20 border border-orange-500/30' 
+                        ? 'bg-orange-50 border border-orange-200' 
                         : STATUS_BG_COLORS[currentStatus]
                 }`}>
                     <span className={`w-3 h-3 rounded-full ${
                         interventionActive ? 'bg-orange-500 animate-pulse' : STATUS_COLORS[currentStatus].replace('text-', 'bg-')
                     }`} />
                     <span className={`text-sm font-medium ${
-                        interventionActive ? 'text-orange-400' : STATUS_COLORS[currentStatus]
+                        interventionActive ? 'text-orange-600' : STATUS_COLORS[currentStatus]
                     }`}>
                         {interventionActive ? 'En intervention' : STATUS_LABELS[currentStatus]}
                     </span>
@@ -81,14 +81,14 @@ export function AvailabilityToggle({
 
             {/* Message d'avertissement si intervention active */}
             {interventionActive && (
-                <div className="mb-6 p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg">
+                <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
                     <div className="flex items-start gap-3">
-                        <AlertTriangle className="h-5 w-5 text-orange-400 mt-0.5" />
+                        <AlertTriangle className="h-5 w-5 text-orange-500 mt-0.5" />
                         <div>
-                            <p className="text-sm font-medium text-orange-400">
+                            <p className="text-sm font-medium text-orange-600">
                                 Intervention en cours
                             </p>
-                            <p className="text-xs text-slate-400 mt-1">
+                            <p className="text-xs text-gray-500 mt-1">
                                 Vous ne pouvez pas modifier votre disponibilité pendant une intervention.
                                 Votre statut sera automatiquement mis à jour à la fin de l'intervention.
                             </p>
@@ -105,27 +105,27 @@ export function AvailabilityToggle({
                     disabled={disabled || interventionActive}
                     className={`relative p-4 rounded-xl border-2 transition-all duration-200 ${
                         currentStatus === 'disponible'
-                            ? 'bg-green-500/10 border-green-500/50 ring-2 ring-green-500/20'
-                            : 'bg-slate-700/30 border-slate-600 hover:bg-slate-700/50 hover:border-slate-500'
+                            ? 'bg-green-50 border-green-500 ring-2 ring-green-500/20'
+                            : 'bg-white border-gray-200 hover:bg-gray-50 hover:border-gray-300'
                     } ${disabled || interventionActive ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                     ${isAnimating ? 'scale-95' : ''}
                     `}
                 >
                     <div className="flex flex-col items-center gap-3">
                         <div className={`p-3 rounded-full ${
-                            currentStatus === 'disponible' ? 'bg-green-500/20' : 'bg-slate-600/30'
+                            currentStatus === 'disponible' ? 'bg-green-100' : 'bg-gray-100'
                         }`}>
                             <Circle className={`h-8 w-8 ${
-                                currentStatus === 'disponible' ? 'text-green-400' : 'text-slate-400'
+                                currentStatus === 'disponible' ? 'text-green-500' : 'text-gray-400'
                             }`} />
                         </div>
                         <div className="text-center">
                             <p className={`font-semibold ${
-                                currentStatus === 'disponible' ? 'text-green-400' : 'text-slate-300'
+                                currentStatus === 'disponible' ? 'text-green-600' : 'text-gray-700'
                             }`}>
                                 Disponible
                             </p>
-                            <p className="text-xs text-slate-400 mt-1">
+                            <p className="text-xs text-gray-500 mt-1">
                                 Reçoit les demandes
                             </p>
                         </div>
@@ -144,27 +144,27 @@ export function AvailabilityToggle({
                     disabled={disabled || interventionActive}
                     className={`relative p-4 rounded-xl border-2 transition-all duration-200 ${
                         currentStatus === 'occupe'
-                            ? 'bg-orange-500/10 border-orange-500/50 ring-2 ring-orange-500/20'
-                            : 'bg-slate-700/30 border-slate-600 hover:bg-slate-700/50 hover:border-slate-500'
+                            ? 'bg-orange-50 border-orange-500 ring-2 ring-orange-500/20'
+                            : 'bg-white border-gray-200 hover:bg-gray-50 hover:border-gray-300'
                     } ${disabled || interventionActive ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                     ${isAnimating ? 'scale-95' : ''}
                     `}
                 >
                     <div className="flex flex-col items-center gap-3">
                         <div className={`p-3 rounded-full ${
-                            currentStatus === 'occupe' ? 'bg-orange-500/20' : 'bg-slate-600/30'
+                            currentStatus === 'occupe' ? 'bg-orange-100' : 'bg-gray-100'
                         }`}>
                             <Clock className={`h-8 w-8 ${
-                                currentStatus === 'occupe' ? 'text-orange-400' : 'text-slate-400'
+                                currentStatus === 'occupe' ? 'text-orange-500' : 'text-gray-400'
                             }`} />
                         </div>
                         <div className="text-center">
                             <p className={`font-semibold ${
-                                currentStatus === 'occupe' ? 'text-orange-400' : 'text-slate-300'
+                                currentStatus === 'occupe' ? 'text-orange-600' : 'text-gray-700'
                             }`}>
                                 Occupé
                             </p>
-                            <p className="text-xs text-slate-400 mt-1">
+                            <p className="text-xs text-gray-500 mt-1">
                                 Intervention en cours
                             </p>
                         </div>
@@ -183,27 +183,27 @@ export function AvailabilityToggle({
                     disabled={disabled || interventionActive}
                     className={`relative p-4 rounded-xl border-2 transition-all duration-200 ${
                         currentStatus === 'hors_service'
-                            ? 'bg-red-500/10 border-red-500/50 ring-2 ring-red-500/20'
-                            : 'bg-slate-700/30 border-slate-600 hover:bg-slate-700/50 hover:border-slate-500'
+                            ? 'bg-red-50 border-red-500 ring-2 ring-red-500/20'
+                            : 'bg-white border-gray-200 hover:bg-gray-50 hover:border-gray-300'
                     } ${disabled || interventionActive ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                     ${isAnimating ? 'scale-95' : ''}
                     `}
                 >
                     <div className="flex flex-col items-center gap-3">
                         <div className={`p-3 rounded-full ${
-                            currentStatus === 'hors_service' ? 'bg-red-500/20' : 'bg-slate-600/30'
+                            currentStatus === 'hors_service' ? 'bg-red-100' : 'bg-gray-100'
                         }`}>
                             <Power className={`h-8 w-8 ${
-                                currentStatus === 'hors_service' ? 'text-red-400' : 'text-slate-400'
+                                currentStatus === 'hors_service' ? 'text-red-500' : 'text-gray-400'
                             }`} />
                         </div>
                         <div className="text-center">
                             <p className={`font-semibold ${
-                                currentStatus === 'hors_service' ? 'text-red-400' : 'text-slate-300'
+                                currentStatus === 'hors_service' ? 'text-red-600' : 'text-gray-700'
                             }`}>
                                 Hors service
                             </p>
-                            <p className="text-xs text-slate-400 mt-1">
+                            <p className="text-xs text-gray-500 mt-1">
                                 Non disponible
                             </p>
                         </div>
@@ -218,16 +218,16 @@ export function AvailabilityToggle({
             </div>
 
             {/* Info supplémentaire */}
-            <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <div className="flex items-start gap-3">
-                    <div className="p-1.5 bg-blue-500/20 rounded">
-                        <Clock className="h-4 w-4 text-blue-400" />
+                    <div className="p-1.5 bg-blue-100 rounded">
+                        <Clock className="h-4 w-4 text-blue-500" />
                     </div>
                     <div>
-                        <p className="text-sm text-blue-400">
+                        <p className="text-sm text-blue-600">
                             Conseil
                         </p>
-                        <p className="text-xs text-slate-400 mt-0.5">
+                        <p className="text-xs text-gray-500 mt-0.5">
                             Gardez votre statut à jour pour ne pas manquer d'opportunités. 
                             Les clients préfèrent les dépanneurs disponibles.
                         </p>

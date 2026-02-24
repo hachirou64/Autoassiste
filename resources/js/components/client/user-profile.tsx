@@ -101,12 +101,12 @@ export function UserProfile({
     return (
         <div className="space-y-6">
             {/* En-tête du profil */}
-            <Card className="bg-slate-800/50 border-slate-700">
+            <Card className="bg-white border-gray-200 shadow-sm">
                 <CardContent className="pt-6">
                     <div className="flex flex-col md:flex-row items-start gap-6">
                         {/* Photo de profil */}
                         <div className="relative">
-                            <div className="w-24 h-24 bg-slate-700 rounded-full flex items-center justify-center overflow-hidden border-2 border-slate-600">
+                            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden border-2 border-gray-200">
                                 {photoPreview || profile.photo ? (
                                     <img
                                         src={photoPreview || profile.photo}
@@ -114,7 +114,7 @@ export function UserProfile({
                                         className="w-full h-full object-cover"
                                     />
                                 ) : (
-                                    <User className="h-12 w-12 text-slate-400" />
+                                    <User className="h-12 w-12 text-gray-400" />
                                 )}
                             </div>
                             {isEditing && (
@@ -134,14 +134,14 @@ export function UserProfile({
                         <div className="flex-1">
                             <div className="flex items-start justify-between">
                                 <div>
-                                    <h2 className="text-xl font-bold text-white">{profile.fullName}</h2>
-                                    <p className="text-slate-400">Client GoAssist</p>
+                                    <h2 className="text-xl font-bold text-gray-900">{profile.fullName}</h2>
+                                    <p className="text-gray-500">Client GoAssist</p>
                                 </div>
                                 <Button
                                     variant={isEditing ? 'default' : 'outline'}
                                     size="sm"
                                     onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-                                    className={isEditing ? 'bg-blue-500 hover:bg-blue-600' : 'bg-slate-700 border-slate-600 text-white'}
+                                    className={isEditing ? 'bg-blue-500 hover:bg-blue-600' : 'border-gray-300 text-gray-700'}
                                 >
                                     {isEditing ? (
                                         <>
@@ -159,12 +159,12 @@ export function UserProfile({
 
                             {/* Badges */}
                             <div className="flex flex-wrap gap-2 mt-3">
-                                <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                                <Badge className="bg-blue-50 text-blue-600 border-blue-200">
                                     <Award className="h-3 w-3 mr-1" />
                                     Membre depuis {stats?.membre_depuis || formatDate(profile.createdAt || undefined)}
                                 </Badge>
                                 {stats && stats.demandes_terminees >= 10 && (
-                                    <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">
+                                    <Badge className="bg-amber-50 text-amber-600 border-amber-200">
                                         <Star className="h-3 w-3 mr-1" />
                                         Client fidèle
                                     </Badge>
@@ -178,50 +178,50 @@ export function UserProfile({
             {/* Formulaire d'édition */}
             <div className="grid gap-6 md:grid-cols-2">
                 {/* Informations personnelles */}
-                <Card className="bg-slate-800/50 border-slate-700">
+                <Card className="bg-white border-gray-200 shadow-sm">
                     <CardHeader>
-                        <CardTitle className="text-white flex items-center gap-2">
-                            <User className="h-5 w-5 text-blue-400" />
+                        <CardTitle className="text-gray-900 flex items-center gap-2">
+                            <User className="h-5 w-5 text-blue-600" />
                             Informations personnelles
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
-                            <Label className="text-slate-300">Nom complet</Label>
+                            <Label className="text-gray-700">Nom complet</Label>
                             <div className="relative">
-                                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                 <Input
                                     value={editedProfile.fullName}
                                     onChange={(e) => setEditedProfile({ ...editedProfile, fullName: e.target.value })}
                                     disabled={!isEditing}
-                                    className="pl-10 bg-slate-700 border-slate-600 text-white"
+                                    className="pl-10 bg-white border-gray-300 text-gray-900"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <Label className="text-slate-300">Email</Label>
+                            <Label className="text-gray-700">Email</Label>
                             <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                 <Input
                                     type="email"
                                     value={editedProfile.email}
                                     onChange={(e) => setEditedProfile({ ...editedProfile, email: e.target.value })}
                                     disabled={!isEditing}
-                                    className="pl-10 bg-slate-700 border-slate-600 text-white"
+                                    className="pl-10 bg-white border-gray-300 text-gray-900"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <Label className="text-slate-300">Téléphone</Label>
+                            <Label className="text-gray-700">Téléphone</Label>
                             <div className="relative">
-                                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                 <Input
                                     value={editedProfile.phone}
                                     onChange={(e) => setEditedProfile({ ...editedProfile, phone: e.target.value })}
                                     disabled={!isEditing}
-                                    className="pl-10 bg-slate-700 border-slate-600 text-white"
+                                    className="pl-10 bg-white border-gray-300 text-gray-900"
                                 />
                             </div>
                         </div>
@@ -229,16 +229,16 @@ export function UserProfile({
                 </Card>
 
                 {/* Préférences */}
-                <Card className="bg-slate-800/50 border-slate-700">
+                <Card className="bg-white border-gray-200 shadow-sm">
                     <CardHeader>
-                        <CardTitle className="text-white flex items-center gap-2">
-                            <CreditCard className="h-5 w-5 text-blue-400" />
+                        <CardTitle className="text-gray-900 flex items-center gap-2">
+                            <CreditCard className="h-5 w-5 text-blue-600" />
                             Préférences
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
-                            <Label className="text-slate-300">Mode de paiement préféré</Label>
+                            <Label className="text-gray-700">Mode de paiement préféré</Label>
                             <div className="grid grid-cols-3 gap-2">
                                 {PAYMENT_METHODS.map((method) => {
                                     const isSelected = localPrefs.methode_payement_preferee === method.value;
@@ -251,8 +251,8 @@ export function UserProfile({
                                             disabled={!isEditing}
                                             className={`p-3 rounded-lg border transition-colors ${
                                                 isSelected
-                                                    ? 'bg-blue-500/20 border-blue-500 text-white'
-                                                    : 'bg-slate-700 border-slate-600 text-slate-400 hover:bg-slate-600'
+                                                    ? 'bg-blue-50 border-blue-500 text-blue-700'
+                                                    : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                                             }`}
                                         >
                                             <span className="text-xs">{method.label}</span>
@@ -262,18 +262,18 @@ export function UserProfile({
                             </div>
                         </div>
 
-                        <div className="space-y-4 pt-4 border-t border-slate-700">
+                        <div className="space-y-4 pt-4 border-t border-gray-200">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <Bell className="h-4 w-4 text-slate-400" />
-                                    <Label className="text-slate-300">Notifications SMS</Label>
+                                    <Bell className="h-4 w-4 text-gray-500" />
+                                    <Label className="text-gray-700">Notifications SMS</Label>
                                 </div>
                                 <Button
                                     variant={localPrefs.notifications_sms ? 'default' : 'outline'}
                                     size="sm"
                                     onClick={() => handlePreferenceChange('notifications_sms', !localPrefs.notifications_sms)}
                                     disabled={!isEditing}
-                                    className={localPrefs.notifications_sms ? 'bg-green-500 hover:bg-green-600' : 'bg-slate-700 border-slate-600'}
+                                    className={localPrefs.notifications_sms ? 'bg-green-500 hover:bg-green-600' : 'border-gray-300'}
                                 >
                                     {localPrefs.notifications_sms ? 'Activé' : 'Désactivé'}
                                 </Button>
@@ -281,15 +281,15 @@ export function UserProfile({
 
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <Mail className="h-4 w-4 text-slate-400" />
-                                    <Label className="text-slate-300">Notifications Email</Label>
+                                    <Mail className="h-4 w-4 text-gray-500" />
+                                    <Label className="text-gray-700">Notifications Email</Label>
                                 </div>
                                 <Button
                                     variant={localPrefs.notifications_email ? 'default' : 'outline'}
                                     size="sm"
                                     onClick={() => handlePreferenceChange('notifications_email', !localPrefs.notifications_email)}
                                     disabled={!isEditing}
-                                    className={localPrefs.notifications_email ? 'bg-green-500 hover:bg-green-600' : 'bg-slate-700 border-slate-600'}
+                                    className={localPrefs.notifications_email ? 'bg-green-500 hover:bg-green-600' : 'border-gray-300'}
                                 >
                                     {localPrefs.notifications_email ? 'Activé' : 'Désactivé'}
                                 </Button>
@@ -300,28 +300,28 @@ export function UserProfile({
 
                 {/* Statistiques */}
                 {stats && (
-                    <Card className="bg-slate-800/50 border-slate-700">
+                    <Card className="bg-white border-gray-200 shadow-sm">
                         <CardHeader>
-                            <CardTitle className="text-white flex items-center gap-2">
-                                <Award className="h-5 w-5 text-blue-400" />
+                            <CardTitle className="text-gray-900 flex items-center gap-2">
+                                <Award className="h-5 w-5 text-blue-600" />
                                 Statistiques
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="grid grid-cols-3 gap-4 text-center">
-                                <div className="p-4 bg-slate-700/30 rounded-lg">
-                                    <p className="text-2xl font-bold text-white">{stats.total_demandes}</p>
-                                    <p className="text-sm text-slate-400">Demandes</p>
+                                <div className="p-4 bg-gray-50 rounded-lg">
+                                    <p className="text-2xl font-bold text-gray-900">{stats.total_demandes}</p>
+                                    <p className="text-sm text-gray-500">Demandes</p>
                                 </div>
-                                <div className="p-4 bg-slate-700/30 rounded-lg">
-                                    <p className="text-2xl font-bold text-green-400">{stats.demandes_terminees}</p>
-                                    <p className="text-sm text-slate-400">Terminées</p>
+                                <div className="p-4 bg-green-50 rounded-lg">
+                                    <p className="text-2xl font-bold text-green-600">{stats.demandes_terminees}</p>
+                                    <p className="text-sm text-gray-500">Terminées</p>
                                 </div>
-                                <div className="p-4 bg-slate-700/30 rounded-lg">
-                                    <p className="text-2xl font-bold text-blue-400">
+                                <div className="p-4 bg-blue-50 rounded-lg">
+                                    <p className="text-2xl font-bold text-blue-600">
                                         {(stats.montant_total_depense / 1000).toFixed(0)}k
                                     </p>
-                                    <p className="text-sm text-slate-400">XOF dépensé</p>
+                                    <p className="text-sm text-gray-500">XOF dépensé</p>
                                 </div>
                             </div>
                         </CardContent>
@@ -329,17 +329,17 @@ export function UserProfile({
                 )}
 
                 {/* Sécurité */}
-                <Card className="bg-slate-800/50 border-slate-700">
+                <Card className="bg-white border-gray-200 shadow-sm">
                     <CardHeader>
-                        <CardTitle className="text-white flex items-center gap-2">
-                            <Lock className="h-5 w-5 text-blue-400" />
+                        <CardTitle className="text-gray-900 flex items-center gap-2">
+                            <Lock className="h-5 w-5 text-blue-600" />
                             Sécurité
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <Button
                             variant="outline"
-                            className="w-full bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                            className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
                             onClick={onChangePassword}
                         >
                             <Lock className="h-4 w-4 mr-2" />
@@ -351,3 +351,4 @@ export function UserProfile({
         </div>
     );
 }
+

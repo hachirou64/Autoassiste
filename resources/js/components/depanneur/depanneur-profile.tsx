@@ -92,55 +92,55 @@ export function DepanneurProfile({
     return (
         <div className="space-y-6">
             {/* Header avec avatar */}
-            <Card className="bg-slate-800/50 border-slate-700">
+            <Card className="bg-white border-gray-200 shadow-sm">
                 <CardContent className="pt-6">
                     <div className="flex flex-col md:flex-row items-center gap-6">
                         <div className="relative">
                             <Avatar className="w-24 h-24">
 <AvatarImage src={effectiveProfile.photo} alt={effectiveProfile.etablissement_name} />
-                                <AvatarFallback className="bg-blue-500/20 text-blue-400 text-2xl">
+                                <AvatarFallback className="bg-blue-100 text-blue-600 text-2xl">
                                     {effectiveProfile.etablissement_name?.substring(0, 2).toUpperCase() || 'DP'}
                                 </AvatarFallback>
                             </Avatar>
                             <Button
                                 variant="outline"
                                 size="icon"
-                                className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full bg-slate-700 border-slate-600"
+                                className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full bg-white border-gray-300"
                             >
-                                <Camera className="h-4 w-4 text-slate-300" />
+                                <Camera className="h-4 w-4 text-gray-600" />
                             </Button>
                         </div>
                         
                         <div className="flex-1 text-center md:text-left">
                             <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
-                                <h2 className="text-2xl font-bold text-white">
+                                <h2 className="text-2xl font-bold text-gray-900">
                                     {profile.etablissement_name}
                                 </h2>
                                 {/* Indicateur de statut de compte (activé/désactivé par admin) */}
                                 <Badge className={profile.isActive 
-                                    ? "bg-green-500/20 text-green-400 border-green-500/30" 
-                                    : "bg-red-500/20 text-red-400 border-red-500/30"
+                                    ? "bg-green-100 text-green-600 border-green-200" 
+                                    : "bg-red-100 text-red-600 border-red-200"
                                 }>
                                     {profile.isActive ? '✅ Activé' : '🚫 Désactivé'}
                                 </Badge>
                             </div>
                             {!profile.isActive && (
-                                <p className="text-sm text-red-400 mb-2">
+                                <p className="text-sm text-red-600 mb-2">
                                     Votre compte est désactivé. Veuillez contacter l'administrateur.
                                 </p>
                             )}
-                            <p className="text-slate-400">
+                            <p className="text-gray-600">
                                 {profile.promoteur_name}
                             </p>
                             <div className="flex items-center justify-center md:justify-start gap-4 mt-2">
                                 {profile.statistiques && (
                                     <>
-                                        <div className="flex items-center gap-1 text-amber-400">
-                                            <Star className="h-5 w-5 fill-amber-400" />
+                                        <div className="flex items-center gap-1 text-amber-500">
+                                            <Star className="h-5 w-5 fill-amber-500" />
                                             <span className="font-bold">{(profile.statistiques.note_moyenne ?? 0).toFixed(1)}</span>
-                                            <span className="text-slate-400">({profile.statistiques.total_interventions} interventions)</span>
+                                            <span className="text-gray-500">({profile.statistiques.total_interventions} interventions)</span>
                                         </div>
-                                        <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                                        <Badge className="bg-green-100 text-green-600 border-green-200">
                                             {profile.statistiques.depuis}
                                         </Badge>
                                     </>
@@ -179,17 +179,17 @@ export function DepanneurProfile({
 
             <div className="grid gap-6 lg:grid-cols-2">
                 {/* Informations de l'établissement */}
-                <Card className="bg-slate-800/50 border-slate-700">
+                <Card className="bg-white border-gray-200 shadow-sm">
                     <CardHeader>
-                        <CardTitle className="text-white flex items-center gap-2">
-                            <Building className="h-5 w-5 text-blue-400" />
+                        <CardTitle className="text-gray-900 flex items-center gap-2">
+                            <Building className="h-5 w-5 text-blue-600" />
                             Informations de l'établissement
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="grid gap-4 md:grid-cols-2">
                             <div>
-                                <label className="text-sm text-slate-400 mb-1 block">
+                                <label className="text-sm text-gray-600 mb-1 block">
                                     Nom de l'établissement
                                 </label>
                                 {isEditing ? (
@@ -199,14 +199,14 @@ export function DepanneurProfile({
                                             ...editedProfile,
                                             etablissement_name: e.target.value
                                         })}
-                                        className="bg-slate-700 border-slate-600 text-white"
+                                        className="bg-white border-gray-300 text-gray-900"
                                     />
                                 ) : (
-                                    <p className="text-white">{profile.etablissement_name}</p>
+                                    <p className="text-gray-900">{profile.etablissement_name}</p>
                                 )}
                             </div>
                             <div>
-                                <label className="text-sm text-slate-400 mb-1 block">
+                                <label className="text-sm text-gray-600 mb-1 block">
                                     Nom du responsable
                                 </label>
                                 {isEditing ? (
@@ -216,16 +216,16 @@ export function DepanneurProfile({
                                             ...editedProfile,
                                             promoteur_name: e.target.value
                                         })}
-                                        className="bg-slate-700 border-slate-600 text-white"
+                                        className="bg-white border-gray-300 text-gray-900"
                                     />
                                 ) : (
-                                    <p className="text-white">{profile.promoteur_name}</p>
+                                    <p className="text-gray-900">{profile.promoteur_name}</p>
                                 )}
                             </div>
                         </div>
                         
                         <div>
-                            <label className="text-sm text-slate-400 mb-1 block">
+                            <label className="text-sm text-gray-600 mb-1 block">
                                 IFU
                             </label>
                             {isEditing ? (
@@ -235,16 +235,16 @@ export function DepanneurProfile({
                                         ...editedProfile,
                                         IFU: e.target.value
                                     })}
-                                    className="bg-slate-700 border-slate-600 text-white"
+                                    className="bg-white border-gray-300 text-gray-900"
                                 />
                             ) : (
-                                <p className="text-white font-mono">{profile.IFU}</p>
+                                <p className="text-gray-900 font-mono">{profile.IFU}</p>
                             )}
                         </div>
                         
                         <div className="grid gap-4 md:grid-cols-2">
                             <div>
-                                <label className="text-sm text-slate-400 mb-1 block">
+                                <label className="text-sm text-gray-600 mb-1 block">
                                     Email
                                 </label>
                                 {isEditing ? (
@@ -255,14 +255,14 @@ export function DepanneurProfile({
                                             ...editedProfile,
                                             email: e.target.value
                                         })}
-                                        className="bg-slate-700 border-slate-600 text-white"
+                                        className="bg-white border-gray-300 text-gray-900"
                                     />
                                 ) : (
-                                    <p className="text-white">{profile.email}</p>
+                                    <p className="text-gray-900">{profile.email}</p>
                                 )}
                             </div>
                             <div>
-                                <label className="text-sm text-slate-400 mb-1 block">
+                                <label className="text-sm text-gray-600 mb-1 block">
                                     Téléphone
                                 </label>
                                 {isEditing ? (
@@ -272,10 +272,10 @@ export function DepanneurProfile({
                                             ...editedProfile,
                                             phone: e.target.value
                                         })}
-                                        className="bg-slate-700 border-slate-600 text-white"
+                                        className="bg-white border-gray-300 text-gray-900"
                                     />
                                 ) : (
-                                    <p className="text-white">{profile.phone}</p>
+                                    <p className="text-gray-900">{profile.phone}</p>
                                 )}
                             </div>
                         </div>
@@ -283,10 +283,10 @@ export function DepanneurProfile({
                 </Card>
 
                 {/* Horaires de disponibilité */}
-                <Card className="bg-slate-800/50 border-slate-700">
+                <Card className="bg-white border-gray-200 shadow-sm">
                     <CardHeader>
-                        <CardTitle className="text-white flex items-center gap-2">
-                            <Clock className="h-5 w-5 text-amber-400" />
+                        <CardTitle className="text-gray-900 flex items-center gap-2">
+                            <Clock className="h-5 w-5 text-amber-600" />
                             Horaires de disponibilité
                         </CardTitle>
                     </CardHeader>
@@ -298,22 +298,22 @@ export function DepanneurProfile({
                                     <div 
                                         key={jour.key}
                                         className={`flex items-center justify-between p-3 rounded-lg ${
-                                            horaire?.estActif ? 'bg-slate-700/30' : 'bg-slate-700/10 opacity-50'
+                                            horaire?.estActif ? 'bg-gray-100' : 'bg-gray-50 opacity-50'
                                         }`}
                                     >
                                         <div className="flex items-center gap-3">
                                             <span className={`w-3 h-3 rounded-full ${
-                                                horaire?.estActif ? 'bg-green-500' : 'bg-slate-500'
+                                                horaire?.estActif ? 'bg-green-500' : 'bg-gray-400'
                                             }`} />
-                                            <span className="text-white font-medium">{jour.label}</span>
+                                            <span className="text-gray-900 font-medium">{jour.label}</span>
                                         </div>
                                         <div className="text-right">
                                             {horaire?.estActif ? (
-                                                <span className="text-slate-300">
+                                                <span className="text-gray-700">
                                                     {horaire.debut} - {horaire.fin}
                                                 </span>
                                             ) : (
-                                                <span className="text-slate-500">Fermé</span>
+                                                <span className="text-gray-500">Fermé</span>
                                             )}
                                         </div>
                                     </div>
@@ -324,10 +324,10 @@ export function DepanneurProfile({
                 </Card>
 
                 {/* Préférences */}
-                <Card className="bg-slate-800/50 border-slate-700">
+                <Card className="bg-white border-gray-200 shadow-sm">
                     <CardHeader>
-                        <CardTitle className="text-white flex items-center gap-2">
-                            <Settings className="h-5 w-5 text-purple-400" />
+                        <CardTitle className="text-gray-900 flex items-center gap-2">
+                            <Settings className="h-5 w-5 text-purple-600" />
                             Préférences
                         </CardTitle>
                     </CardHeader>
@@ -335,10 +335,10 @@ export function DepanneurProfile({
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <Bell className="h-5 w-5 text-slate-400" />
+                                    <Bell className="h-5 w-5 text-gray-500" />
                                     <div>
-                                        <p className="text-white">Notifications sonores</p>
-                                        <p className="text-sm text-slate-400">Sons pour les nouvelles demandes</p>
+                                        <p className="text-gray-900">Notifications sonores</p>
+                                        <p className="text-sm text-gray-500">Sons pour les nouvelles demandes</p>
                                     </div>
                                 </div>
                                 <Button
@@ -352,10 +352,10 @@ export function DepanneurProfile({
                             
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <Mail className="h-5 w-5 text-slate-400" />
+                                    <Mail className="h-5 w-5 text-gray-500" />
                                     <div>
-                                        <p className="text-white">Notifications SMS</p>
-                                        <p className="text-sm text-slate-400">Recevoir les alertes par SMS</p>
+                                        <p className="text-gray-900">Notifications SMS</p>
+                                        <p className="text-sm text-gray-500">Recevoir les alertes par SMS</p>
                                     </div>
                                 </div>
                                 <Button
@@ -369,13 +369,13 @@ export function DepanneurProfile({
                             
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <Globe className="h-5 w-5 text-slate-400" />
+                                    <Globe className="h-5 w-5 text-gray-500" />
                                     <div>
-                                        <p className="text-white">Rayon préféré</p>
-                                        <p className="text-sm text-slate-400">Distance de recherche par défaut</p>
+                                        <p className="text-gray-900">Rayon préféré</p>
+                                        <p className="text-sm text-gray-500">Distance de recherche par défaut</p>
                                     </div>
                                 </div>
-                                <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                                <Badge className="bg-blue-100 text-blue-600 border-blue-200">
                                     {profile.preferences?.rayon_prefere ?? 10} km
                                 </Badge>
                             </div>
@@ -385,9 +385,9 @@ export function DepanneurProfile({
             </div>
 
             {/* Actions du compte */}
-            <Card className="bg-slate-800/50 border-slate-700">
+            <Card className="bg-white border-gray-200 shadow-sm">
                 <CardHeader>
-                    <CardTitle className="text-white">
+                    <CardTitle className="text-gray-900">
                         Compte
                     </CardTitle>
                 </CardHeader>
@@ -396,14 +396,14 @@ export function DepanneurProfile({
                         <Button
                             variant="outline"
                             onClick={onChangePassword}
-                            className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                            className="border-gray-300 text-gray-700 hover:bg-gray-50"
                         >
                             <Shield className="h-4 w-4 mr-2" />
                             Changer le mot de passe
                         </Button>
                         <Button
                             variant="outline"
-                            className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                            className="border-gray-300 text-gray-700 hover:bg-gray-50"
                         >
                             <FileText className="h-4 w-4 mr-2" />
                             Mes documents

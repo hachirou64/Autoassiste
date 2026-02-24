@@ -106,20 +106,20 @@ export function DepanneurStatsCards({ stats }: DepanneurStatsCardsProps) {
         <div className="space-y-6">
             {/* Stats du jour */}
             <div>
-                <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-blue-400" />
+                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-blue-500" />
                     Statistiques du jour
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     {mainCards.map((card) => (
                         <Card 
                             key={card.title} 
-                            className={`bg-slate-800/50 border-slate-700 hover:bg-slate-800 transition-all ${
+                            className={`bg-white border-gray-200 hover:bg-gray-50 transition-all ${
                                 card.accent ? 'ring-2 ring-blue-500/50' : ''
                             }`}
                         >
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium text-slate-300">
+                                <CardTitle className="text-sm font-medium text-gray-600">
                                     {card.title}
                                 </CardTitle>
                                 <div className={`p-2 rounded-lg ${card.bgColor}`}>
@@ -127,8 +127,8 @@ export function DepanneurStatsCards({ stats }: DepanneurStatsCardsProps) {
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold text-white">{card.value}</div>
-                                <p className="text-xs text-slate-400">{card.subtitle}</p>
+                                <div className="text-2xl font-bold text-gray-900">{card.value}</div>
+                                <p className="text-xs text-gray-500">{card.subtitle}</p>
                             </CardContent>
                         </Card>
                     ))}
@@ -137,15 +137,15 @@ export function DepanneurStatsCards({ stats }: DepanneurStatsCardsProps) {
 
             {/* Stats du mois */}
             <div>
-                <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-purple-400" />
+                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-purple-500" />
                     Statistiques du mois
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     {monthCards.map((card) => (
-                        <Card key={card.title} className="bg-slate-800/50 border-slate-700">
+                        <Card key={card.title} className="bg-white border-gray-200">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium text-slate-300">
+                                <CardTitle className="text-sm font-medium text-gray-600">
                                     {card.title}
                                 </CardTitle>
                                 <div className={`p-2 rounded-lg ${card.bgColor}`}>
@@ -153,8 +153,8 @@ export function DepanneurStatsCards({ stats }: DepanneurStatsCardsProps) {
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold text-white">{card.value}</div>
-                                <p className="text-xs text-slate-400">{card.subtitle}</p>
+                                <div className="text-2xl font-bold text-gray-900">{card.value}</div>
+                                <p className="text-xs text-gray-500">{card.subtitle}</p>
                             </CardContent>
                         </Card>
                     ))}
@@ -163,43 +163,43 @@ export function DepanneurStatsCards({ stats }: DepanneurStatsCardsProps) {
 
             {/* Stats globales */}
             <div className="grid gap-4 md:grid-cols-3">
-                <Card className="bg-slate-800/50 border-slate-700">
+                <Card className="bg-white border-gray-200">
                     <CardContent className="pt-6">
                         <div className="flex items-center gap-4">
-                            <div className="p-3 rounded-full bg-blue-500/10">
-                                <Wrench className="h-6 w-6 text-blue-400" />
+                            <div className="p-3 rounded-full bg-blue-50">
+                                <Wrench className="h-6 w-6 text-blue-500" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-400">Total interventions</p>
-                                <p className="text-2xl font-bold text-white">{stats.total_interventions}</p>
+                                <p className="text-sm text-gray-500">Total interventions</p>
+                                <p className="text-2xl font-bold text-gray-900">{stats.total_interventions}</p>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
                 
-                <Card className="bg-slate-800/50 border-slate-700">
+                <Card className="bg-white border-gray-200">
                     <CardContent className="pt-6">
                         <div className="flex items-center gap-4">
-                            <div className="p-3 rounded-full bg-green-500/10">
-                                <DollarSign className="h-6 w-6 text-green-400" />
+                            <div className="p-3 rounded-full bg-green-50">
+                                <DollarSign className="h-6 w-6 text-green-500" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-400">Revenus totaux</p>
-                                <p className="text-2xl font-bold text-white">{formatCurrency(stats.total_revenus)}</p>
+                                <p className="text-sm text-gray-500">Revenus totaux</p>
+                                <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.total_revenus)}</p>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
                 
-                <Card className="bg-slate-800/50 border-slate-700">
+                <Card className="bg-white border-gray-200">
                     <CardContent className="pt-6">
                         <div className="flex items-center gap-4">
-                            <div className="p-3 rounded-full bg-amber-500/10">
-                                <Star className="h-6 w-6 text-amber-400" />
+                            <div className="p-3 rounded-full bg-amber-50">
+                                <Star className="h-6 w-6 text-amber-500" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-400">Note moyenne globale</p>
-                                <p className="text-2xl font-bold text-white">{formatNote(stats.note_moyenne)}</p>
+                                <p className="text-sm text-gray-500">Note moyenne globale</p>
+                                <p className="text-2xl font-bold text-gray-900">{formatNote(stats.note_moyenne)}</p>
                             </div>
                         </div>
                     </CardContent>

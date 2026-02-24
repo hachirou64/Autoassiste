@@ -376,11 +376,11 @@ export default function ClientDashboard() {
             <Head title="Dashboard Client - GoAssist" />
             
             {/* Header mobile avec menu toggle */}
-            <div className="lg:hidden bg-slate-900 border-b border-slate-700 p-4 flex items-center justify-between">
-                <h1 className="text-white font-bold">{getPageTitle()}</h1>
+            <div className="lg:hidden bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+                <h1 className="text-gray-900 font-bold">{getPageTitle()}</h1>
                 <button
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    className="text-slate-400 hover:text-white p-2"
+                    className="text-gray-600 hover:text-gray-900 p-2"
                 >
                     {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                 </button>
@@ -388,10 +388,10 @@ export default function ClientDashboard() {
 
             <div className="flex h-full">
                 {/* Sidebar Desktop */}
-                <div className={`${sidebarOpen ? 'w-64' : 'w-16'} hidden lg:flex bg-slate-900 border-r border-slate-700 flex-col transition-all duration-300`}>
-                    <div className="p-4 border-b border-slate-700">
-                        <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                            <MapPin className="h-6 w-6 text-blue-400" />
+                <div className={`${sidebarOpen ? 'w-64' : 'w-16'} hidden lg:flex bg-white border-r border-gray-200 flex-col transition-all duration-300`}>
+                    <div className="p-4 border-b border-gray-200">
+                        <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            <MapPin className="h-6 w-6 text-blue-600" />
                             {sidebarOpen && <span>GoAssist</span>}
                         </h2>
                     </div>
@@ -406,8 +406,8 @@ export default function ClientDashboard() {
                                     onClick={() => setActiveTab(item.id as TabType)}
                                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                                         isActive 
-                                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' 
-                                            : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                            ? 'bg-blue-100 text-blue-700 border border-blue-200' 
+                                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                                     }`}
                                 >
                                     <IconComponent className="h-5 w-5 flex-shrink-0" />
@@ -421,19 +421,19 @@ export default function ClientDashboard() {
                             );
                         })}
                     </nav>
-                    <div className="p-3 border-t border-slate-700 bg-slate-800/50 space-y-2">
+                    <div className="p-3 border-t border-gray-200 bg-gray-50 space-y-2">
                         {/* Theme Toggle Button */}
                         <ThemeToggleButton sidebarOpen={sidebarOpen} />
                         <button
                             onClick={handleLogout}
-                            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all duration-200 border border-red-500/20 hover:border-red-500/40 group"
+                            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-all duration-200 border border-red-200 hover:border-red-300 group"
                         >
                             <LogOut className="h-5 w-5 group-hover:scale-110 transition-transform" />
                             {sidebarOpen && <span className="text-sm font-semibold">Déconnexion</span>}
                         </button>
                         <button
                             onClick={() => setSidebarOpen(!sidebarOpen)}
-                            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-slate-500 hover:bg-slate-800 hover:text-white transition-colors"
+                            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-200 hover:text-gray-700 transition-colors"
                         >
                             <ChevronRight className={`h-5 w-5 transition-transform ${sidebarOpen ? 'rotate-180' : ''}`} />
                             {sidebarOpen && <span className="text-sm">Replier</span>}
@@ -444,10 +444,10 @@ export default function ClientDashboard() {
                 {/* Mobile Menu Overlay */}
                 {mobileMenuOpen && (
                     <div className="lg:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setMobileMenuOpen(false)}>
-                        <div className="absolute right-0 top-0 h-full w-64 bg-slate-900 p-4" onClick={(e) => e.stopPropagation()}>
+                        <div className="absolute right-0 top-0 h-full w-64 bg-white p-4" onClick={(e) => e.stopPropagation()}>
                             <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-lg font-bold text-white">Menu</h2>
-                                <button onClick={() => setMobileMenuOpen(false)} className="text-slate-400 p-2">
+                                <h2 className="text-lg font-bold text-gray-900">Menu</h2>
+                                <button onClick={() => setMobileMenuOpen(false)} className="text-gray-500 p-2">
                                     <X className="h-5 w-5" />
                                 </button>
                             </div>
@@ -465,8 +465,8 @@ export default function ClientDashboard() {
                                             }}
                                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                                                 isActive 
-                                                    ? 'bg-blue-500/20 text-blue-400' 
-                                                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                                    ? 'bg-blue-100 text-blue-700' 
+                                                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                                             }`}
                                         >
                                             <IconComponent className="h-5 w-5" />
@@ -475,18 +475,32 @@ export default function ClientDashboard() {
                                     );
                                 })}
                             </nav>
+                            
+                            {/* Bouton Déconnexion - Visible sur mobile */}
+                            <div className="mt-6 pt-4 border-t border-gray-200">
+                                <button
+                                    onClick={() => {
+                                        setMobileMenuOpen(false);
+                                        handleLogout();
+                                    }}
+                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition-colors"
+                                >
+                                    <LogOut className="h-5 w-5" />
+                                    <span className="text-sm font-medium">Déconnexion</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
 
                 {/* Main Content */}
-                <div className="flex-1 overflow-auto bg-slate-950 p-4 lg:p-6">
+                <div className="flex-1 overflow-auto bg-gray-50 p-4 lg:p-6">
                     <div className="max-w-7xl mx-auto space-y-6">
                         {/* Page Title */}
                         <div className="hidden lg:flex items-center justify-between">
                             <div>
-                                <h1 className="text-2xl font-bold text-white">{getPageTitle()}</h1>
-                                <p className="text-slate-400 mt-1">
+                                <h1 className="text-2xl font-bold text-gray-900">{getPageTitle()}</h1>
+                                <p className="text-gray-600 mt-1">
                                     {!loading && data ? `Bienvenue sur votre espace client ${data.profile.fullName}` : 'Bienvenue sur votre espace client GoAssist'}
                                 </p>
                             </div>
@@ -681,7 +695,7 @@ function ThemeToggleButton({ sidebarOpen }: { sidebarOpen: boolean }) {
     return (
         <button
             onClick={() => updateAppearance(appearance === 'dark' ? 'light' : 'dark')}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-all duration-200 group"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-200 hover:text-gray-900 transition-all duration-200 group"
         >
             {appearance === 'dark' ? (
                 <Sun className="h-5 w-5 group-hover:rotate-180 transition-transform duration-500" />

@@ -119,18 +119,18 @@ export function DepanneurNotifications({
     const unreadCount = notifications.filter(n => !n.isRead).length;
 
     return (
-        <Card className="bg-slate-800/50 border-slate-700">
+        <Card className="bg-white border-gray-200">
             <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                    <CardTitle className="text-white flex items-center gap-2">
+                    <CardTitle className="text-gray-900 flex items-center gap-2">
                         {unreadCount > 0 ? (
-                            <BellRing className="h-5 w-5 text-amber-400" />
+                            <BellRing className="h-5 w-5 text-amber-500" />
                         ) : (
-                            <Bell className="h-5 w-5 text-blue-400" />
+                            <Bell className="h-5 w-5 text-blue-500" />
                         )}
                         Notifications
                         {unreadCount > 0 && (
-                            <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">
+                            <Badge className="bg-amber-50 text-amber-600 border-amber-200">
                                 {unreadCount}
                             </Badge>
                         )}

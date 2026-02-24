@@ -61,10 +61,10 @@ export function InterventionHistory({
     };
 
     return (
-        <Card className="bg-slate-800/50 border-slate-700">
+        <Card className="bg-white border-gray-200 shadow-sm">
             <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-blue-400" />
+                <CardTitle className="text-gray-900 flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-blue-600" />
                     Historique des interventions
                 </CardTitle>
             </CardHeader>
@@ -72,7 +72,7 @@ export function InterventionHistory({
                 {/* Filtres */}
                 <div className="flex items-center justify-between mb-4">
                     <Tabs defaultValue={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
-                        <TabsList className="bg-slate-700">
+                        <TabsList className="bg-gray-100">
                             <TabsTrigger value="all" className="data-[state=active]:bg-blue-500">
                                 Toutes
                             </TabsTrigger>
@@ -84,7 +84,7 @@ export function InterventionHistory({
                             </TabsTrigger>
                         </TabsList>
                     </Tabs>
-                    <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white">
+                    <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
                         <Filter className="h-4 w-4 mr-1" />
                         Filtrer
                     </Button>
@@ -94,63 +94,63 @@ export function InterventionHistory({
                 <div className="space-y-3">
                     {filteredHistory.length === 0 ? (
                         <div className="text-center py-8">
-                            <div className="w-12 h-12 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <Calendar className="h-6 w-6 text-slate-400" />
+                            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <Calendar className="h-6 w-6 text-gray-400" />
                             </div>
-                            <p className="text-slate-400">Aucune intervention dans l'historique</p>
+                            <p className="text-gray-500">Aucune intervention dans l'historique</p>
                         </div>
                     ) : (
                         filteredHistory.map((item) => (
                             <div
                                 key={item.id}
-                                className="p-4 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-colors"
+                                className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200"
                             >
                                 {/* En-tête */}
                                 <div className="flex items-start justify-between mb-3">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-slate-600 rounded-lg flex items-center justify-center">
-                                            <Wrench className="h-5 w-5 text-slate-300" />
+                                        <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">
+                                            <Wrench className="h-5 w-5 text-gray-600" />
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <span className="font-mono text-white">{item.codeDemande}</span>
+                                                <span className="font-mono text-gray-900">{item.codeDemande}</span>
                                                 <Badge className={getStatusColor(item.status)}>
                                                     {DEMANDE_STATUS_LABELS[item.status as keyof typeof DEMANDE_STATUS_LABELS] || item.status}
                                                 </Badge>
                                             </div>
-                                            <p className="text-sm text-slate-400">{item.typePanne}</p>
+                                            <p className="text-sm text-gray-500">{item.typePanne}</p>
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-sm text-slate-400">{formatDate(item.date)}</p>
-                                        <p className="text-sm text-slate-500">{formatDuration(item.duree)}</p>
+                                        <p className="text-sm text-gray-500">{formatDate(item.date)}</p>
+                                        <p className="text-sm text-gray-400">{formatDuration(item.duree)}</p>
                                     </div>
                                 </div>
 
                                 {/* Détails (affichés si développé) */}
                                 {expandedId === item.id && (
-                                    <div className="mt-4 pt-4 border-t border-slate-600 space-y-3">
+                                    <div className="mt-4 pt-4 border-t border-gray-200 space-y-3">
                                         <div className="grid grid-cols-2 gap-4 text-sm">
                                             <div>
-                                                <p className="text-slate-500">Dépanneur</p>
-                                                <p className="text-white">{item.depanneur.fullName}</p>
-                                                <p className="text-slate-400 text-xs">{item.depanneur.etablissement_name}</p>
+                                                <p className="text-gray-500">Dépanneur</p>
+                                                <p className="text-gray-900">{item.depanneur.fullName}</p>
+                                                <p className="text-gray-500 text-xs">{item.depanneur.etablissement_name}</p>
                                             </div>
                                             <div>
-                                                <p className="text-slate-500">Montant</p>
-                                                <p className="text-white font-medium">{formatCurrency(item.montant)}</p>
+                                                <p className="text-gray-500">Montant</p>
+                                                <p className="text-gray-900 font-medium">{formatCurrency(item.montant)}</p>
                                             </div>
                                         </div>
 
                                         {/* Évaluation */}
                                         {item.evaluation ? (
-                                            <div className="p-3 bg-amber-500/10 rounded-lg">
+                                            <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
                                                 <div className="flex items-center gap-2 mb-1">
-                                                    <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-                                                    <span className="font-medium text-white">{item.evaluation.note}/5</span>
+                                                    <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                                                    <span className="font-medium text-gray-900">{item.evaluation.note}/5</span>
                                                 </div>
                                                 {item.evaluation.commentaire && (
-                                                    <p className="text-sm text-slate-400">"{item.evaluation.commentaire}"</p>
+                                                    <p className="text-sm text-gray-600">"{item.evaluation.commentaire}"</p>
                                                 )}
                                             </div>
                                         ) : item.status === 'terminee' ? (
@@ -158,7 +158,7 @@ export function InterventionHistory({
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
-                                                    className="w-full bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                                                    className="w-full bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                                                     onClick={() => onEvaluer(item)}
                                                 >
                                                     <Star className="h-4 w-4 mr-2" />
@@ -174,7 +174,7 @@ export function InterventionHistory({
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => onViewDetails(item)}
-                                                    className="flex-1 text-slate-400 hover:text-white"
+                                                    className="flex-1 text-gray-600 hover:text-gray-900"
                                                 >
                                                     Détails
                                                 </Button>
@@ -184,7 +184,7 @@ export function InterventionHistory({
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => onDownloadFacture(item.facture!.id)}
-                                                    className="flex-1 text-slate-400 hover:text-white"
+                                                    className="flex-1 text-gray-600 hover:text-gray-900"
                                                 >
                                                     <Download className="h-4 w-4 mr-1" />
                                                     Facture
@@ -195,8 +195,8 @@ export function InterventionHistory({
                                 )}
 
                                 {/* Actions */}
-                                <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-600/50">
-                                    <div className="flex items-center gap-1 text-xs text-slate-500">
+                                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200">
+                                    <div className="flex items-center gap-1 text-xs text-gray-500">
                                         <MapPin className="h-3 w-3" />
                                         {item.depanneur.etablissement_name}
                                     </div>
@@ -204,7 +204,7 @@ export function InterventionHistory({
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
-                                        className="text-slate-400 hover:text-white h-auto p-0"
+                                        className="text-gray-600 hover:text-gray-900 h-auto p-0"
                                     >
                                         {expandedId === item.id ? 'Moins' : 'Plus'}
                                         <ChevronRight className={`h-4 w-4 ml-1 transition-transform ${expandedId === item.id ? 'rotate-90' : ''}`} />
@@ -217,12 +217,12 @@ export function InterventionHistory({
 
                 {/* Pagination simulée */}
                 {filteredHistory.length > 0 && (
-                    <div className="flex items-center justify-center gap-2 mt-4 pt-4 border-t border-slate-700">
-                        <Button variant="ghost" size="sm" disabled className="text-slate-500">
+                    <div className="flex items-center justify-center gap-2 mt-4 pt-4 border-t border-gray-200">
+                        <Button variant="ghost" size="sm" disabled className="text-gray-500">
                             Précédent
                         </Button>
-                        <span className="text-sm text-slate-400">Page 1 sur 5</span>
-                        <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white">
+                        <span className="text-sm text-gray-500">Page 1 sur 5</span>
+                        <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
                             Suivant
                         </Button>
                     </div>

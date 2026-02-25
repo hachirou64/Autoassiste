@@ -26,12 +26,29 @@ const ContactPage = () => {
     
     setContactLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      setSubmitStatus('success');
-      setContactForm({ name: '', email: '', subject: '', message: '' });
-      setTimeout(() => setSubmitStatus('idle'), 3000);
+      const response = await fetch('/api/contact/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        },
+        credentials: 'include',
+        body: JSON.stringify(contactForm),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSubmitStatus('success');
+        setContactForm({ name: '', email: '', subject: '', message: '' });
+        setTimeout(() => setSubmitStatus('idle'), 3000);
+      } else {
+        setSubmitStatus('error');
+        setTimeout(() => setSubmitStatus('idle'), 3000);
+      }
     } catch (error) {
+      console.error('Contact form error:', error);
       setSubmitStatus('error');
       setTimeout(() => setSubmitStatus('idle'), 3000);
     } finally {

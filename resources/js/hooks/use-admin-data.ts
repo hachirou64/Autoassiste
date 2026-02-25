@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { AdminStats, AdminAlert, RecentActivity, Client, Depanneur, PaginationParams, TableResponse, Demande, DemandeFilters } from '@/types';
+import type { AdminStats, AdminAlert, RecentActivity, Client, Depanneur, PaginationParams, TableResponse, Demande, DemandeFilters, ContactMessage, ContactMessageFilters } from '@/types';
 
 // Types pour les données admin
 interface AdminData {
@@ -482,6 +482,226 @@ export function useAdminDemandes(initialParams: Partial<PaginationParams> & { st
         refresh: () => fetchDemandes(),
         onPageChange: handlePageChange,
         refetch: fetchDemandes,
+    };
+}
+
+// Hook pour les messages de contact
+export function useContactMessages(initialParams: Partial<PaginationParams> & { status?: string } = {}) {
+    const [messagesData, setMessagesData] = useState<{
+        messages: ContactMessage[];
+        pagination: {
+            current_page: number;
+            last_page: number;
+            total: number;
+            per_page: number;
+        };
+        pendingCount: number;
+    }>({
+        messages: [],
+        pagination: {
+            current_page: 1,
+            last_page: 1,
+            total: 0,
+            per_page: initialParams.per_page || 15,
+        },
+        pendingCount: 0,
+    });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [statusFilter, setStatusFilter] = useState(initialParams.status || '');
+    const searchRef = useRef('');
+    const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    const fetchMessages = useCallback(async (params: Partial<PaginationParams> = {}) => {
+        setLoading(true);
+        setError(null);
+
+        const queryParams = new URLSearchParams();
+        queryParams.set('page', String(params.page || 1));
+        queryParams.set('per_page', String(params.per_page || 15));
+        
+        if (params.sort_by) queryParams.set('sort_by', params.sort_by);
+        if (params.sort_order) queryParams.set('sort_order', params.sort_order);
+        
+        // Appliquer les filtres
+        if (searchRef.current) queryParams.set('search', searchRef.current);
+        if (statusFilter) queryParams.set('status', statusFilter);
+
+        try {
+            const authOptions = getAuthOptions();
+            const response = await fetch(`/admin/api/contact/messages?${queryParams}`, authOptions);
+
+            if (!response.ok) {
+                throw new Error(`Erreur ${response.status}: Erreur lors du chargement des messages`);
+            }
+
+            const result = await response.json();
+            console.log('[useContactMessages] API Response:', result);
+
+            // Compter les messages en attente
+            const countResponse = await fetch('/admin/api/contact/pending-count', authOptions);
+            const countResult = await countResponse.json();
+
+            setMessagesData({
+                messages: result.data || result,
+                pagination: {
+                    current_page: result.current_page || 1,
+                    last_page: result.last_page || 1,
+                    total: result.total || 0,
+                    per_page: result.per_page || 15,
+                },
+                pendingCount: countResult.count || 0,
+            });
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+        } finally {
+            setLoading(false);
+        }
+    }, [statusFilter]);
+
+    // Effect pour charger les données au montage
+    useEffect(() => {
+        console.log('[useContactMessages] Composant mounted, chargement initial des messages');
+        fetchMessages();
+    }, []); // Vide pour éviter les re-fetches inutiles
+
+    // Charger le count des messages en attente
+    const fetchPendingCount = useCallback(async () => {
+        try {
+            const authOptions = getAuthOptions();
+            const response = await fetch('/admin/api/contact/pending-count', authOptions);
+            const result = await response.json();
+            setMessagesData(prev => ({
+                ...prev,
+                pendingCount: result.count || 0,
+            }));
+        } catch (err) {
+            console.error('Erreur lors du chargement du count:', err);
+        }
+    }, []);
+
+    const handleSearch = (query: string) => {
+        searchRef.current = query;
+        
+        // Debounce: attendre 300ms avant de refetch
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+        }
+        debounceTimerRef.current = setTimeout(() => {
+            fetchMessages({ page: 1 });
+        }, 300);
+    };
+
+    const handleStatusFilter = (status: string) => {
+        setStatusFilter(status);
+    };
+
+    const handlePageChange = (page: number) => {
+        fetchMessages({ page });
+    };
+
+    // Fonction pour marquer un message comme lu
+    const markAsRead = useCallback(async (id: number) => {
+        try {
+            const authOptions = getAuthOptions();
+            const response = await fetch(`/admin/api/contact/${id}/mark-read`, {
+                ...authOptions,
+                method: 'POST',
+            });
+            const result = await response.json();
+            if (result.success) {
+                // Mettre à jour le message dans la liste
+                setMessagesData(prev => ({
+                    ...prev,
+                    messages: prev.messages.map(msg => 
+                        msg.id === id ? { ...msg, status: 'read' as const, read_at: result.data.read_at } : msg
+                    ),
+                    pendingCount: Math.max(0, prev.pendingCount - 1),
+                }));
+            }
+            return result;
+        } catch (err) {
+            console.error('Erreur lors du marquage comme lu:', err);
+            throw err;
+        }
+    }, []);
+
+    // Fonction pour répondre à un message
+    const replyToMessage = useCallback(async (id: number, response: string) => {
+        try {
+            const authOptions = getAuthOptions();
+            const res = await fetch(`/admin/api/contact/${id}/reply`, {
+                ...authOptions,
+                method: 'POST',
+                body: JSON.stringify({ response }),
+            });
+            const result = await res.json();
+            if (result.success) {
+                // Mettre à jour le message dans la liste
+                setMessagesData(prev => ({
+                    ...prev,
+                    messages: prev.messages.map(msg => 
+                        msg.id === id ? { 
+                            ...msg, 
+                            status: 'replied' as const, 
+                            admin_response: response,
+                            replied_at: result.data.replied_at 
+                        } : msg
+                    ),
+                }));
+            }
+            return result;
+        } catch (err) {
+            console.error('Erreur lors de la réponse:', err);
+            throw err;
+        }
+    }, []);
+
+    // Fonction pour supprimer un message
+    const deleteMessage = useCallback(async (id: number) => {
+        try {
+            const authOptions = getAuthOptions();
+            const response = await fetch(`/admin/api/contact/${id}`, {
+                ...authOptions,
+                method: 'DELETE',
+            });
+            const result = await response.json();
+            if (result.success) {
+                // Retirer le message de la liste
+                setMessagesData(prev => ({
+                    ...prev,
+                    messages: prev.messages.filter(msg => msg.id !== id),
+                }));
+            }
+            return result;
+        } catch (err) {
+            console.error('Erreur lors de la suppression:', err);
+            throw err;
+        }
+    }, []);
+
+    // Cleanup du timer
+    useEffect(() => {
+        return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, []);
+
+    return {
+        ...messagesData,
+        loading,
+        error,
+        statusFilter,
+        setSearch: handleSearch,
+        refresh: () => fetchMessages(),
+        setStatusFilter: handleStatusFilter,
+        refreshPendingCount: fetchPendingCount,
+        onPageChange: handlePageChange,
+        markAsRead,
+        replyToMessage,
+        deleteMessage,
     };
 }
 

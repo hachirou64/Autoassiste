@@ -62,6 +62,8 @@ class Notification extends Model
     // Type: Compte désactivé (pour dépanneur)
     const TYPE_COMPTE_DESACTIVATE = 'compte_desactive';
 
+    const TYPE_BIENVENUE = 'bienvenue';
+
    
     public function client(): BelongsTo
     {

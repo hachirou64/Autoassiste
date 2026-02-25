@@ -7,6 +7,7 @@ use App\Models\Utilisateur;
 use App\Models\TypeCompte;
 use App\Models\Zone;
 use App\Models\Notification;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -138,6 +139,21 @@ class DepanneurController extends Controller
                     'priorite' => 1,
                     'dateAjout' => now(),
                 ]);
+            }
+
+            // Envoyer les notifications (email, SMS, in-app)
+            // Note: Les erreurs de notification ne bloquent pas l'inscription
+            try {
+                $notificationService = app(NotificationService::class);
+                $notificationService->sendWelcomeNotifications(
+                    $user,
+                    NotificationService::TYPE_DEPANNEUR,
+                    true,  // sendEmail
+                    true,  // sendSMS
+                    true   // sendInApp
+                );
+            } catch (\Exception $e) {
+                \Log::error('Erreur notification inscription dépanneur: ' . $e->getMessage());
             }
 
             // NOTE: On ne connecte PLUS automatiquement l'utilisateur après l'inscription
@@ -603,6 +619,20 @@ class DepanneurController extends Controller
                 'email_verified' => true,
                 'isActive' => true,
             ]);
+
+            // Envoyer les notifications (email, SMS, in-app)
+            try {
+                $notificationService = app(NotificationService::class);
+                $notificationService->sendWelcomeNotifications(
+                    $user,
+                    NotificationService::TYPE_DEPANNEUR,
+                    true,  // sendEmail
+                    true,  // sendSMS
+                    true   // sendInApp
+                );
+            } catch (\Exception $e) {
+                \Log::error('Erreur notification création dépanneur par admin: ' . $e->getMessage());
+            }
 
             return response()->json([
                 'success' => true,

@@ -244,57 +244,57 @@ export function InterventionHistory({
         <div className="space-y-6">
             {/* Header avec stats */}
             <div className="grid gap-4 md:grid-cols-4">
-                <Card className="bg-slate-800/50 border-slate-700">
+                <Card className="bg-white border-gray-200">
                     <CardContent className="pt-6">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-blue-500/10">
-                                <FileText className="h-5 w-5 text-blue-400" />
+                            <div className="p-2 rounded-lg bg-blue-50">
+                                <FileText className="h-5 w-5 text-blue-600" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-400">Total</p>
-                                <p className="text-2xl font-bold text-white">{fetchFromApi ? pagination.total : stats.total}</p>
+                                <p className="text-sm text-gray-500">Total</p>
+                                <p className="text-2xl font-bold text-gray-900">{fetchFromApi ? pagination.total : stats.total}</p>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
                 
-                <Card className="bg-slate-800/50 border-slate-700">
+                <Card className="bg-white border-gray-200">
                     <CardContent className="pt-6">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-green-500/10">
-                                <CheckCircle className="h-5 w-5 text-green-400" />
+                            <div className="p-2 rounded-lg bg-green-50">
+                                <CheckCircle className="h-5 w-5 text-green-600" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-400">Terminées</p>
-                                <p className="text-2xl font-bold text-white">{stats.terminees}</p>
+                                <p className="text-sm text-gray-500">Terminées</p>
+                                <p className="text-2xl font-bold text-gray-900">{stats.terminees}</p>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
                 
-                <Card className="bg-slate-800/50 border-slate-700">
+                <Card className="bg-white border-gray-200">
                     <CardContent className="pt-6">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-red-500/10">
-                                <Clock className="h-5 w-5 text-red-400" />
+                            <div className="p-2 rounded-lg bg-red-50">
+                                <Clock className="h-5 w-5 text-red-600" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-400">Annulées</p>
-                                <p className="text-2xl font-bold text-white">{stats.annulees}</p>
+                                <p className="text-sm text-gray-500">Annulées</p>
+                                <p className="text-2xl font-bold text-gray-900">{stats.annulees}</p>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
                 
-                <Card className="bg-slate-800/50 border-slate-700">
+                <Card className="bg-white border-gray-200">
                     <CardContent className="pt-6">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-amber-500/10">
-                                <DollarSign className="h-5 w-5 text-amber-400" />
+                            <div className="p-2 rounded-lg bg-amber-50">
+                                <DollarSign className="h-5 w-5 text-amber-600" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-400">Revenus</p>
-                                <p className="text-2xl font-bold text-white">{formatCurrency(stats.montantTotal)}</p>
+                                <p className="text-sm text-gray-500">Revenus</p>
+                                <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.montantTotal)}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -302,21 +302,21 @@ export function InterventionHistory({
             </div>
 
             {/* Filtres et recherche */}
-            <Card className="bg-slate-800/50 border-slate-700">
+            <Card className="bg-white border-gray-200">
                 <CardContent className="py-4">
                     <div className="flex flex-col md:flex-row gap-4">
                         <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <Input
                                 placeholder="Rechercher par code, client..."
                                 value={searchQuery}
                                 onChange={handleSearchChange}
-                                className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400"
+                                className="pl-10 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400"
                             />
                         </div>
                         
                         <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
-                            <SelectTrigger className="w-full md:w-48 bg-slate-700/50 border-slate-600 text-white">
+                            <SelectTrigger className="w-full md:w-48 bg-white border-gray-300 text-gray-900">
                                 <SelectValue placeholder="Statut" />
                             </SelectTrigger>
                             <SelectContent>
@@ -329,7 +329,7 @@ export function InterventionHistory({
                         </Select>
                         
                         <Select value={dateFilter} onValueChange={handleDateFilterChange}>
-                            <SelectTrigger className="w-full md:w-48 bg-slate-700/50 border-slate-600 text-white">
+                            <SelectTrigger className="w-full md:w-48 bg-white border-gray-300 text-gray-900">
                                 <SelectValue placeholder="Période" />
                             </SelectTrigger>
                             <SelectContent>
@@ -344,7 +344,7 @@ export function InterventionHistory({
                             <Button
                                 variant="outline"
                                 onClick={() => onExport?.('excel')}
-                                className="border-green-500/30 text-green-400 hover:bg-green-500/10"
+                                className="border-green-500/30 text-green-600 hover:bg-green-50"
                             >
                                 <Download className="h-4 w-4 mr-2" />
                                 Excel
@@ -352,7 +352,7 @@ export function InterventionHistory({
                             <Button
                                 variant="outline"
                                 onClick={() => onExport?.('pdf')}
-                                className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                                className="border-red-500/30 text-red-600 hover:bg-red-50"
                             >
                                 <File className="h-4 w-4 mr-2" />
                                 PDF
@@ -363,57 +363,57 @@ export function InterventionHistory({
             </Card>
 
             {/* Tableau */}
-            <Card className="bg-slate-800/50 border-slate-700">
+            <Card className="bg-white border-gray-200">
                 {loading ? (
                     <div className="flex items-center justify-center py-12">
-                        <Loader2 className="h-8 w-8 text-amber-400 animate-spin" />
-                        <span className="ml-2 text-slate-400">Chargement...</span>
+                        <Loader2 className="h-8 w-8 text-amber-500 animate-spin" />
+                        <span className="ml-2 text-gray-600">Chargement...</span>
                     </div>
                 ) : (
                     <Table>
                         <TableHeader>
-                            <TableRow className="border-slate-700 hover:bg-slate-700/50">
-                                <TableHead className="text-slate-300">Date</TableHead>
-                                <TableHead className="text-slate-300">Code</TableHead>
-                                <TableHead className="text-slate-300">Client</TableHead>
-                                <TableHead className="text-slate-300">Type</TableHead>
-                                <TableHead className="text-slate-300">Montant</TableHead>
-                                <TableHead className="text-slate-300">Durée</TableHead>
-                                <TableHead className="text-slate-300">Statut</TableHead>
-                                <TableHead className="text-slate-300">Note</TableHead>
-                                <TableHead className="text-slate-300 text-right">Actions</TableHead>
+                            <TableRow className="border-gray-200 hover:bg-gray-50">
+                                <TableHead className="text-gray-600">Date</TableHead>
+                                <TableHead className="text-gray-600">Code</TableHead>
+                                <TableHead className="text-gray-600">Client</TableHead>
+                                <TableHead className="text-gray-600">Type</TableHead>
+                                <TableHead className="text-gray-600">Montant</TableHead>
+                                <TableHead className="text-gray-600">Durée</TableHead>
+                                <TableHead className="text-gray-600">Statut</TableHead>
+                                <TableHead className="text-gray-600">Note</TableHead>
+                                <TableHead className="text-gray-600 text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {filteredHistory.map((item) => (
                                 <TableRow 
                                     key={item.id}
-                                    className="border-slate-700 hover:bg-slate-700/50"
+                                    className="border-gray-200 hover:bg-gray-50"
                                 >
-                                    <TableCell className="text-slate-300">
+                                    <TableCell className="text-gray-600">
                                         {formatDate(item.date)}
                                     </TableCell>
                                     <TableCell>
                                         <div>
-                                            <p className="font-medium text-white">{item.codeIntervention}</p>
-                                            <p className="text-xs text-slate-400">{item.codeDemande}</p>
+                                            <p className="font-medium text-gray-900">{item.codeIntervention}</p>
+                                            <p className="text-xs text-gray-500">{item.codeDemande}</p>
                                         </div>
                                     </TableCell>
                                     <TableCell>
                                         <div>
-                                            <p className="text-white">{item.client.fullName}</p>
-                                            <p className="text-xs text-slate-400">{item.vehicle?.brand} {item.vehicle?.model}</p>
+                                            <p className="text-gray-900">{item.client.fullName}</p>
+                                            <p className="text-xs text-gray-500">{item.vehicle?.brand} {item.vehicle?.model}</p>
                                         </div>
                                     </TableCell>
-                                    <TableCell className="text-slate-300 capitalize">
+                                    <TableCell className="text-gray-600 capitalize">
                                         {item.typePanne.replace('_', ' ')}
                                     </TableCell>
                                     <TableCell>
-                                        <span className="font-medium text-green-400">
+                                        <span className="font-medium text-green-600">
                                             {formatCurrency(item.montant)}
                                         </span>
                                     </TableCell>
-                                    <TableCell className="text-slate-300">
+                                    <TableCell className="text-gray-600">
                                         {formatDuree(item.duree)}
                                     </TableCell>
                                     <TableCell>
@@ -424,24 +424,24 @@ export function InterventionHistory({
                                     <TableCell>
                                         {item.evaluation ? (
                                             <div className="flex items-center gap-1">
-                                                <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-                                                <span className="text-white">{item.evaluation.note}/5</span>
+                                                <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                                                <span className="text-gray-900">{item.evaluation.note}/5</span>
                                             </div>
                                         ) : (
-                                            <span className="text-slate-500">-</span>
+                                            <span className="text-gray-400">-</span>
                                         )}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="text-slate-400">
+                                                <Button variant="ghost" size="icon" className="text-gray-500">
                                                     <MoreVertical className="h-4 w-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700">
+                                            <DropdownMenuContent align="end" className="bg-white border-gray-200">
                                                 <DropdownMenuItem 
                                                     onClick={() => onViewDetails?.(item)}
-                                                    className="text-white hover:bg-slate-700"
+                                                    className="text-gray-900 hover:bg-gray-100"
                                                 >
                                                     <Eye className="h-4 w-4 mr-2" />
                                                     Voir détails
@@ -449,13 +449,13 @@ export function InterventionHistory({
                                                 {item.facture && (
                                                     <DropdownMenuItem 
                                                         onClick={() => onDownloadFacture?.(item.facture!.id)}
-                                                        className="text-white hover:bg-slate-700"
+                                                        className="text-gray-900 hover:bg-gray-100"
                                                     >
                                                         <File className="h-4 w-4 mr-2" />
                                                         Facture
                                                     </DropdownMenuItem>
                                                 )}
-                                                <DropdownMenuItem className="text-white hover:bg-slate-700">
+                                                <DropdownMenuItem className="text-gray-900 hover:bg-gray-100">
                                                     <Phone className="h-4 w-4 mr-2" />
                                                     Appeler le client
                                                 </DropdownMenuItem>
@@ -470,8 +470,8 @@ export function InterventionHistory({
                 
                 {filteredHistory.length === 0 && !loading && (
                     <div className="py-12 text-center">
-                        <FileText className="h-12 w-12 text-slate-500 mx-auto mb-4" />
-                        <p className="text-slate-400">Aucune intervention trouvée</p>
+                        <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-500">Aucune intervention trouvée</p>
                     </div>
                 )}
             </Card>

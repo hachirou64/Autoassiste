@@ -144,6 +144,20 @@ Route::get('/contact', function () {
     return Inertia::render('contact');
 })->name('contact');
 
+// API Routes pour les messages de contact - Public (pour envoyer)
+Route::prefix('api/contact')->group(function () {
+    Route::post('/send', [App\Http\Controllers\Api\ContactController::class, 'store'])->name('contact.send');
+});
+
+// API Routes Admin pour les messages de contact - Protégées
+Route::prefix('admin/api/contact')->middleware(['auth'])->group(function () {
+    Route::get('/messages', [App\Http\Controllers\Api\ContactController::class, 'index'])->name('contact.messages');
+    Route::get('/pending-count', [App\Http\Controllers\Api\ContactController::class, 'pendingCount'])->name('contact.pending-count');
+    Route::post('/{id}/mark-read', [App\Http\Controllers\Api\ContactController::class, 'markAsRead'])->name('contact.mark-read');
+    Route::post('/{id}/reply', [App\Http\Controllers\Api\ContactController::class, 'reply'])->name('contact.reply');
+    Route::delete('/{id}', [App\Http\Controllers\Api\ContactController::class, 'destroy'])->name('contact.delete');
+});
+
 // API Routes pour l'inscription client (simple)
 Route::prefix('api/client')->group(function () {
     Route::get('/check-auth', [App\Http\Controllers\Api\ClientRegistrationController::class, 'checkAuth'])->name('client.check-auth');

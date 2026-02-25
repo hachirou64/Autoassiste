@@ -35,7 +35,9 @@ import {
     Globe,
     Plus,
     Trash2,
-    ChevronRight
+    ChevronRight,
+    Check,
+    Loader2
 } from 'lucide-react';
 import type { DepanneurProfile, ZoneIntervention, HorairesDisponibilite } from '@/types/depanneur';
 
@@ -78,15 +80,71 @@ export function DepanneurProfile({
     const effectiveProfile = profile || defaultProfile;
     const [isEditing, setIsEditing] = useState(false);
     const [editedProfile, setEditedProfile] = useState(effectiveProfile);
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
+    const [saveSuccess, setSaveSuccess] = useState(false);
 
-    const handleSave = () => {
-        onSaveProfile?.(editedProfile);
-        setIsEditing(false);
+    const handleSave = async () => {
+        setIsSaving(true);
+        setSaveError(null);
+        setSaveSuccess(false);
+        
+        try {
+            const response = await fetch('/api/depanneur/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify(editedProfile),
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                setSaveSuccess(true);
+                onSaveProfile?.(editedProfile);
+                setIsEditing(false);
+                // Masquer le message de succès après 3 secondes
+                setTimeout(() => setSaveSuccess(false), 3000);
+            } else {
+                setSaveError(data.error || 'Erreur lors de la sauvegarde');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            setSaveError('Erreur de connexion');
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleCancel = () => {
         setEditedProfile(effectiveProfile);
         setIsEditing(false);
+        setSaveError(null);
+    };
+
+    const handlePreferenceChange = async (key: keyof DepanneurProfile['preferences'], value: boolean | number) => {
+        if (!profile?.preferences) return;
+        
+        try {
+            const response = await fetch('/api/depanneur/preferences', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({ [key]: value }),
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                onSavePreferences?.({ ...profile.preferences, [key]: value });
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+        }
     };
 
     return (
@@ -148,11 +206,21 @@ export function DepanneurProfile({
                             </div>
                         </div>
                         
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 items-center">
+                            {(saveSuccess || saveError) && (
+                                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${
+                                    saveSuccess ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
+                                }`}>
+                                    {saveSuccess ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                                    {saveSuccess ? 'Sauvegardé!' : saveError}
+                                </div>
+                            )}
+                            
                             <Button
                                 variant={isEditing ? "outline" : "default"}
                                 onClick={() => isEditing ? handleCancel() : setIsEditing(true)}
-                                className={isEditing ? "border-red-500/30 text-red-400" : ""}
+                                disabled={isSaving}
+                                className={isEditing ? "border-red-500/30 text-red-600 hover:bg-red-50" : ""}
                             >
                                 {isEditing ? (
                                     <>
@@ -167,9 +235,18 @@ export function DepanneurProfile({
                                 )}
                             </Button>
                             {isEditing && (
-                                <Button onClick={handleSave}>
-                                    <Save className="h-4 w-4 mr-2" />
-                                    Sauvegarder
+                                <Button onClick={handleSave} disabled={isSaving}>
+                                    {isSaving ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                            Sauvegarde...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save className="h-4 w-4 mr-2" />
+                                            Sauvegarder
+                                        </>
+                                    )}
                                 </Button>
                             )}
                         </div>

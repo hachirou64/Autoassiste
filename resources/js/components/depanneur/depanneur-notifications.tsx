@@ -143,7 +143,7 @@ export function DepanneurNotifications({
                                     variant="ghost"
                                     size="sm"
                                     onClick={onMarkAllAsRead}
-                                    className="text-slate-400 hover:text-white text-xs"
+                                    className="text-gray-500 hover:text-gray-900 text-xs"
                                 >
                                     <CheckCheck className="h-3 w-3 mr-1" />
                                     Tout marquer lu
@@ -151,14 +151,14 @@ export function DepanneurNotifications({
                             )}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="text-slate-400">
+                                    <Button variant="ghost" size="icon" className="text-gray-500">
                                         <MoreVertical className="h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700">
+                                <DropdownMenuContent align="end" className="bg-white border-gray-200">
                                     <DropdownMenuItem 
                                         onClick={onClearAll}
-                                        className="text-white hover:bg-slate-700"
+                                        className="text-gray-900 hover:bg-gray-100"
                                     >
                                         <X className="h-4 w-4 mr-2" />
                                         Effacer tout
@@ -174,24 +174,24 @@ export function DepanneurNotifications({
                 <div className="max-h-96 overflow-y-auto">
                     {notifications.length === 0 ? (
                         <div className="py-12 text-center">
-                            <div className="w-16 h-16 bg-slate-700/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Bell className="h-8 w-8 text-slate-500" />
+                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Bell className="h-8 w-8 text-gray-400" />
                             </div>
-                            <p className="text-slate-400">Aucune notification</p>
+                            <p className="text-gray-500">Aucune notification</p>
                         </div>
                     ) : (
-                        <div className="divide-y divide-slate-700">
+                        <div className="divide-y divide-gray-200">
                             {notifications.map((notification) => (
                                 <div
                                     key={notification.id}
-                                    className={`p-4 hover:bg-slate-700/30 transition-colors cursor-pointer ${
-                                        !notification.isRead ? 'bg-blue-500/5' : ''
+                                    className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
+                                        !notification.isRead ? 'bg-blue-50' : ''
                                     }`}
                                     onClick={() => onNotificationClick?.(notification)}
                                 >
                                     <div className="flex gap-3">
                                         <div className={`p-2 rounded-full flex-shrink-0 ${
-                                            !notification.isRead ? 'bg-blue-500/10' : 'bg-slate-700/50'
+                                            !notification.isRead ? 'bg-blue-100' : 'bg-gray-100'
                                         }`}>
                                             {getNotificationIcon(notification.type)}
                                         </div>
@@ -200,11 +200,11 @@ export function DepanneurNotifications({
                                             <div className="flex items-start justify-between gap-2">
                                                 <div>
                                                     <p className={`text-sm ${
-                                                        !notification.isRead ? 'font-medium text-white' : 'text-slate-300'
+                                                        !notification.isRead ? 'font-medium text-gray-900' : 'text-gray-700'
                                                     }`}>
                                                         {notification.titre}
                                                     </p>
-                                                    <p className="text-xs text-slate-400 mt-1 line-clamp-2">
+                                                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">
                                                         {notification.message}
                                                     </p>
                                                 </div>
@@ -215,7 +215,7 @@ export function DepanneurNotifications({
                                             </div>
                                             
                                             <div className="flex items-center justify-between mt-2">
-                                                <span className="text-xs text-slate-500">
+                                                <span className="text-xs text-gray-400">
                                                     {formatTimeAgo(notification.createdAt)}
                                                 </span>
                                                 
@@ -226,7 +226,7 @@ export function DepanneurNotifications({
                                                         e.stopPropagation();
                                                         onMarkAsRead?.(notification.id);
                                                     }}
-                                                    className="text-xs text-slate-400 hover:text-white h-auto p-0"
+                                                    className="text-xs text-gray-500 hover:text-gray-900 h-auto p-0"
                                                 >
                                                     <Check className="h-3 w-3 mr-1" />
                                                     Marquer lu

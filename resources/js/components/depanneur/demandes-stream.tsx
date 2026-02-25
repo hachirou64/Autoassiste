@@ -496,20 +496,20 @@ export function DemandesStream({
                                     
                                     {/* Expanded details */}
                                     {isSelected && (
-                                        <div className="mt-4 p-4 bg-slate-900/50 rounded-lg">
-                                            <h5 className="text-sm font-medium text-white mb-2">
+                                        <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                                            <h5 className="text-sm font-medium text-gray-900 mb-2">
                                                 Détails de la demande
                                             </h5>
                                             <div className="grid grid-cols-2 gap-2 text-sm">
                                                 <div>
-                                                    <span className="text-slate-400">Client:</span>
-                                                    <span className="text-white ml-2">{demande.client.fullName}</span>
+                                                    <span className="text-gray-500">Client:</span>
+                                                    <span className="text-gray-900 ml-2">{demande.client.fullName}</span>
                                                 </div>
                                                 <div>
-                                                    <span className="text-slate-400">Téléphone:</span>
+                                                    <span className="text-gray-500">Téléphone:</span>
                                                     <a 
                                                         href={`tel:${demande.client.phone}`}
-                                                        className="text-blue-400 ml-2 hover:underline"
+                                                        className="text-blue-600 ml-2 hover:underline"
                                                     >
                                                         {demande.client.phone}
                                                     </a>
@@ -517,14 +517,14 @@ export function DemandesStream({
                                                 {demande.vehicle && (
                                                     <>
                                                         <div>
-                                                            <span className="text-slate-400">Véhicule:</span>
-                                                            <span className="text-white ml-2">
+                                                            <span className="text-gray-500">Véhicule:</span>
+                                                            <span className="text-gray-900 ml-2">
                                                                 {demande.vehicle.brand} {demande.vehicle.model}
                                                             </span>
                                                         </div>
                                                         <div>
-                                                            <span className="text-slate-400">Plaque:</span>
-                                                            <span className="text-white ml-2">{demande.vehicle.plate}</span>
+                                                            <span className="text-gray-500">Plaque:</span>
+                                                            <span className="text-gray-900 ml-2">{demande.vehicle.plate}</span>
                                                         </div>
                                                     </>
                                                 )}

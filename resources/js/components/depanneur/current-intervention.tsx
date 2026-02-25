@@ -226,14 +226,14 @@ export function CurrentIntervention({
                     </div>
 
                     {/* Adresse et distance */}
-                    <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                         <div className="flex items-start gap-3">
-                            <MapPin className="h-5 w-5 text-blue-400 mt-0.5" />
+                            <MapPin className="h-5 w-5 text-blue-600 mt-0.5" />
                             <div>
-                                <p className="text-sm text-white font-medium">
+                                <p className="text-sm text-gray-900 font-medium">
                                     {intervention.adresseClient}
                                 </p>
-                                <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
+                                <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
                                     <span className="flex items-center gap-1">
                                         <Navigation className="h-3 w-3" />
                                         {intervention.distanceClient} km
@@ -251,10 +251,10 @@ export function CurrentIntervention({
                     {status === 'en_cours' ? (
                         <div className="space-y-4">
                             {/* Timer */}
-                            <div className="flex items-center justify-center p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg">
+                            <div className="flex items-center justify-center p-4 bg-orange-50 border border-orange-200 rounded-lg">
                                 <div className="text-center">
-                                    <p className="text-xs text-slate-400 uppercase tracking-wide">Temps écoulé</p>
-                                    <p className="text-4xl font-bold text-orange-400 font-mono">
+                                    <p className="text-xs text-gray-500 uppercase tracking-wide">Temps écoulé</p>
+                                    <p className="text-4xl font-bold text-orange-600 font-mono">
                                         {formatDuree(elapsedTime)}
                                     </p>
                                 </div>
@@ -262,15 +262,15 @@ export function CurrentIntervention({
 
                             {/* Bouton terminer */}
                             {showEndForm ? (
-                                <div className="space-y-4 p-4 bg-slate-900/50 rounded-lg">
-                                    <h4 className="font-medium text-white flex items-center gap-2">
+                                <div className="space-y-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                                    <h4 className="font-medium text-gray-900 flex items-center gap-2">
                                         <FileText className="h-4 w-4" />
                                         Finaliser l'intervention
                                     </h4>
                                     
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="text-sm text-slate-400 mb-1 block">
+                                            <label className="text-sm text-gray-600 mb-1 block">
                                                 Coût des pièces (XOF)
                                             </label>
                                             <Input
@@ -280,12 +280,12 @@ export function CurrentIntervention({
                                                     ...formData,
                                                     coutPiece: parseFloat(e.target.value) || 0
                                                 })}
-                                                className="bg-slate-800 border-slate-600 text-white"
+                                                className="bg-white border-gray-300 text-gray-900"
                                                 placeholder="0"
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-sm text-slate-400 mb-1 block">
+                                            <label className="text-sm text-gray-600 mb-1 block">
                                                 Main d'œuvre (XOF)
                                             </label>
                                             <Input
@@ -295,14 +295,14 @@ export function CurrentIntervention({
                                                     ...formData,
                                                     coutMainOeuvre: parseFloat(e.target.value) || 0
                                                 })}
-                                                className="bg-slate-800 border-slate-600 text-white"
+                                                className="bg-white border-gray-300 text-gray-900"
                                                 placeholder="0"
                                             />
                                         </div>
                                     </div>
                                     
                                     <div>
-                                        <label className="text-sm text-slate-400 mb-1 block">
+                                        <label className="text-sm text-gray-600 mb-1 block">
                                             Pièces remplacées
                                         </label>
                                         <Input
@@ -311,13 +311,13 @@ export function CurrentIntervention({
                                                 ...formData,
                                                 piecesRemplacees: e.target.value
                                             })}
-                                            className="bg-slate-800 border-slate-600 text-white"
+                                            className="bg-white border-gray-300 text-gray-900"
                                             placeholder="Ex: Batterie 12V, Courroie alternateur..."
                                         />
                                     </div>
                                     
                                     <div>
-                                        <label className="text-sm text-slate-400 mb-1 block">
+                                        <label className="text-sm text-gray-600 mb-1 block">
                                             Observations / Notes
                                         </label>
                                         <Textarea
@@ -326,7 +326,7 @@ export function CurrentIntervention({
                                                 ...formData,
                                                 observations: e.target.value
                                             })}
-                                            className="bg-slate-800 border-slate-600 text-white"
+                                            className="bg-white border-gray-300 text-gray-900"
                                             placeholder="Détails de l'intervention..."
                                             rows={3}
                                         />
@@ -334,21 +334,21 @@ export function CurrentIntervention({
                                     
                                     {/* Upload photos */}
                                     <div>
-                                        <label className="text-sm text-slate-400 mb-2 block">
+                                        <label className="text-sm text-gray-600 mb-2 block">
                                             Photos du travail effectué
                                         </label>
-                                        <div className="border-2 border-dashed border-slate-600 rounded-lg p-4 text-center">
-                                            <Camera className="h-8 w-8 text-slate-500 mx-auto mb-2" />
-                                            <p className="text-xs text-slate-400">
+                                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                                            <Camera className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                                            <p className="text-xs text-gray-500">
                                                 Cliquez pour télécharger ou.glissez-déposez
                                             </p>
                                         </div>
                                     </div>
                                     
                                     {/* Total */}
-                                    <div className="flex items-center justify-between p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
-                                        <span className="text-white font-medium">Total à facturer</span>
-                                        <span className="text-2xl font-bold text-green-400">
+                                    <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
+                                        <span className="text-gray-900 font-medium">Total à facturer</span>
+                                        <span className="text-2xl font-bold text-green-600">
                                             {formatCurrency(calculateTotal())}
                                         </span>
                                     </div>
@@ -406,22 +406,22 @@ export function CurrentIntervention({
 
             {/* Info panneau Type de panne */}
             {intervention.demande.typePanne && (
-                <Card className="bg-slate-800/50 border-slate-700">
+                <Card className="bg-white border-gray-200">
                     <CardContent className="py-4">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-blue-500/20 rounded-lg">
-                                <Wrench className="h-5 w-5 text-blue-400" />
+                            <div className="p-2 bg-blue-50 rounded-lg">
+                                <Wrench className="h-5 w-5 text-blue-600" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-400">Type de panne</p>
-                                <p className="text-white font-medium capitalize">
+                                <p className="text-sm text-gray-500">Type de panne</p>
+                                <p className="text-gray-900 font-medium capitalize">
                                     {intervention.demande.typePanne.replace('_', ' ')}
                                 </p>
                             </div>
                         </div>
                         <div className="mt-3 ml-12">
-                            <p className="text-sm text-slate-400">Description</p>
-                            <p className="text-slate-300 text-sm">
+                            <p className="text-sm text-gray-500">Description</p>
+                            <p className="text-gray-700 text-sm">
                                 {intervention.demande.descriptionProbleme}
                             </p>
                         </div>

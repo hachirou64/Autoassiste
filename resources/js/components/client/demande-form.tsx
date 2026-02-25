@@ -31,7 +31,8 @@ import {
     Target,
     Gauge,
     Star,
-    X
+    X,
+    MessageCircle
 } from 'lucide-react';
 import { 
     VEHICLE_TYPES, 
@@ -692,14 +693,22 @@ export function DemandeForm({ onSubmit, isLoading = false }: DemandeFormProps) {
                             <div className="grid grid-cols-2 gap-3">
                                 <Button
                                     variant="outline"
+                                    onClick={() => {
+                                        const phone = selectedDepanneur?.phone || '+2290169162107';
+                                        const cleanPhone = phone.replace(/\D/g, '');
+                                        window.open(`https://wa.me/${cleanPhone}`, '_blank');
+                                    }}
                                     className="py-4 border-emerald-500 text-emerald-600 hover:bg-emerald-50"
                                 >
-                                    <PhoneCall className="h-4 w-4 mr-2" />
+                                    <MessageCircle className="h-4 w-4 mr-2" />
                                     WhatsApp
                                 </Button>
                                 <Button
                                     variant="outline"
-                                    onClick={() => window.location.href = 'tel:+2290169162107'}
+                                    onClick={() => {
+                                        const phone = selectedDepanneur?.phone || '+2290169162107';
+                                        window.location.href = `tel:${phone}`;
+                                    }}
                                     className="py-4"
                                 >
                                     <PhoneCall className="h-4 w-4 mr-2" />

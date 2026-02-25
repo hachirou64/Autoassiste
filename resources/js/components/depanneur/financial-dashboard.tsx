@@ -169,8 +169,8 @@ export function FinancialDashboard({
     if (loading) {
         return (
             <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 text-amber-400 animate-spin" />
-                <span className="ml-2 text-slate-400">Chargement des données financières...</span>
+                <Loader2 className="h-8 w-8 text-amber-500 animate-spin" />
+                <span className="ml-2 text-gray-600">Chargement des données financières...</span>
             </div>
         );
     }
@@ -179,71 +179,71 @@ export function FinancialDashboard({
         <div className="space-y-6">
             {/* Stats principales */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="bg-slate-800/50 border-slate-700">
+                <Card className="bg-white border-gray-200">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-slate-400 flex items-center gap-2">
+                        <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                             <DollarSign className="h-4 w-4" />
                             Revenus aujourd'hui
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-white">
+                        <div className="text-2xl font-bold text-gray-900">
                             {displayStats ? formatCurrency(displayStats.revenus_jour) : formatCurrency(0)}
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-green-400 mt-1">
+                        <div className="flex items-center gap-1 text-xs text-green-600 mt-1">
                             <ArrowUpRight className="h-3 w-3" />
                             +12% vs hier
                         </div>
                     </CardContent>
                 </Card>
 
-                <Card className="bg-slate-800/50 border-slate-700">
+                <Card className="bg-white border-gray-200">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-slate-400 flex items-center gap-2">
+                        <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                             <TrendingUp className="h-4 w-4" />
                             Revenus ce mois
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-white">
+                        <div className="text-2xl font-bold text-gray-900">
                             {displayStats ? formatCurrency(displayStats.revenus_mois) : formatCurrency(0)}
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-green-400 mt-1">
+                        <div className="flex items-center gap-1 text-xs text-green-600 mt-1">
                             <ArrowUpRight className="h-3 w-3" />
                             +8% vs mois dernier
                         </div>
                     </CardContent>
                 </Card>
 
-                <Card className="bg-slate-800/50 border-slate-700">
+                <Card className="bg-white border-gray-200">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-slate-400 flex items-center gap-2">
+                        <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                             <Calendar className="h-4 w-4" />
                             Total revenus
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-white">
+                        <div className="text-2xl font-bold text-gray-900">
                             {displayStats ? formatCurrency(displayStats.revenus_total) : formatCurrency(0)}
                         </div>
-                        <p className="text-xs text-slate-400 mt-1">
+                        <p className="text-xs text-gray-500 mt-1">
                             Depuis votre inscription
                         </p>
                     </CardContent>
                 </Card>
 
-                <Card className="bg-slate-800/50 border-slate-700">
+                <Card className="bg-white border-gray-200">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-slate-400 flex items-center gap-2">
+                        <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                             <Clock className="h-4 w-4" />
                             En attente
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-amber-400">
+                        <div className="text-2xl font-bold text-amber-600">
                             {formatCurrency(totalEnAttente)}
                         </div>
-                        <p className="text-xs text-slate-400 mt-1">
+                        <p className="text-xs text-gray-500 mt-1">
                             {displayStats?.factures_en_attente || 0} facture(s)
                         </p>
                     </CardContent>
@@ -252,14 +252,14 @@ export function FinancialDashboard({
 
             {/* Graphiques et tabs */}
             <Tabs defaultValue="overview" className="space-y-4">
-                <TabsList className="bg-slate-800 border-slate-700">
-                    <TabsTrigger value="overview" className="data-[state=active]:bg-slate-700">
+                <TabsList className="bg-gray-100 border border-gray-200">
+                    <TabsTrigger value="overview" className="data-[state=active]:bg-white">
                         Aperçu
                     </TabsTrigger>
-                    <TabsTrigger value="factures" className="data-[state=active]:bg-slate-700">
+                    <TabsTrigger value="factures" className="data-[state=active]:bg-white">
                         Factures
                     </TabsTrigger>
-                    <TabsTrigger value="revenus" className="data-[state=active]:bg-slate-700">
+                    <TabsTrigger value="revenus" className="data-[state=active]:bg-white">
                         Revenus
                     </TabsTrigger>
                 </TabsList>

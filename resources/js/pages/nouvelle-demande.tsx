@@ -160,6 +160,13 @@ export default function NouvelleDemandePage() {
         window.location.href = '/client/dashboard';
     };
 
+    const handleCancel = () => {
+        // Clear any pending demande info
+        sessionStorage.removeItem('pending_demande_info');
+        // Redirect to homepage
+        window.location.href = '/';
+    };
+
     // Show loading while checking authentication
     if (view === 'loading') {
         return <LoadingPage text="Vérification de votre session..." />;
@@ -301,6 +308,18 @@ export default function NouvelleDemandePage() {
 
                     {/* Form */}
                     <DemandeForm onSubmit={handleSubmit} />
+                    
+                    {/* Cancel Button */}
+                    <div className="mt-4">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleCancel}
+                            className="w-full border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-800"
+                        >
+                            Annuler
+                        </Button>
+                    </div>
                 </div>
             </div>
         </AppHeaderLayout>

@@ -302,3 +302,27 @@ export interface ActionResponse {
     data?: Record<string, unknown>;
 }
 
+// ==================== MESSAGES DE CONTACT ====================
+
+export interface ContactMessage {
+    id: number;
+    name: string;
+    email: string;
+    subject: string | null;
+    message: string;
+    status: 'pending' | 'read' | 'replied';
+    admin_response: string | null;
+    replied_at: string | null;
+    read_at: string | null;
+    created_at: string;
+    updated_at: string;
+    statut_label?: string;
+}
+
+export interface ContactMessageFilters {
+    status?: 'pending' | 'read' | 'replied';
+    search?: string;
+    date_from?: string;
+    date_to?: string;
+}
+

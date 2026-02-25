@@ -11,13 +11,25 @@ import { DemandesTracking } from '@/components/admin/demandes-tracking';
 import { InterventionsTracking } from '@/components/admin/interventions-tracking';
 import { FinancialReports } from '@/components/admin/financial-reports';
 import { AnalyticsCharts, StatusDistribution } from '@/components/admin/analytics-charts';
+import { ContactMessagesPanel } from '@/components/admin/contact-messages-panel';
 import {
-    LayoutDashboard, Users, Wrench, FileText,
-    DollarSign, BarChart3, ChevronRight, Hammer, RefreshCw, LogOut, Cog, Shield
+    LayoutDashboard,
+    Users,
+    Wrench,
+    FileText,
+    DollarSign,
+    BarChart3,
+    ChevronRight,
+    Hammer,
+    RefreshCw,
+    LogOut,
+    Cog,
+    Shield,
+    MessageSquare,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { AdminStats, AdminAlert, RecentActivity, TrendsData, Demande, Intervention, Facture } from '@/types';
-import { useAdminData, useAdminClients, useAdminDepanneurs, useAdminDemandes } from '@/hooks/use-admin-data';
+import { useAdminData, useAdminClients, useAdminDepanneurs, useAdminDemandes, useContactMessages } from '@/hooks/use-admin-data';
 import { useApi } from '@/hooks/use-admin-data';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -32,6 +44,7 @@ interface LocalNavItem {
 
 const localNavItems: LocalNavItem[] = [
     { title: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+    { title: 'Messages', href: '/admin/messages', icon: MessageSquare },
     { title: 'Clients', href: '/admin/clients', icon: Users },
     { title: 'Dépanneurs', href: '/admin/depanneurs', icon: Wrench },
     { title: 'Demandes', href: '/admin/demandes', icon: FileText },
@@ -88,7 +101,7 @@ const defaultPagination = {
     per_page: 10,
 };
 
-type TabType = 'overview' | 'clients' | 'depanneurs' | 'demandes' | 'interventions' | 'financial' | 'analytics';
+type TabType = 'overview' | 'clients' | 'depanneurs' | 'demandes' | 'interventions' | 'financial' | 'analytics' | 'messages';
 
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState<TabType>('overview');
@@ -123,6 +136,21 @@ export default function AdminDashboard() {
         setSearch: setDepanneurSearch
     } = useAdminDepanneurs({ per_page: 10 });
 
+    // Hook pour les messages de contact
+    const {
+        messages: contactMessages = [],
+        pagination: messagesPagination,
+        pendingCount,
+        loading: loadingMessages,
+        refresh: refreshMessages,
+        setSearch: setMessagesSearch,
+        setStatusFilter: setMessagesStatus,
+        onPageChange: onMessagesPageChange,
+        markAsRead,
+        replyToMessage,
+        deleteMessage,
+    } = useContactMessages({ per_page: 15 });
+
     const handleRefresh = () => {
         refreshAdminData();
         refreshClients();
@@ -141,6 +169,21 @@ export default function AdminDashboard() {
     const renderTabContent = () => {
         switch (activeTab) {
             case 'overview': return <OverviewTab stats={stats} alerts={dynamicAlerts} activities={dynamicActivities} />;
+            case 'messages': return (
+                <MessagesTab 
+                    messages={contactMessages}
+                    pagination={messagesPagination}
+                    pendingCount={pendingCount}
+                    isLoading={loadingMessages}
+                    onSearch={setMessagesSearch}
+                    onStatusFilter={setMessagesStatus}
+                    onPageChange={onMessagesPageChange}
+                    onMarkAsRead={markAsRead}
+                    onReply={replyToMessage}
+                    onDelete={deleteMessage}
+                    onRefresh={refreshMessages}
+                />
+            );
             case 'clients': return (
                 <ClientsTab 
                     clients={dynamicClients} 
@@ -162,6 +205,7 @@ export default function AdminDashboard() {
     const getPageTitle = (): string => {
         const titles: Record<TabType, string> = {
             overview: 'Vue d\'ensemble',
+            messages: 'Messages de contact',
             clients: 'Gestion des clients',
             depanneurs: 'Gestion des depanneurs',
             demandes: 'Suivi des demandes',
@@ -173,6 +217,7 @@ export default function AdminDashboard() {
     };
 
     const getTabFromHref = (href: string): TabType => {
+        if (href.includes('messages')) return 'messages';
         if (href.includes('clients')) return 'clients';
         if (href.includes('depanneurs')) return 'depanneurs';
         if (href.includes('demandes')) return 'demandes';
@@ -331,7 +376,7 @@ function ClientsTab({ clients, pagination, isLoading, onSearch, onPageChange }: 
     };
 
     const handleDelete = async (client: import('@/types').Client) => {
-        if (!confirm(`Etes-vous sur de vouloir supprimer le client "${client.fullName}" ? Cette action est irreversible.`)) {
+        if (!confirm(`Êtes-vous sur de vouloir supprimer le client "${client.fullName}" ? Cette action est irréversible.`)) {
             return;
         }
         setIsLoadingAction(true);
@@ -344,16 +389,37 @@ function ClientsTab({ clients, pagination, isLoading, onSearch, onPageChange }: 
                 },
                 credentials: 'include',
             });
+            
+            // Check if response is JSON before parsing
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                // Server returned non-JSON response (probably an error page)
+                if (response.status === 403) {
+                    alert('Accès refusé. Vous n\'êtes pas autorisé à supprimer ce client.');
+                } else if (response.status === 401) {
+                    alert('Session expirée. Veuillez vous reconnecter.');
+                } else {
+                    alert(`Erreur serveur (${response.status}). Veuillez réessayer plus tard.`);
+                }
+                setIsLoadingAction(false);
+                return;
+            }
+            
             const data = await response.json();
             if (data.success) {
-                alert('Client supprime avec succes');
+                alert('Client supprimé avec succès');
                 window.location.reload();
             } else {
                 alert(data.message || 'Erreur lors de la suppression');
             }
         } catch (error) {
             console.error('Erreur suppression:', error);
-            alert('Erreur lors de la suppression');
+            // Handle network errors or JSON parse errors
+            if (error instanceof SyntaxError) {
+                alert('Erreur de réponse serveur. Veuillez réessayer plus tard.');
+            } else {
+                alert('Erreur lors de la suppression');
+            }
         } finally {
             setIsLoadingAction(false);
         }
@@ -530,7 +596,7 @@ function DepanneursTab({ depanneurs, pagination, isLoading, setSearch }: { depan
     };
 
     const handleDelete = async (depanneur: import('@/types').Depanneur) => {
-        if (!confirm(`Etes-vous sur de vouloir supprimer le depanneur "${depanneur.etablissement_name}" ? Cette action est irreversible.`)) {
+        if (!confirm(`Êtes-vous sur de vouloir supprimer le depanneur "${depanneur.etablissement_name}" ? Cette action est irréversible.`)) {
             return;
         }
         setIsLoadingAction(true);
@@ -543,16 +609,37 @@ function DepanneursTab({ depanneurs, pagination, isLoading, setSearch }: { depan
                 },
                 credentials: 'include',
             });
+            
+            // Check if response is JSON before parsing
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                // Server returned non-JSON response (probably an error page)
+                if (response.status === 403) {
+                    alert('Accès refusé. Vous n\'êtes pas autorisé à supprimer ce depanneur.');
+                } else if (response.status === 401) {
+                    alert('Session expirée. Veuillez vous reconnecter.');
+                } else {
+                    alert(`Erreur serveur (${response.status}). Veuillez réessayer plus tard.`);
+                }
+                setIsLoadingAction(false);
+                return;
+            }
+            
             const data = await response.json();
             if (data.success) {
-                alert('Depanneur supprime avec succes');
+                alert('Dépanneur supprimé avec succès');
                 window.location.reload();
             } else {
                 alert(data.message || 'Erreur lors de la suppression');
             }
         } catch (error) {
             console.error('Erreur suppression:', error);
-            alert('Erreur lors de la suppression');
+            // Handle network errors or JSON parse errors
+            if (error instanceof SyntaxError) {
+                alert('Erreur de réponse serveur. Veuillez réessayer plus tard.');
+            } else {
+                alert('Erreur lors de la suppression');
+            }
         } finally {
             setIsLoadingAction(false);
         }
@@ -721,6 +808,48 @@ function AnalyticsTab({ stats }: { stats: AdminStats }) {
                 />
             </div>
         </div>
+    );
+}
+
+function MessagesTab({ 
+    messages, 
+    pagination, 
+    pendingCount,
+    isLoading,
+    onSearch,
+    onStatusFilter,
+    onPageChange,
+    onMarkAsRead,
+    onReply,
+    onDelete,
+    onRefresh 
+}: { 
+    messages: import('@/types').ContactMessage[];
+    pagination: { current_page: number; last_page: number; total: number; per_page: number };
+    pendingCount: number;
+    isLoading?: boolean;
+    onSearch?: (query: string) => void;
+    onStatusFilter?: (status: string) => void;
+    onPageChange?: (page: number) => void;
+    onMarkAsRead?: (id: number) => Promise<any>;
+    onReply?: (id: number, response: string) => Promise<any>;
+    onDelete?: (id: number) => Promise<any>;
+    onRefresh?: () => void;
+}) {
+    return (
+        <ContactMessagesPanel
+            messages={messages}
+            pagination={pagination}
+            pendingCount={pendingCount}
+            isLoading={isLoading}
+            onSearch={onSearch}
+            onStatusFilter={onStatusFilter}
+            onPageChange={onPageChange}
+            onMarkAsRead={onMarkAsRead}
+            onReply={onReply}
+            onDelete={onDelete}
+            onRefresh={onRefresh}
+        />
     );
 }
 

@@ -159,33 +159,33 @@ export function DepanneurGeolocationStatus({
 
                 {/* Erreur */}
                 {error && (
-                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-2">
-                        <AlertCircle className="h-4 w-4 text-red-400 mt-0.5 flex-shrink-0" />
-                        <p className="text-sm text-red-300">{error}</p>
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+                        <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
+                        <p className="text-sm text-red-600">{error}</p>
                     </div>
                 )}
 
                 {/* Statut serveur */}
                 <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2 text-slate-400">
+                    <div className="flex items-center gap-2 text-gray-500">
                         <Clock className="h-4 w-4" />
                         <span>Dernière sync serveur:</span>
                     </div>
-                    <span className="text-white">
+                    <span className="text-gray-900">
                         {lastServerUpdate ? (
                             <span className="flex items-center gap-1">
-                                <CheckCircle2 className="h-3 w-3 text-green-400" />
+                                <CheckCircle2 className="h-3 w-3 text-green-500" />
                                 {formatLastUpdate(lastServerUpdate)}
                             </span>
                         ) : (
-                            <span className="text-slate-500">Jamais synchronisé</span>
+                            <span className="text-gray-400">Jamais synchronisé</span>
                         )}
                     </span>
                 </div>
 
                 {/* Contrôles */}
                 {showControls && (
-                    <div className="flex gap-2 pt-2 border-t border-slate-700">
+                    <div className="flex gap-2 pt-2 border-t border-gray-200">
                         <Button 
                             onClick={buttonAction}
                             className={`flex-1 ${isActive ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
@@ -200,7 +200,7 @@ export function DepanneurGeolocationStatus({
                                 variant="outline"
                                 size="sm"
                                 disabled={isLoading}
-                                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                                className="border-gray-300 text-gray-700 hover:bg-gray-50"
                             >
                                 <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
                             </Button>

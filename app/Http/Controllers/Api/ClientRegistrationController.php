@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Utilisateur;
 use App\Models\TypeCompte;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -14,6 +15,13 @@ use Inertia\Inertia;
 
 class ClientRegistrationController extends Controller
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     /**
      * Inscrire un nouveau client (simple)
      * Retourne JSON avec redirect_url pour gestion côté frontend
@@ -60,6 +68,21 @@ class ClientRegistrationController extends Controller
             $request->session()->regenerate();
 
             DB::commit();
+
+            // Envoyer les notifications (email, SMS, in-app)
+            // Note: Les erreurs de notification ne bloquent pas l'inscription
+            try {
+                $this->notificationService->sendWelcomeNotifications(
+                    $utilisateur,
+                    NotificationService::TYPE_CLIENT,
+                    true,  // sendEmail
+                    true,  // sendSMS
+                    true   // sendInApp
+                );
+            } catch (\Exception $e) {
+                // Log l'erreur mais ne pas bloquer l'inscription
+                \Log::error('Erreur notification inscription client: ' . $e->getMessage());
+            }
 
             // Retourner une réponse Inertia avec redirection et flash message
             // Le flash message sera affiché sur la page de destination

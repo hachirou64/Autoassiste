@@ -1339,31 +1339,62 @@ class DashboardController extends Controller
      */
     public function refuseDemande($id)
     {
-        $utilisateur = Auth::user();
-        
-        if (!$utilisateur) {
-            return response()->json(['error' => 'Aucun compte dépanneur lié'], 403);
+        try {
+            $utilisateur = Auth::user();
+            
+            if (!$utilisateur) {
+                return response()->json(['error' => 'Aucun compte dépanneur lié'], 403);
+            }
+
+            $depanneur = $utilisateur->depanneur ?? null;
+            
+            if (!$depanneur) {
+                return response()->json(['error' => 'Aucun compte dépanneur lié'], 403);
+            }
+
+            $demande = Demande::findOrFail($id);
+
+            if ($demande->status !== 'en_attente') {
+                return response()->json(['error' => 'Cette demande n\'est plus disponible'], 400);
+            }
+
+            // Récupérer le motif de refus si fourni
+            $motif = request()->input('motif', '');
+
+            // Mettre à jour le statut de la demande
+            // On annule la demande car le dépanneur a explicitement refusé
+            $demande->update([
+                'status' => 'annulee',
+            ]);
+
+            // Notifier le client que sa demande a été annulée
+            Notification::create([
+                'id_client' => $demande->id_client,
+                'id_depanneur' => $depanneur->id,
+                'id_demande' => $demande->id,
+                'type' => 'annulee',
+                'titre' => 'Demande annulée',
+                'message' => 'Votre demande a été annulée par le dépanneur ' . $depanneur->etablissement_name . '. Veuillez trouver un autre dépanneur.',
+                'isRead' => false,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Demande refusée avec succès',
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['error' => 'Demande non trouvée'], 404);
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors du refus de la demande', [
+                'demande_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'error' => 'Erreur lors du refus de la demande',
+                'message' => $e->getMessage(),
+            ], 500);
         }
-
-        $depanneur = $utilisateur->depanneur ?? null;
-        
-        if (!$depanneur) {
-            return response()->json(['error' => 'Aucun compte dépanneur lié'], 403);
-        }
-
-        $demande = Demande::findOrFail($id);
-
-        if ($demande->status !== 'en_attente') {
-            return response()->json(['error' => 'Cette demande n\'est plus disponible'], 400);
-        }
-
-        // Optionnel: Enregistrer le refus pour analytics
-        // Log::info('Demande refusée', ['depanneur_id' => $depanneur->id, 'demande_id' => $id]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Demande refusée',
-        ]);
     }
 
     /**

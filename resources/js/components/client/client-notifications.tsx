@@ -27,6 +27,8 @@ const NOTIFICATION_ICONS: Record<string, NotificationIconConfig> = {
     demande_recue: { icon: CheckCircle, color: 'text-green-600 bg-green-50' },
     demande_acceptee: { icon: CheckCircle, color: 'text-green-600 bg-green-50' },
     demande_annulee: { icon: XCircle, color: 'text-red-600 bg-red-50' },
+    annulee: { icon: XCircle, color: 'text-red-600 bg-red-50' },
+    refusee: { icon: XCircle, color: 'text-red-600 bg-red-50' },
     depannage_en_route: { icon: Wrench, color: 'text-blue-600 bg-blue-50' },
     intervention_terminee: { icon: Check, color: 'text-emerald-600 bg-emerald-50' },
     paiement_recu: { icon: CheckCircle, color: 'text-green-600 bg-green-50' },

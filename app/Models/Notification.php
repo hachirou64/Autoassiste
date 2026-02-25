@@ -137,6 +137,7 @@ class Notification extends Model
             self::TYPE_PAIEMENT_RECU => 'Paiement reçu',
             'acceptee' => 'Demande acceptée',
             'refusee' => 'Demande refusée',
+            'annulee' => 'Demande annulée',
         ];
 
         return $labels[$this->type] ?? $this->type;
@@ -173,6 +174,7 @@ class Notification extends Model
             self::TYPE_PAIEMENT_RECU => 'success',
             self::TYPE_COMPTE_ACTIVATE => 'success',
             self::TYPE_COMPTE_DESACTIVATE => 'danger',
+            'annulee' => 'danger',
         ];
 
         return $colors[$this->type] ?? 'secondary';
@@ -206,7 +208,7 @@ class Notification extends Model
             self::TYPE_INTERVENTION_TERMINEE,
             self::TYPE_PAIEMENT_RECU,
             'acceptee', // Used when a depanneur accepts a request
-            'refusee',  // Used when a depanneur refuses a request
+            'annulee',  // Used when a depanneur cancels a request
         ];
 
         if (!in_array($value, $validTypes)) {

@@ -1228,90 +1228,110 @@ class DashboardController extends Controller
      */
     public function acceptDemande($id)
     {
-        $utilisateur = Auth::user();
-        
-        if (!$utilisateur) {
-            return response()->json(['error' => 'Aucun compte dépanneur lié'], 403);
-        }
+        try {
+            $utilisateur = Auth::user();
+            
+            if (!$utilisateur) {
+                return response()->json(['error' => 'Aucun compte dépanneur lié'], 403);
+            }
 
-        $depanneur = $utilisateur->depanneur ?? null;
-        
-        if (!$depanneur) {
-            return response()->json(['error' => 'Aucun compte dépanneur lié'], 403);
-        }
+            $depanneur = $utilisateur->depanneur ?? null;
+            
+            if (!$depanneur) {
+                return response()->json(['error' => 'Aucun compte dépanneur lié'], 403);
+            }
 
-        // Vérifier si le dépanneur est disponible
-        if ($depanneur->status !== Depanneur::STATUS_DISPONIBLE) {
-            return response()->json(['error' => 'Vous devez être disponible pour accepter une demande'], 400);
-        }
+            // Vérifier si le dépanneur est disponible
+            if ($depanneur->status !== Depanneur::STATUS_DISPONIBLE) {
+                return response()->json(['error' => 'Vous devez être disponible pour accepter une demande'], 400);
+            }
 
-        $demande = Demande::findOrFail($id);
+            $demande = Demande::findOrFail($id);
 
-        if ($demande->status !== 'en_attente') {
-            return response()->json(['error' => 'Cette demande n\'est plus disponible'], 400);
-        }
+            if ($demande->status !== 'en_attente') {
+                return response()->json(['error' => 'Cette demande n\'est plus disponible'], 400);
+            }
 
-        // Vérifier que la demande est dans une zone du dépanneur
-        // CORRECTION: Permettre au dépanneur d'accepter la demande si:
-        // 1. La demande n'a pas de zone définie (id_zone est NULL)
-        // 2. Le dépanneur n'a pas de zones assignées (peut accepter toutes les demandes)
-        // 3. La zone de la demande correspond à une des zones du dépanneur
-        $zoneIds = $depanneur->zones()->pluck('zones.id')->toArray();
-        
-        // Si la demande n'a pas de zone, on autorise l'acceptation
-        if ($demande->id_zone === null) {
-            // OK - la demande n'a pas de zone, on autorise
-        }
-        // Si le dépanneur n'a pas de zones assignées, on autorise l'acceptation
-        elseif (empty($zoneIds)) {
-            // OK - le dépanneur n'a pas de zones, il peut accepter toutes les demandes
-        }
-        // Sinon, vérifier que la zone de la demande est dans les zones du dépanneur
-        elseif (!in_array($demande->id_zone, $zoneIds)) {
-            return response()->json(['error' => 'Cette demande n\'est pas dans votre zone d\'intervention'], 400);
-        }
+            // Vérifier que la demande est dans une zone du dépanneur
+            // CORRECTION: Permettre au dépanneur d'accepter la demande si:
+            // 1. La demande n'a pas de zone définie (id_zone est NULL)
+            // 2. Le dépanneur n'a pas de zones assignées (peut accepter toutes les demandes)
+            // 3. La zone de la demande correspond à une des zones du dépanneur
+            $zoneIds = $depanneur->zones()->pluck('zones.id')->toArray();
+            
+            // Si la demande n'a pas de zone, on autorise l'acceptation
+            if ($demande->id_zone === null) {
+                // OK - la demande n'a pas de zone, on autorise
+            }
+            // Si le dépanneur n'a pas de zones assignées, on autorise l'acceptation
+            elseif (empty($zoneIds)) {
+                // OK - le dépanneur n'a pas de zones, il peut accepter toutes les demandes
+            }
+            // Sinon, vérifier que la zone de la demande est dans les zones du dépanneur
+            elseif (!in_array($demande->id_zone, $zoneIds)) {
+                return response()->json(['error' => 'Cette demande n\'est pas dans votre zone d\'intervention'], 400);
+            }
 
-        // Créer l'intervention
-        $intervention = Intervention::create([
-            'id_demande' => $demande->id,
-            'id_depanneur' => $depanneur->id,
-            'status' => 'acceptee',
-            'startedAt' => now(),
-            'coutTotal' => 0,
-        ]);
+            // Créer l'intervention avec le statut correct
+            // Note: Le statut 'acceptee' n'est pas valide pour les interventions
+            // Les statuts valides sont: 'planifiee', 'en_cours', 'terminee'
+            $intervention = Intervention::create([
+                'id_demande' => $demande->id,
+                'id_depanneur' => $depanneur->id,
+                'status' => Intervention::STATUS_PLANIFIEE, // Corrigé: 'planifiee' au lieu de 'acceptee'
+                'startedAt' => now(),
+                'coutPiece' => 0,
+                'coutMainOeuvre' => 0,
+                'coutTotal' => 0,
+            ]);
 
-        // Mettre à jour la demande
-        $demande->update([
-            'status' => 'acceptee',
-            'id_depanneur' => $depanneur->id,
-        ]);
+            // Mettre à jour la demande
+            $demande->update([
+                'status' => 'acceptee',
+                'id_depanneur' => $depanneur->id,
+                'acceptedAt' => now(),
+            ]);
 
-        // Mettre à jour le statut du dépanneur
-        $depanneur->update(['status' => Depanneur::STATUS_OCCUPE]);
+            // Mettre à jour le statut du dépanneur
+            $depanneur->update(['status' => Depanneur::STATUS_OCCUPE]);
 
-        // Créer une notification pour le client
-        Notification::create([
-            'id_client' => $demande->id_client,
-            'id_depanneur' => $depanneur->id,
-            'id_demande' => $demande->id,
-            'type' => 'acceptee',
-            'titre' => 'Demande acceptée',
-            'message' => 'Le dépanneur ' . $depanneur->etablissement_name . ' a accepté votre demande et arrive bientôt.',
-            'isRead' => false,
-        ]);
+            // Créer une notification pour le client
+            Notification::create([
+                'id_client' => $demande->id_client,
+                'id_depanneur' => $depanneur->id,
+                'id_demande' => $demande->id,
+                'type' => 'acceptee',
+                'titre' => 'Demande acceptée',
+                'message' => 'Le dépanneur ' . $depanneur->etablissement_name . ' a accepté votre demande et arrive bientôt.',
+                'isRead' => false,
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Demande acceptée avec succès',
-            'intervention' => [
-                'id' => $intervention->id,
-                'codeIntervention' => $intervention->codeIntervention,
-                'demande' => [
-                    'id' => $demande->id,
-                    'codeDemande' => $demande->codeDemande,
+            return response()->json([
+                'success' => true,
+                'message' => 'Demande acceptée avec succès',
+                'intervention' => [
+                    'id' => $intervention->id,
+                    'codeIntervention' => $intervention->codeIntervention,
+                    'status' => $intervention->status,
+                    'demande' => [
+                        'id' => $demande->id,
+                        'codeDemande' => $demande->codeDemande,
+                    ],
                 ],
-            ],
-        ]);
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['error' => 'Demande non trouvée'], 404);
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors de l\'acceptation de la demande', [
+                'demande_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'error' => 'Erreur lors de l\'acceptation de la demande',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**

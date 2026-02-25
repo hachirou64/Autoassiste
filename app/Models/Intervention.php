@@ -245,6 +245,14 @@ class Intervention extends Model
         return $this->demande?->client;
     }
 
+    /**
+     * Get the intervention code (generated from ID if not stored in DB)
+     */
+    public function getCodeInterventionAttribute(): string
+    {
+        return 'INT-' . str_pad($this->id, 5, '0', STR_PAD_LEFT);
+    }
+
     
     public function estProcheDeLActuel(int $minutes = 30): bool
     {

@@ -22,6 +22,7 @@ class Notification extends Model
         'id_client',     // FK client (optionnel)
         'id_demande',    // FK demande (optionnel)
         'id_depanneur',  // FK dépanneur (optionnel)
+        'createdAt',     // Date de création
     ];
 
    
@@ -134,6 +135,8 @@ class Notification extends Model
             self::TYPE_DEPANNAGE_EN_ROUTE => 'Dépanneur en route',
             self::TYPE_INTERVENTION_TERMINEE => 'Intervention terminée',
             self::TYPE_PAIEMENT_RECU => 'Paiement reçu',
+            'acceptee' => 'Demande acceptée',
+            'refusee' => 'Demande refusée',
         ];
 
         return $labels[$this->type] ?? $this->type;
@@ -202,6 +205,8 @@ class Notification extends Model
             self::TYPE_DEPANNAGE_EN_ROUTE,
             self::TYPE_INTERVENTION_TERMINEE,
             self::TYPE_PAIEMENT_RECU,
+            'acceptee', // Used when a depanneur accepts a request
+            'refusee',  // Used when a depanneur refuses a request
         ];
 
         if (!in_array($value, $validTypes)) {

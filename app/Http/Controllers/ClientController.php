@@ -26,9 +26,9 @@ class ClientController extends Controller
                 abort(403, 'Vous devez être connecté.');
             }
             
-            // Charger la relation type_compte si elle n'est pas déjà chargée
-            if (!$user->relationLoaded('type_compte')) {
-                $user->load('type_compte');
+            // Charger la relation typeCompte si elle n'est pas déjà chargée
+            if (!$user->relationLoaded('typeCompte')) {
+                $user->load('typeCompte');
             }
             
             // Vérifier si l'utilisateur est admin

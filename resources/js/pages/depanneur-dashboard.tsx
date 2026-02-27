@@ -53,7 +53,7 @@ interface DepanneurDashboardProps {
     interventionEnCours: {
         id: number;
         codeIntervention: string;
-        status: 'acceptee' | 'en_cours';
+        status: 'planifiee' | 'acceptee' | 'en_cours';
         demande: {
             id: number;
             codeDemande: string;
@@ -117,7 +117,9 @@ export default function DepanneurDashboard() {
     const [soundEnabled, setSoundEnabled] = useState(true);
     const [currentStatus, setCurrentStatus] = useState<StatusDisponibilite>((props.currentStatus as StatusDisponibilite) || 'disponible');
     const [interventionStatus, setInterventionStatus] = useState<'aucune' | 'acceptee' | 'en_cours'>(
-        props.interventionEnCours ? (props.interventionEnCours.status === 'acceptee' ? 'acceptee' : 'en_cours') : 'aucune'
+        props.interventionEnCours 
+            ? (props.interventionEnCours.status === 'en_cours' ? 'en_cours' : 'acceptee')
+            : 'aucune'
     );
     
     // Extraire la localisation du profil
@@ -336,10 +338,10 @@ export default function DepanneurDashboard() {
     }, []);
 
     const handleStartIntervention = useCallback(async () => {
-        if (!props.interventionEnCours) return;
+        if (!currentIntervention) return;
         
         try {
-            const response = await fetch(`/api/depanneur/interventions/${props.interventionEnCours?.id}/start`, {
+            const response = await fetch(`/api/depanneur/interventions/${currentIntervention.id}/start`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -356,13 +358,13 @@ export default function DepanneurDashboard() {
             console.error('Erreur:', error);
             alert('Erreur de connexion');
         }
-    }, [props.interventionEnCours]);
+    }, [currentIntervention]);
 
     const handleEndIntervention = useCallback(async (data: any) => {
-        if (!props.interventionEnCours) return;
+        if (!currentIntervention) return;
         
         try {
-            const response = await fetch(`/api/depanneur/interventions/${props.interventionEnCours?.id}/end`, {
+            const response = await fetch(`/api/depanneur/interventions/${currentIntervention.id}/end`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -376,6 +378,7 @@ export default function DepanneurDashboard() {
             if (result.success) {
                 setInterventionStatus('aucune');
                 setCurrentStatus('disponible');
+                setCurrentIntervention(null);
                 // Rafraîchir les stats
                 setStats(prev => prev ? ({
                     ...prev,
@@ -389,7 +392,7 @@ export default function DepanneurDashboard() {
             console.error('Erreur:', error);
             alert('Erreur de connexion');
         }
-    }, [props.interventionEnCours]);
+    }, [currentIntervention]);
 
     const handleCancelIntervention = useCallback(() => {
         setInterventionStatus('aucune');
@@ -492,8 +495,8 @@ export default function DepanneurDashboard() {
                                 coutPiece: 0,
                                 coutMainOeuvre: 0,
                                 coutTotal: 0,
-                                distanceClient: 3.5,
-                                dureeEstimee: 15,
+                                distanceClient: 0,
+                                dureeEstimee:0,
                                 adresseClient: currentIntervention.demande.localisation,
                             } : undefined}
                             onStart={handleStartIntervention}

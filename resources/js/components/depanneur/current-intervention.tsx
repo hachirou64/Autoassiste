@@ -21,7 +21,10 @@ import {
     Wrench,
     User,
     Car,
-    MessageSquare
+    MessageSquare,
+    MoreHorizontal,
+    ChevronDown,
+    ChevronUp
 } from 'lucide-react';
 import type { InterventionEnCours, InterventionFormData } from '@/types/depanneur';
 
@@ -67,8 +70,8 @@ const mockIntervention: InterventionEnCours = {
     coutPiece: 0,
     coutMainOeuvre: 0,
     coutTotal: 0,
-    distanceClient: 3.5,
-    dureeEstimee: 15,
+    distanceClient: 0,
+    dureeEstimee:0,
     adresseClient: 'Cotonou, Rue de la Paix, en face de la station Shell',
     photos: [],
 };
@@ -100,6 +103,7 @@ export function CurrentIntervention({
     status,
 }: CurrentInterventionProps) {
     const [showEndForm, setShowEndForm] = useState(false);
+    const [showMoreDetails, setShowMoreDetails] = useState(false);
     const [formData, setFormData] = useState<InterventionFormData>({
         piecesRemplacees: '',
         observations: '',
@@ -167,13 +171,33 @@ export function CurrentIntervention({
                             </CardDescription>
                         </div>
                         
-                        <Badge className={
-                            status === 'en_cours' 
-                                ? 'bg-orange-50 text-orange-600 border-orange-200'
-                                : 'bg-blue-50 text-blue-600 border-blue-200'
-                        }>
-                            {status === 'en_cours' ? 'En cours' : 'Acceptée'}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                            <Badge className={
+                                status === 'en_cours' 
+                                    ? 'bg-orange-50 text-orange-600 border-orange-200'
+                                    : 'bg-blue-50 text-blue-600 border-blue-200'
+                            }>
+                                {status === 'en_cours' ? 'En cours' : 'Acceptée'}
+                            </Badge>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setShowMoreDetails(!showMoreDetails)}
+                                className="border-gray-300 text-gray-600 hover:bg-gray-50"
+                            >
+                                {showMoreDetails ? (
+                                    <>
+                                        <ChevronUp className="h-4 w-4 mr-1" />
+                                        Moins
+                                    </>
+                                ) : (
+                                    <>
+                                        <ChevronDown className="h-4 w-4 mr-1" />
+                                        Plus
+                                    </>
+                                )}
+                            </Button>
+                        </div>
                     </div>
                 </CardHeader>
                 
@@ -402,6 +426,105 @@ export function CurrentIntervention({
                         </div>
                     )}
                 </CardContent>
+                
+                {/* Plus de détails - Affiché quand on clique sur "Plus" */}
+                {showMoreDetails && (
+                    <div className="px-6 pb-6 space-y-4">
+                        <div className="border-t border-gray-200 pt-4">
+                            <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+                                <MoreHorizontal className="h-4 w-4" />
+                                Détails supplémentaires
+                            </h4>
+                            
+                            {/* Informations complètes du client */}
+                            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                                <h5 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                    <User className="h-4 w-4" />
+                                    Informations client
+                                </h5>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                    <div>
+                                        <span className="text-gray-500">Nom complet:</span>
+                                        <span className="text-gray-900 ml-2 font-medium">{intervention.client.fullName}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-500">Téléphone:</span>
+                                        <a href={`tel:${intervention.client.phone}`} className="text-blue-600 ml-2 hover:underline">
+                                            {intervention.client.phone}
+                                        </a>
+                                    </div>
+                                    {intervention.client.photo && (
+                                        <div className="md:col-span-2">
+                                            <span className="text-gray-500">Photo:</span>
+                                            <img 
+                                                src={intervention.client.photo} 
+                                                alt={intervention.client.fullName}
+                                                className="w-16 h-16 rounded-full ml-2 mt-1"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            
+                            {/* Informations complètes du véhicule */}
+                            {intervention.vehicle && (
+                                <div className="bg-gray-50 rounded-lg p-4 space-y-3 mt-3">
+                                    <h5 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                        <Car className="h-4 w-4" />
+                                        Informations véhicule
+                                    </h5>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                        <div>
+                                            <span className="text-gray-500">Marque:</span>
+                                            <span className="text-gray-900 ml-2 font-medium">{intervention.vehicle.brand}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-gray-500">Modèle:</span>
+                                            <span className="text-gray-900 ml-2 font-medium">{intervention.vehicle.model}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-gray-500">Couleur:</span>
+                                            <span className="text-gray-900 ml-2 font-medium">{intervention.vehicle.color}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-gray-500">Plaque:</span>
+                                            <span className="text-gray-900 ml-2 font-medium">{intervention.vehicle.plate}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Description du problème */}
+                            {intervention.demande.descriptionProbleme && (
+                                <div className="bg-gray-50 rounded-lg p-4 space-y-2 mt-3">
+                                    <h5 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                        <MessageSquare className="h-4 w-4" />
+                                        Description du problème
+                                    </h5>
+                                    <p className="text-sm text-gray-600">
+                                        {intervention.demande.descriptionProbleme}
+                                    </p>
+                                </div>
+                            )}
+                            
+                            {/* Adresse complète */}
+                            <div className="bg-gray-50 rounded-lg p-4 space-y-2 mt-3">
+                                <h5 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                    <MapPin className="h-4 w-4" />
+                                    Adresse complète
+                                </h5>
+                                <p className="text-sm text-gray-600">
+                                    {intervention.adresseClient || intervention.demande.localisation}
+                                </p>
+                                <div className="flex items-center gap-2 mt-2">
+                                    <span className="text-xs text-gray-500">
+                                        Coordonnées: {intervention.demande.latitude}, {intervention.demande.longitude}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </Card>
 
             {/* Info panneau Type de panne */}

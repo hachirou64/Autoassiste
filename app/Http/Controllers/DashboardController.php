@@ -946,9 +946,9 @@ class DashboardController extends Controller
             ->get()
             ->map(fn($d) => $this->formatDemandeForApi($d, $depanneur));
 
-        // Intervention en cours
+        // Intervention en cours - incluant 'planifiee' et 'acceptee'
         $interventionEnCours = $depanneur->interventions()
-            ->whereIn('status', ['acceptee', 'en_cours'])
+            ->whereIn('status', ['planifiee', 'acceptee', 'en_cours'])
             ->with(['demande.client'])
             ->first();
 
@@ -1416,7 +1416,7 @@ class DashboardController extends Controller
 
         $intervention = Intervention::where('id', $id)
             ->where('id_depanneur', $depanneur->id)
-            ->where('status', 'acceptee')
+            ->whereIn('status', ['planifiee', 'acceptee'])
             ->firstOrFail();
 
         $intervention->update([

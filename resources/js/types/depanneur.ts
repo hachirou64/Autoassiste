@@ -104,7 +104,7 @@ export interface ActiveIntervention {
 export interface InterventionEnCours {
     id: number;
     codeIntervention: string;
-    status: 'planifiee' | 'en_cours' | 'terminee';
+    status: 'planifiee' | 'acceptee' | 'en_cours' | 'terminee';
     
     demande: {
         id: number;

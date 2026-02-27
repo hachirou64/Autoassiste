@@ -52,15 +52,17 @@ export function DepanneursTable({
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const [createError, setCreateError] = useState<string | null>(null);
-    const [createForm, setCreateForm] = useState({
+const [createForm, setCreateForm] = useState({
+        fullName: '',
         promoteur_name: '',
         etablissement_name: '',
         IFU: '',
         email: '',
         phone: '',
+        adresse: '',
+        type_vehicule: 'voiture',
         password: '',
         password_confirmation: '',
-        type_vehicule: 'voiture',
     });
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -454,8 +456,7 @@ export function DepanneursTable({
                             >
                                 <option value="voiture">Voiture</option>
                                 <option value="moto">Moto</option>
-                                <option value="camion">Camion</option>
-                                <option value="utilitaire">Utilitaire</option>
+                                <option value="les-deux">Les deux</option>
                             </select>
                         </div>
 

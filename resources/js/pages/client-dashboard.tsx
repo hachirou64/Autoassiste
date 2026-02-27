@@ -376,26 +376,36 @@ export default function ClientDashboard() {
             <Head title="Dashboard Client - GoAssist" />
             
             {/* Header mobile avec menu toggle */}
-            <div className="lg:hidden bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-                <h1 className="text-gray-900 font-bold">{getPageTitle()}</h1>
+            <div className="lg:hidden bg-gradient-to-r from-slate-900 to-slate-800 border-b border-slate-700 p-4 flex items-center justify-between shadow-lg">
+                <h1 className="text-white font-bold">{getPageTitle()}</h1>
                 <button
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    className="text-gray-600 hover:text-gray-900 p-2"
+                    className="text-slate-300 hover:text-white p-2"
                 >
                     {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                 </button>
             </div>
 
-            <div className="flex h-full">
-                {/* Sidebar Desktop */}
-                <div className={`${sidebarOpen ? 'w-64' : 'w-16'} hidden lg:flex bg-white border-r border-gray-200 flex-col transition-all duration-300`}>
-                    <div className="p-4 border-b border-gray-200">
-                        <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                            <MapPin className="h-6 w-6 text-blue-600" />
-                            {sidebarOpen && <span>GoAssist</span>}
-                        </h2>
+            <div className="flex h-screen overflow-hidden">
+                {/* Sidebar - Modern design with gradient */}
+                <div className={`${sidebarOpen ? 'w-72' : 'w-20'} bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex-col transition-all duration-300 sticky top-0 h-full shadow-xl`}>
+                    {/* Logo */}
+                    <div className="p-5 border-b border-slate-700/50">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                                <MapPin className="h-5 w-5 text-white" />
+                            </div>
+                            {sidebarOpen && (
+                                <div>
+                                    <h2 className="text-lg font-bold text-white">GoAssist</h2>
+                                    <p className="text-xs text-slate-400">Espace Client</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                    <nav className="flex-1 p-2 space-y-1">
+                    
+                    {/* Navigation */}
+                    <nav className="flex-1 p-3 space-y-1.5">
                         {navItems.map((item) => {
                             const IconComponent = item.icon;
                             const isActive = activeTab === item.id;
@@ -404,38 +414,44 @@ export default function ClientDashboard() {
                                 <button
                                     key={item.id}
                                     onClick={() => setActiveTab(item.id as TabType)}
-                                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                                    className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200 group ${
                                         isActive 
-                                            ? 'bg-blue-100 text-blue-700 border border-blue-200' 
-                                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                            ? 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-white border border-blue-500/30 shadow-lg shadow-blue-500/10' 
+                                            : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
                                     }`}
                                 >
-                                    <IconComponent className="h-5 w-5 flex-shrink-0" />
+                                    <IconComponent className={`h-5 w-5 flex-shrink-0 ${isActive ? 'text-blue-400' : 'group-hover:text-blue-400 transition-colors'}`} />
                                     {sidebarOpen && (
                                         <>
                                             <span className="text-sm font-medium">{item.label}</span>
-                                            {isActive && <ChevronRight className="h-4 w-4 ml-auto" />}
+                                            {isActive && <ChevronRight className="h-4 w-4 ml-auto text-blue-400" />}
                                         </>
                                     )}
                                 </button>
                             );
                         })}
                     </nav>
-                    <div className="p-3 border-t border-gray-200 bg-gray-50 space-y-2">
+                    
+                    {/* Footer */}
+                    <div className="p-3 border-t border-slate-700/50 space-y-2">
                         {/* Theme Toggle Button */}
                         <ThemeToggleButton sidebarOpen={sidebarOpen} />
+                        
+                        {/* Logout Button */}
                         <button
                             onClick={handleLogout}
-                            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-all duration-200 border border-red-200 hover:border-red-300 group"
+                            className="w-full flex items-center justify-center gap-3 px-4 py-3.5 rounded-xl bg-gradient-to-r from-red-500 to-orange-500 text-white hover:from-red-600 hover:to-orange-600 transition-all duration-300 group shadow-lg shadow-red-500/20 hover:shadow-red-500/40"
                         >
                             <LogOut className="h-5 w-5 group-hover:scale-110 transition-transform" />
                             {sidebarOpen && <span className="text-sm font-semibold">Déconnexion</span>}
                         </button>
+                        
+                        {/* Collapse Button */}
                         <button
                             onClick={() => setSidebarOpen(!sidebarOpen)}
-                            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-200 hover:text-gray-700 transition-colors"
+                            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800/50 hover:text-white transition-all"
                         >
-                            <ChevronRight className={`h-5 w-5 transition-transform ${sidebarOpen ? 'rotate-180' : ''}`} />
+                            <ChevronRight className={`h-5 w-5 transition-transform duration-300 ${sidebarOpen ? 'rotate-180' : ''}`} />
                             {sidebarOpen && <span className="text-sm">Replier</span>}
                         </button>
                     </div>
@@ -493,14 +509,14 @@ export default function ClientDashboard() {
                     </div>
                 )}
 
-                {/* Main Content */}
-                <div className="flex-1 overflow-auto bg-gray-50 p-4 lg:p-6">
+                {/* Main Content - Modern dark theme */}
+                <div className="flex-1 overflow-auto bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 p-4 lg:p-6">
                     <div className="max-w-7xl mx-auto space-y-6">
                         {/* Page Title */}
                         <div className="hidden lg:flex items-center justify-between">
                             <div>
-                                <h1 className="text-2xl font-bold text-gray-900">{getPageTitle()}</h1>
-                                <p className="text-gray-600 mt-1">
+                                <h1 className="text-2xl font-bold text-slate-900">{getPageTitle()}</h1>
+                                <p className="text-slate-600 mt-1">
                                     {!loading && data ? `Bienvenue sur votre espace client ${data.profile.fullName}` : 'Bienvenue sur votre espace client GoAssist'}
                                 </p>
                             </div>

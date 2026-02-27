@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -91,7 +91,7 @@ function formatCurrency(amount: number): string {
 }
 
 export function CurrentIntervention({
-    intervention = mockIntervention,
+    intervention,
     onStart,
     onEnd,
     onCancel,
@@ -110,14 +110,14 @@ export function CurrentIntervention({
     const [elapsedTime, setElapsedTime] = useState(30); // en minutes
 
     // Timer pour le temps écoulé
-    useState(() => {
+    useEffect(() => {
         if (status === 'en_cours') {
             const interval = setInterval(() => {
                 setElapsedTime(prev => prev + 1);
             }, 60000); // jede minute
             return () => clearInterval(interval);
         }
-    });
+    }, [status]);
 
     const handleSubmit = () => {
         onEnd(formData);
@@ -129,7 +129,7 @@ export function CurrentIntervention({
     };
 
     // Pas d'intervention en cours
-    if (status === 'aucune') {
+    if (status === 'aucune' || !intervention) {
         return (
             <Card className="bg-white border-gray-200">
                 <CardContent className="py-12">

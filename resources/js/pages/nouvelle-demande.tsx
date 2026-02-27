@@ -178,25 +178,25 @@ export default function NouvelleDemandePage() {
             <AppHeaderLayout>
                 <Head title="Demande créée - GoAssist" />
                 
-                {/* Header with user info and dashboard link */}
-                <div className="bg-white border-b border-gray-200 px-4 py-3">
+                {/* Header with user info and dashboard link - Fixed */}
+                <div className="bg-gradient-to-r from-slate-900 to-slate-800 border-b border-slate-700 px-4 py-3 sticky top-0 z-50 shadow-lg">
                     <div className="max-w-md mx-auto flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-                                <User className="h-5 w-5 text-amber-600" />
+                            <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+                                <User className="h-5 w-5 text-amber-400" />
                             </div>
                             <div>
-                                <p className="text-sm font-medium text-gray-900">
+                                <p className="text-sm font-medium text-white">
                                     Client
                                 </p>
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-slate-400">
                                     Bienvenue sur GoAssist
                                 </p>
                             </div>
                         </div>
                         <Link
                             href="/client/dashboard"
-                            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium text-white transition-all"
                         >
                             <LayoutDashboard className="h-4 w-4" />
                             Dashboard
@@ -249,33 +249,33 @@ export default function NouvelleDemandePage() {
         <AppHeaderLayout>
             <Head title="Nouvelle demande - GoAssist" />
             
-            {/* Header with user info and dashboard link */}
-            <div className="bg-white border-b border-gray-200 px-4 py-3">
-                <div className="max-w-2xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-                            <User className="h-5 w-5 text-amber-600" />
+                {/* Header with user info and dashboard link - Fixed */}
+                <div className="bg-gradient-to-r from-slate-900 to-slate-800 border-b border-slate-700 px-4 py-3 sticky top-0 z-50 shadow-lg">
+                    <div className="max-w-2xl mx-auto flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+                                <User className="h-5 w-5 text-amber-400" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-white">
+                                    Client
+                                </p>
+                                <p className="text-xs text-slate-400">
+                                    Bienvenue sur GoAssist
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-sm font-medium text-gray-900">
-                                Client
-                            </p>
-                            <p className="text-xs text-gray-500">
-                                Bienvenue sur GoAssist
-                            </p>
-                        </div>
+                        <Link
+                            href="/client/dashboard"
+                            className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium text-white transition-all"
+                        >
+                            <LayoutDashboard className="h-4 w-4" />
+                            Dashboard
+                        </Link>
                     </div>
-                    <Link
-                        href="/client/dashboard"
-                        className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
-                    >
-                        <LayoutDashboard className="h-4 w-4" />
-                        Dashboard
-                    </Link>
                 </div>
-            </div>
             
-            <div className="min-h-screen bg-gray-50 p-4 lg:p-8">
+            <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 p-4 lg:p-8">
                 <div className="max-w-2xl mx-auto">
                     {/* Error message */}
                     {error && (

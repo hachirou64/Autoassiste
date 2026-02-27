@@ -230,9 +230,9 @@ export default function AdminDashboard() {
     return (
         <AppHeaderLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard Admin - GoAssist" />
-            <div className="flex h-full">
-                {/* Sidebar */}
-                <div className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-gradient-to-b from-slate-900 via-slate-900 to-slate-800 border-r border-slate-700/50 transition-all duration-300 flex flex-col`}>
+            <div className="flex h-screen overflow-hidden">
+                {/* Sidebar - Sticky position for all devices */}
+                <div className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-gradient-to-b from-slate-900 via-slate-900 to-slate-800 border-r border-slate-700/50 transition-all duration-300 flex flex-col sticky top-0 h-full`}>
                     {/* Header */}
                     <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
                         <div className="flex items-center gap-3">

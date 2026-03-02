@@ -48,6 +48,9 @@ class Notification extends Model
     // Type: Demande annulée
     const TYPE_DEMANDE_ANNULEE = 'demande_annulee';
 
+    // Type: Demande refusée par un dépanneur
+    const TYPE_DEMANDE_REFUSEE = 'demande_refusee';
+
     // Type: Dépannage en route
     const TYPE_DEPANNAGE_EN_ROUTE = 'depannage_en_route';
 
@@ -132,6 +135,7 @@ class Notification extends Model
             self::TYPE_DEMANDE_RECUE => 'Demande reçue',
             self::TYPE_DEMANDE_ACCEPTEE => 'Demande acceptée',
             self::TYPE_DEMANDE_ANNULEE => 'Demande annulée',
+            self::TYPE_DEMANDE_REFUSEE => 'Demande refusée',
             self::TYPE_DEPANNAGE_EN_ROUTE => 'Dépanneur en route',
             self::TYPE_INTERVENTION_TERMINEE => 'Intervention terminée',
             self::TYPE_PAIEMENT_RECU => 'Paiement reçu',
@@ -151,6 +155,7 @@ class Notification extends Model
             self::TYPE_DEMANDE_RECUE => '✅',
             self::TYPE_DEMANDE_ACCEPTEE => '✅',
             self::TYPE_DEMANDE_ANNULEE => '❌',
+            self::TYPE_DEMANDE_REFUSEE => '🚫',
             self::TYPE_DEPANNAGE_EN_ROUTE => '🚗',
             self::TYPE_INTERVENTION_TERMINEE => '🔧',
             self::TYPE_PAIEMENT_RECU => '💰',
@@ -169,12 +174,14 @@ class Notification extends Model
             self::TYPE_DEMANDE_RECUE => 'success',
             self::TYPE_DEMANDE_ACCEPTEE => 'success',
             self::TYPE_DEMANDE_ANNULEE => 'danger',
+            self::TYPE_DEMANDE_REFUSEE => 'warning',
             self::TYPE_DEPANNAGE_EN_ROUTE => 'warning',
             self::TYPE_INTERVENTION_TERMINEE => 'primary',
             self::TYPE_PAIEMENT_RECU => 'success',
             self::TYPE_COMPTE_ACTIVATE => 'success',
             self::TYPE_COMPTE_DESACTIVATE => 'danger',
             'annulee' => 'danger',
+            'refusee' => 'warning',
         ];
 
         return $colors[$this->type] ?? 'secondary';
@@ -204,11 +211,13 @@ class Notification extends Model
             self::TYPE_DEMANDE_RECUE,
             self::TYPE_DEMANDE_ACCEPTEE,
             self::TYPE_DEMANDE_ANNULEE,
+            self::TYPE_DEMANDE_REFUSEE,
             self::TYPE_DEPANNAGE_EN_ROUTE,
             self::TYPE_INTERVENTION_TERMINEE,
             self::TYPE_PAIEMENT_RECU,
             'acceptee', // Used when a depanneur accepts a request
             'annulee',  // Used when a depanneur cancels a request
+            'refusee',  // Used when a depanneur refuses a request
         ];
 
         if (!in_array($value, $validTypes)) {
@@ -249,6 +258,7 @@ class Notification extends Model
             self::TYPE_DEMANDE_RECUE => 'Demande reçue',
             self::TYPE_DEMANDE_ACCEPTEE => 'Demande acceptée',
             self::TYPE_DEMANDE_ANNULEE => 'Demande annulée',
+            self::TYPE_DEMANDE_REFUSEE => 'Demande refusée',
             self::TYPE_DEPANNAGE_EN_ROUTE => 'Dépanneur en route',
             self::TYPE_INTERVENTION_TERMINEE => 'Intervention terminée',
             self::TYPE_PAIEMENT_RECU => 'Paiement reçu',

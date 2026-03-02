@@ -456,6 +456,12 @@ export default function DepanneurDashboard() {
                     currentLocation={currentLocation}
                     geolocationActive={props.geolocationActive}
                     positionRecente={props.positionRecente}
+                    currentIntervention={currentIntervention}
+                    onStartIntervention={handleStartIntervention}
+                    onEndIntervention={handleEndIntervention}
+                    onCancelIntervention={handleCancelIntervention}
+                    onCallClient={handleCallClient}
+                    onOpenMaps={handleOpenMaps}
                 />;
             case 'demandes':
                 return (
@@ -542,6 +548,12 @@ export default function DepanneurDashboard() {
                     currentLocation={currentLocation}
                     geolocationActive={props.geolocationActive}
                     positionRecente={props.positionRecente}
+                    currentIntervention={currentIntervention}
+                    onStartIntervention={handleStartIntervention}
+                    onEndIntervention={handleEndIntervention}
+                    onCancelIntervention={handleCancelIntervention}
+                    onCallClient={handleCallClient}
+                    onOpenMaps={handleOpenMaps}
                 />;
         }
     };
@@ -777,6 +789,13 @@ interface OverviewTabProps {
     // Nouvelles props pour la géolocalisation
     geolocationActive?: boolean;
     positionRecente?: boolean;
+    // Props pour l'intervention en cours
+    currentIntervention?: DepanneurDashboardProps['interventionEnCours'];
+    onStartIntervention?: () => void;
+    onEndIntervention?: (data: any) => void;
+    onCancelIntervention?: () => void;
+    onCallClient?: () => void;
+    onOpenMaps?: () => void;
 }
 
 function OverviewTab({
@@ -795,6 +814,12 @@ function OverviewTab({
     currentLocation,
     geolocationActive = false,
     positionRecente = false,
+    currentIntervention,
+    onStartIntervention,
+    onEndIntervention,
+    onCancelIntervention,
+    onCallClient,
+    onOpenMaps,
 }: OverviewTabProps) {
     return (
         <div className="space-y-6">
@@ -851,11 +876,26 @@ function OverviewTab({
             {interventionStatus !== 'aucune' ? (
                 <CurrentIntervention
                     status={interventionStatus}
-                    onStart={() => console.log('Start')}
-                    onEnd={(data) => console.log('End:', data)}
-                    onCancel={() => console.log('Cancel')}
-                    onCallClient={() => window.open('tel:+22990000001')}
-                    onOpenMaps={() => window.open('https://maps.google.com', '_blank')}
+                    intervention={currentIntervention ? {
+                        id: currentIntervention.id,
+                        codeIntervention: currentIntervention.codeIntervention,
+                        status: currentIntervention.status,
+                        demande: currentIntervention.demande,
+                        client: currentIntervention.client,
+                        vehicle: currentIntervention.vehicle || undefined,
+                        startedAt: currentIntervention.startedAt,
+                        coutPiece: 0,
+                        coutMainOeuvre: 0,
+                        coutTotal: 0,
+                        distanceClient: 0,
+                        dureeEstimee: 0,
+                        adresseClient: currentIntervention.demande.localisation,
+                    } : undefined}
+                    onStart={onStartIntervention || (() => {})}
+                    onEnd={onEndIntervention || (() => {})}
+                    onCancel={onCancelIntervention || (() => {})}
+                    onCallClient={onCallClient || (() => {})}
+                    onOpenMaps={onOpenMaps || (() => {})}
                 />
             ) : (
                 <DepanneurNotifications notifications={[]} />

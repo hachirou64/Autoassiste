@@ -129,6 +129,21 @@ Route::get('/client/dashboard', function () {
     return Inertia::render('client-dashboard');
 })->name('client.dashboard')->middleware('auth');
 
+// Route Page de Paiement (protégée par auth)
+Route::get('/client/paiement/{factureId}', function ($factureId) {
+    return Inertia::render('client/payment', ['factureId' => $factureId]);
+})->name('client.paiement')->middleware('auth');
+
+// Route Page de Détails d'intervention (protégée par auth)
+Route::get('/client/intervention/{id}/details', function ($id) {
+    return Inertia::render('client/intervention-details', ['interventionId' => $id]);
+})->name('client.intervention.details')->middleware('auth');
+
+// Route Page d'Évaluation (protégée par auth)
+Route::get('/client/intervention/{id}/evaluer', function ($id) {
+    return Inertia::render('client/evaluation', ['interventionId' => $id]);
+})->name('client.intervention.evaluer')->middleware('auth');
+
 // Route Dashboard (alias for client dashboard) - Protégée par auth
 Route::get('/dashboard', function () {
     return Inertia::render('client-dashboard');

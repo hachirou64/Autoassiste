@@ -468,19 +468,31 @@ class DashboardController extends Controller
                 }),
         ];
 
-        // Demande active
+        // Demande active (en cours ou en attente)
         $demandeActive = $client->demandes()
             ->whereIn('status', ['en_attente', 'acceptee', 'en_cours'])
-            ->with(['depanneur'])
+            ->with(['depanneur', 'interventions.facture'])
             ->orderBy('createdAt', 'desc')
             ->first();
+
+        // Demande terminée avec facture impayée (pour affichage du bouton de paiement)
+        $demandeTermineeAvecFacture = $client->demandes()
+            ->where('status', 'terminee')
+            ->with(['depanneur', 'interventions.facture'])
+            ->orderBy('createdAt', 'desc')
+            ->first();
+
+        // Utiliser la demande terminée avec facture impayée si pas de demande active
+        $demandeActive = $demandeActive ?? $demandeTermineeAvecFacture;
 
         $demandeActiveData = null;
         if ($demandeActive) {
             $intervention = $demandeActive->interventions()
-                ->whereIn('status', ['acceptee', 'en_cours'])
-                ->with('depanneur')
+                ->whereIn('status', ['acceptee', 'en_cours', 'terminee'])
+                ->with('facture')
                 ->first();
+
+            $facture = $intervention?->facture;
 
             $demandeActiveData = [
                 'id' => $demandeActive->id,
@@ -490,7 +502,7 @@ class DashboardController extends Controller
                 'localisation' => $demandeActive->localisation,
                 'latitude' => $demandeActive->latitude,
                 'longitude' => $demandeActive->longitude,
-                'estimated_arrival' => $intervention ? '~' . rand(5, 30) . ' min' : null,
+                'estimated_arrival' => ($demandeActive->status === 'en_cours' || $demandeActive->status === 'acceptee') && $intervention ? '~' . rand(5, 30) . ' min' : null,
                 'distance' => null,
                 'depanneur' => $demandeActive->depanneur ? [
                     'id' => $demandeActive->depanneur->id,
@@ -499,6 +511,10 @@ class DashboardController extends Controller
                     'phone' => $demandeActive->depanneur->phone,
                     'rating' => 4.5,
                 ] : null,
+                // Données de la facture pour le paiement
+                'factureId' => $facture && $facture->status === 'en_attente' ? $facture->id : null,
+                'montant' => $facture ? $facture->montant : ($intervention ? $intervention->coutTotal : null),
+                'factureStatus' => $facture ? $facture->status : null,
             ];
         }
 
@@ -559,6 +575,7 @@ class DashboardController extends Controller
                         'id' => $intervention->facture->id,
                         'url' => '#',
                     ] : null,
+                    'factureStatus' => $intervention?->facture?->status ?? null,
                 ];
             });
 
@@ -1367,14 +1384,14 @@ class DashboardController extends Controller
                 'status' => 'annulee',
             ]);
 
-            // Notifier le client que sa demande a été annulée
+            // Notifier le client que sa demande a été refusée
             Notification::create([
                 'id_client' => $demande->id_client,
                 'id_depanneur' => $depanneur->id,
                 'id_demande' => $demande->id,
-                'type' => 'annulee',
-                'titre' => 'Demande annulée',
-                'message' => 'Votre demande a été annulée par le dépanneur ' . $depanneur->etablissement_name . '. Veuillez trouver un autre dépanneur.',
+                'type' => 'refusee',
+                'titre' => 'Demande refusée',
+                'message' => 'Votre demande a été refusée par le dépanneur ' . $depanneur->etablissement_name . '. Veuillez trouver un autre dépanneur.',
                 'isRead' => false,
             ]);
 
@@ -1475,7 +1492,7 @@ class DashboardController extends Controller
         ]);
 
         // Créer la facture
-        Facture::create([
+        $facture = Facture::create([
             'id_intervention' => $intervention->id,
             'montant' => $coutTotal,
             'coutPiece' => $coutPiece,
@@ -1496,7 +1513,7 @@ class DashboardController extends Controller
             'id_demande' => $intervention->demande->id,
             'type' => 'terminee',
             'titre' => 'Intervention terminée',
-            'message' => 'Votre intervention est terminée. Vous pouvez maintenant procéder au paiement.',
+            'message' => 'Votre intervention est terminée. Montant à payer: ' . number_format($coutTotal, 0, ',', ' ') . ' FCA. Cliquez ici pour procéder au paiement.',
             'isRead' => false,
         ]);
 
@@ -1507,6 +1524,11 @@ class DashboardController extends Controller
                 'id' => $intervention->id,
                 'completedAt' => $intervention->completedAt->toIsoString(),
                 'coutTotal' => $coutTotal,
+            ],
+            'facture' => [
+                'id' => $facture->id,
+                'montant' => $facture->montant,
+                'status' => $facture->status,
             ],
         ]);
     }

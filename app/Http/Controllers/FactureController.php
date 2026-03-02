@@ -1,18 +1,18 @@
 <?php
 
-
 namespace App\Http\Controllers;
 
+use App\Models\Client;
+use App\Models\Demande;
 use App\Models\Facture;
 use App\Models\Intervention;
 use App\Models\Notification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-
 
 class FactureController extends Controller
 {
-    
     public function index()
     {
         $utilisateur = auth()->utilisateur();
@@ -53,13 +53,10 @@ class FactureController extends Controller
         return view('factures.index', compact('factures', 'stats'));
     }
 
-   
     public function show(Facture $facture)
     {
-        
         // VÉRIFICATION DES AUTORISATIONS
-        
-        $user = auth()->utilisateur();
+        $utilisateur = auth()->utilisateur();
 
         if ($utilisateur->isClient() && $facture->intervention->demande->id_client !== $utilisateur->client->id) {
             abort(403, 'Accès non autorisé.');
@@ -69,9 +66,7 @@ class FactureController extends Controller
             abort(403, 'Accès non autorisé.');
         }
 
-        
         // CHARGEMENT DES RELATIONS
-       
         $facture->load([
             'intervention.demande.client',
             'intervention.depanneur',
@@ -81,54 +76,43 @@ class FactureController extends Controller
         return view('factures.show', compact('facture'));
     }
 
-   
+    /**
+     * API: Payer une facture existante
+     */
     public function payer(Request $request, Facture $facture)
     {
-        
         // VÉRIFICATION: Le client doit être le propriétaire
-        
         $utilisateur = auth()->utilisateur();
 
         if (!$utilisateur->isClient() || $facture->intervention->demande->id_client !== $utilisateur->client->id) {
             abort(403, 'Action non autorisée.');
         }
 
-        
         // VÉRIFICATION: La facture ne doit pas être déjà payée
-       
         if ($facture->status === 'payee') {
             return back()->with('error', 'Cette facture a déjà été payée.');
         }
 
-        
         // VALIDATION DU MODE DE PAIEMENT
-       
         $validated = $request->validate([
             'mdePaiement' => 'required|in:cash,mobile_money,carte_bancaire,virement',
         ]);
 
-        
         // TRANSACTION BDD
-
         DB::beginTransaction();
 
         try {
-            
             // ÉTAPE 1: Mettre à jour la facture avec le mode de paiement
-            
             $facture->update([
                 'mdePaiement' => $validated['mdePaiement'],
             ]);
 
             // ÉTAPE 2: Marquer la facture comme payée
-            
             $facture->marquerCommePayee();
 
-            
             // ÉTAPE 3: Notifier le dépanneur du paiement
-        
             Notification::create([
-                'message' => 'Paiement reçu pour la facture ' . $facture->transactionId . ' - Montant : ' . $facture->montant . ' FCFA',
+                'message' => 'Paiement reçu pour la facture ' . $facture->transactionId . ' - Montant : ' . $facture->montant . 'FCFA',
                 'type' => 'paiement_recu',
                 'id_depanneur' => $facture->intervention->id_depanneur,
             ]);
@@ -148,12 +132,124 @@ class FactureController extends Controller
         }
     }
 
-    
+/**
+     * API: Payer une facture par ID (JSON)
+     */
+    public function payerApi(Request $request, $id)
+    {
+        $utilisateur = auth()->utilisateur();
+
+        if (!$utilisateur) {
+            return response()->json(['success' => false, 'error' => 'Non authentifié'], 401);
+        }
+
+        $facture = Facture::findOrFail($id);
+
+        // Vérifier que le client est le propriétaire
+        if (!$utilisateur->client || $facture->intervention->demande->id_client !== $utilisateur->client->id) {
+            return response()->json(['success' => false, 'error' => 'Accès non autorisé'], 403);
+        }
+
+        // Vérifier que la facture n'est pas déjà payée
+        if ($facture->status === 'payee') {
+            return response()->json(['success' => false, 'error' => 'Facture déjà payée'], 400);
+        }
+
+        // Validation du mode de paiement
+        $validated = $request->validate([
+            'method' => 'required|in:cash,mobile_money,carte_bancaire,virement',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            // Mettre à jour la facture
+            $facture->update([
+                'mdePaiement' => $validated['method'],
+            ]);
+
+            // Marquer comme payée
+            $facture->marquerCommePayee();
+
+            // Notifier le dépanneur
+            Notification::create([
+                'message' => 'Paiement reçu pour la facture ' . $facture->transactionId . ' - Montant : ' . $facture->montant . 'FCFA',
+                'type' => 'paiement_recu',
+                'id_depanneur' => $facture->intervention->id_depanneur,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Paiement effectué avec succès',
+                'facture' => [
+                    'id' => $facture->id,
+                    'status' => $facture->status,
+                    'paidAt' => $facture->paidAt,
+                ],
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Erreur lors du paiement',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * API: Récupérer les données d'une facture pour la page de paiement
+     */
+    public function getForPayment($id)
+    {
+        $utilisateur = auth()->utilisateur();
+
+        if (!$utilisateur) {
+            return response()->json(['success' => false, 'error' => 'Non authentifié'], 401);
+        }
+
+        $facture = Facture::with([
+            'intervention.demande.client',
+            'intervention.depanneur',
+        ])->findOrFail($id);
+
+        // Vérifier que le client est le propriétaire
+        if (!$utilisateur->client || $facture->intervention->demande->id_client !== $utilisateur->client->id) {
+            return response()->json(['success' => false, 'error' => 'Accès non autorisé'], 403);
+        }
+
+        return response()->json([
+            'success' => true,
+            'facture' => [
+                'id' => $facture->id,
+                'montant' => $facture->montant,
+                'status' => $facture->status,
+                'transactionId' => $facture->transactionId,
+                'createdAt' => $facture->createdAt->toIsoString(),
+                'intervention' => [
+                    'id' => $facture->intervention->id,
+                    'demande' => [
+                        'codeDemande' => $facture->intervention->demande->codeDemande,
+                        'typePanne' => $facture->intervention->demande->typePanne,
+                        'client' => [
+                            'fullName' => $facture->intervention->demande->client->fullName,
+                        ],
+                    ],
+                    'depanneur' => [
+                        'etablissement_name' => $facture->intervention->depanneur->etablissement_name,
+                    ],
+                ],
+            ],
+        ]);
+    }
+
     public function downloadPdf(Facture $facture)
     {
-        
         // VÉRIFICATION DES AUTORISATIONS
-        // Seul le client propriétaire, le dépanneur assigné ou l'admin peuvent télécharger
         $utilisateur = auth()->utilisateur();
 
         if ($utilisateur->isClient() && $facture->intervention->demande->id_client !== $utilisateur->client->id) {
@@ -164,21 +260,16 @@ class FactureController extends Controller
             abort(403, 'Accès non autorisé.');
         }
 
-    
         // CHARGEMENT DES DONNÉES NÉCESSAIRES
-        // Pour générer le PDF avec toutes les infos pertinentes
         $facture->load([
             'intervention.demande.client',
             'intervention.depanneur',
             'intervention.services'
         ]);
 
-        
-        // Pour l'instant, on retourne la vue HTML
         return view('factures.pdf', compact('facture'));
     }
 
-   
     public function annuler(Facture $facture)
     {
         // Vérifier que c'est un admin
@@ -196,11 +287,9 @@ class FactureController extends Controller
         return back()->with('success', 'Facture annulée avec succès.');
     }
 
-    
-    public function rembourser(Facture $facture)
+    public function remboursser(Facture $facture)
     {
         // Vérifier que c'est un admin
-        
         if (!auth()->utilisateur()->isAdmin()) {
             abort(403, 'Accès réservé aux administrateurs.');
         }
@@ -234,9 +323,7 @@ class FactureController extends Controller
         }
     }
 
-
     // Afficher les statistiques des factures (Admin uniquement)
-     
     public function statistiques()
     {
         if (!auth()->utilisateur()->isAdmin()) {

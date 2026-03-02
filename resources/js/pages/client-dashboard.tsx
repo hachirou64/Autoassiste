@@ -20,7 +20,7 @@ import {
     MapPin, Clock, ChevronRight, Menu, X, AlertCircle,
     LogOut, Sun, Moon
 } from 'lucide-react';
-import type { ClientStats, ClientNotification, InterventionHistoryItem, UserProfile as UserProfileType } from '@/types/client';
+import type { ClientStats, ClientNotification, InterventionHistoryItem, UserProfile as UserProfileType, DemandeActive } from '@/types/client';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
@@ -197,6 +197,7 @@ export default function ClientDashboard() {
                         duree: h.duree,
                         evaluation: h.evaluation,
                         facture: h.facture,
+                        factureStatus: h.factureStatus,
                     })),
                     profile: apiData.profile,
                     profileStats: apiData.profileStats,
@@ -289,15 +290,25 @@ export default function ClientDashboard() {
     };
 
     const handleViewDetails = (item: InterventionHistoryItem) => {
-        console.log('Voir détails:', item);
+        // Rediriger vers la page de détails de l'intervention
+        router.visit(`/client/intervention/${item.id}/details`);
     };
 
     const handleDownloadFacture = (factureId: number) => {
-        console.log('Télécharger facture:', factureId);
+        // Télécharger la facture en PDF
+        window.open(`/api/client/factures/${factureId}/pdf`, '_blank');
+    };
+
+    const handlePayer = (factureId: number) => {
+        // Rediriger vers la page de paiement
+        if (factureId) {
+            router.visit(`/client/paiement/${factureId}`);
+        }
     };
 
     const handleEvaluer = (item: InterventionHistoryItem) => {
-        console.log('Évaluer:', item);
+        // Rediriger vers la page d'évaluation
+        router.visit(`/client/intervention/${item.id}/evaluer`);
     };
 
     const handleSaveProfile = (data: Partial<UserProfileType>) => {
@@ -540,6 +551,8 @@ function HomeTab({ data, onRefresh }: { data: DashboardData; onRefresh?: () => v
                 <GMapComponent demandeActive={data.stats.demande_active} />
                 <InterventionTracker
                     demandeActive={data.stats.demande_active}
+                    factureId={data.stats.demande_active?.factureId}
+                    montant={data.stats.demande_active?.montant}
                     onContactDepanneur={() => {
                         if (data.stats.demande_active && data.stats.demande_active.depanneur && data.stats.demande_active.depanneur.phone) {
                             window.open(`tel:${data.stats.demande_active.depanneur.phone}`);
@@ -576,6 +589,11 @@ function HomeTab({ data, onRefresh }: { data: DashboardData; onRefresh?: () => v
                         } catch (error) {
                             console.error('Erreur:', error);
                             alert('Erreur lors de l\'annulation');
+                        }
+                    }}
+                    onPayer={() => {
+                        if (data.stats.demande_active?.factureId) {
+                            router.visit(`/client/paiement/${data.stats.demande_active.factureId}`);
                         }
                     }}
                 />
@@ -670,6 +688,10 @@ function HistoryTab({
     onDownloadFacture: (id: number) => void
     onEvaluer: (item: InterventionHistoryItem) => void
 }) {
+    const handlePayer = (factureId: number) => {
+        router.visit(`/client/paiement/${factureId}`);
+    };
+    
     return (
         <div className="space-y-6">
             <InterventionHistory 
@@ -677,6 +699,7 @@ function HistoryTab({
                 onViewDetails={onViewDetails}
                 onDownloadFacture={onDownloadFacture}
                 onEvaluer={onEvaluer}
+                onPayer={handlePayer}
             />
         </div>
     );

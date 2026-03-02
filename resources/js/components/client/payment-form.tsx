@@ -8,7 +8,8 @@ import { CreditCard, DollarSign, Smartphone, Banknote, AlertCircle, Loader2 } fr
 
 interface PaymentFormProps {
     amount: number;
-    demande_id: number;
+    factureId?: number;
+    demandeId?: number;
     onSuccess?: () => void;
     isLoading?: boolean;
 }
@@ -17,7 +18,8 @@ type PaymentMethod = 'card' | 'cash' | 'mobile';
 
 export function PaymentForm({
     amount,
-    demande_id,
+    factureId,
+    demandeId,
     onSuccess,
     isLoading = false,
 }: PaymentFormProps) {
@@ -30,28 +32,58 @@ export function PaymentForm({
     });
     const [processing, setProcessing] = useState(false);
 
+    // Mapper le méthode frontend vers le backend
+    const mapMethodToBackend = (method: PaymentMethod): string => {
+        switch (method) {
+            case 'card': return 'carte_bancaire';
+            case 'cash': return 'cash';
+            case 'mobile': return 'mobile_money';
+            default: return 'mobile_money';
+        }
+    };
+
     const handlePayment = async () => {
         setProcessing(true);
 
         try {
-            const response = await fetch(`/api/demandes/${demande_id}/payment`, {
+            // Déterminer l'endpoint à utiliser
+            let endpoint = '';
+            let body: Record<string, unknown> = {};
+
+            if (factureId) {
+                // Paiement par facture
+                endpoint = `/api/client/factures/${factureId}/payer`;
+                body = {
+                    method: mapMethodToBackend(paymentMethod),
+                };
+            } else if (demandeId) {
+                // Paiement par demande (ancien comportement)
+                endpoint = `/api/demandes/${demandeId}/payment`;
+                body = {
+                    amount,
+                    method: mapMethodToBackend(paymentMethod),
+                    card_data: paymentMethod === 'card' ? cardData : null,
+                };
+            } else {
+                alert('Erreur: Aucun identifiant de paiement fourni');
+                return;
+            }
+
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                 },
                 credentials: 'include',
-                body: JSON.stringify({
-                    amount,
-                    method: paymentMethod,
-                    card_data: paymentMethod === 'card' ? cardData : null,
-                }),
+                body: JSON.stringify(body),
             });
 
             if (response.ok) {
                 onSuccess?.();
             } else {
-                alert('Erreur lors du paiement');
+                const errorData = await response.json();
+                alert(errorData.message || errorData.error || 'Erreur lors du paiement');
             }
         } catch (error) {
             console.error('Erreur:', error);

@@ -70,8 +70,8 @@ const mockIntervention: InterventionEnCours = {
     coutPiece: 0,
     coutMainOeuvre: 0,
     coutTotal: 0,
-    distanceClient: 0,
-    dureeEstimee:0,
+    distanceClient: 3.5,
+    dureeEstimee:15,
     adresseClient: 'Cotonou, Rue de la Paix, en face de la station Shell',
     photos: [],
 };

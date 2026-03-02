@@ -19,6 +19,10 @@ export interface DemandeActive {
     depanneur?: AssignedDepanneur;
     estimated_arrival?: string;
     distance?: number;
+    // Données de facture pour le paiement
+    factureId?: number;
+    montant?: number;
+    factureStatus?: string;
 }
 
 export interface AssignedDepanneur {
@@ -75,6 +79,7 @@ export type ClientNotificationType =
     | 'demande_recue'
     | 'demande_acceptee'
     | 'demande_annulee'
+    | 'demande_refusee'
     | 'depannage_en_route'
     | 'intervention_terminee'
     | 'paiement_recu'
@@ -110,6 +115,7 @@ export interface InterventionHistoryItem {
         id: number;
         url: string;
     };
+    factureStatus?: string; // 'en_attente' | 'payee' | 'annulee'
     evaluation?: {
         note: number;
         commentaire: string;

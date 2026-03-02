@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { AdminStats, AdminAlert, RecentActivity, Client, Depanneur, PaginationParams, TableResponse, Demande, DemandeFilters, ContactMessage, ContactMessageFilters } from '@/types';
+import type { AdminStats, AdminAlert, RecentActivity, Client, Depanneur, PaginationParams, TableResponse, Demande, DemandeFilters, ContactMessage, ContactMessageFilters, Intervention, Facture } from '@/types';
 
 // Types pour les données admin
 interface AdminData {
@@ -702,6 +702,262 @@ export function useContactMessages(initialParams: Partial<PaginationParams> & { 
         markAsRead,
         replyToMessage,
         deleteMessage,
+    };
+}
+
+// Hook pour les interventions admin
+export function useAdminInterventions(initialParams: Partial<PaginationParams> & { status?: string } = {}) {
+    const [interventionsData, setInterventionsData] = useState<{
+        interventions: Intervention[];
+        pagination: {
+            current_page: number;
+            last_page: number;
+            total: number;
+            per_page: number;
+        };
+    }>({
+        interventions: [],
+        pagination: {
+            current_page: 1,
+            last_page: 1,
+            total: 0,
+            per_page: initialParams.per_page || 15,
+        },
+    });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [filters, setFilters] = useState<{ status?: string; search?: string }>({});
+    const searchRef = useRef('');
+    const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    const fetchInterventions = useCallback(async (params: Partial<PaginationParams> = {}) => {
+        setLoading(true);
+        setError(null);
+
+        const queryParams = new URLSearchParams();
+        queryParams.set('page', String(params.page || 1));
+        queryParams.set('per_page', String(params.per_page || 15));
+        
+        if (params.sort_by) queryParams.set('sort_by', params.sort_by);
+        if (params.sort_order) queryParams.set('sort_order', params.sort_order);
+        
+        // Appliquer les filtres
+        if (searchRef.current) queryParams.set('search', searchRef.current);
+        if (filters.status) queryParams.set('status', filters.status);
+
+        try {
+            const authOptions = getAuthOptions();
+            const response = await fetch(`/admin/api/interventions?${queryParams}`, authOptions);
+
+            if (!response.ok) {
+                throw new Error(`Erreur ${response.status}: Erreur lors du chargement des interventions`);
+            }
+
+            const result = await response.json();
+            console.log('[useAdminInterventions] API Response:', result);
+
+            // Adapter le format selon la réponse de l'API
+            if (result.data) {
+                setInterventionsData({
+                    interventions: result.data,
+                    pagination: {
+                        current_page: result.current_page,
+                        last_page: result.last_page,
+                        total: result.total,
+                        per_page: result.per_page,
+                    },
+                });
+            } else {
+                setInterventionsData({
+                    interventions: result.interventions?.data || result,
+                    pagination: {
+                        current_page: result.interventions?.current_page || 1,
+                        last_page: result.interventions?.last_page || 1,
+                        total: result.interventions?.total || 0,
+                        per_page: result.interventions?.per_page || 15,
+                    },
+                });
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+        } finally {
+            setLoading(false);
+        }
+    }, [filters]);
+
+    // Effect pour charger les données au montage
+    useEffect(() => {
+        console.log('[useAdminInterventions] Composant mounted, chargement initial des interventions');
+        fetchInterventions();
+    }, []); // Vide pour éviter les re-fetches inutiles
+
+    const handleSearch = (query: string) => {
+        searchRef.current = query;
+        
+        // Debounce: attendre 300ms avant de refetch
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+        }
+        debounceTimerRef.current = setTimeout(() => {
+            fetchInterventions({ page: 1 });
+        }, 300);
+    };
+
+    const handleFilterChange = (newFilters: { status?: string; search?: string }) => {
+        setFilters(newFilters);
+    };
+
+    const handlePageChange = (page: number) => {
+        fetchInterventions({ page });
+    };
+
+    // Cleanup du timer
+    useEffect(() => {
+        return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, []);
+
+    return {
+        ...interventionsData,
+        loading,
+        error,
+        filters,
+        setSearch: handleSearch,
+        setFilters: handleFilterChange,
+        refresh: () => fetchInterventions(),
+        onPageChange: handlePageChange,
+        refetch: fetchInterventions,
+    };
+}
+
+// Hook pour les factures admin
+export function useAdminFactures(initialParams: Partial<PaginationParams> & { status?: string } = {}) {
+    const [facturesData, setFacturesData] = useState<{
+        factures: Facture[];
+        pagination: {
+            current_page: number;
+            last_page: number;
+            total: number;
+            per_page: number;
+        };
+    }>({
+        factures: [],
+        pagination: {
+            current_page: 1,
+            last_page: 1,
+            total: 0,
+            per_page: initialParams.per_page || 15,
+        },
+    });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [filters, setFilters] = useState<{ status?: string; search?: string }>({});
+    const searchRef = useRef('');
+    const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    const fetchFactures = useCallback(async (params: Partial<PaginationParams> = {}) => {
+        setLoading(true);
+        setError(null);
+
+        const queryParams = new URLSearchParams();
+        queryParams.set('page', String(params.page || 1));
+        queryParams.set('per_page', String(params.per_page || 15));
+        
+        if (params.sort_by) queryParams.set('sort_by', params.sort_by);
+        if (params.sort_order) queryParams.set('sort_order', params.sort_order);
+        
+        // Appliquer les filtres
+        if (searchRef.current) queryParams.set('search', searchRef.current);
+        if (filters.status) queryParams.set('status', filters.status);
+
+        try {
+            const authOptions = getAuthOptions();
+            const response = await fetch(`/admin/api/factures?${queryParams}`, authOptions);
+
+            if (!response.ok) {
+                throw new Error(`Erreur ${response.status}: Erreur lors du chargement des factures`);
+            }
+
+            const result = await response.json();
+            console.log('[useAdminFactures] API Response:', result);
+
+            // Adapter le format selon la réponse de l'API
+            if (result.data) {
+                setFacturesData({
+                    factures: result.data,
+                    pagination: {
+                        current_page: result.current_page,
+                        last_page: result.last_page,
+                        total: result.total,
+                        per_page: result.per_page,
+                    },
+                });
+            } else {
+                setFacturesData({
+                    factures: result.factures?.data || result,
+                    pagination: {
+                        current_page: result.factures?.current_page || 1,
+                        last_page: result.factures?.last_page || 1,
+                        total: result.factures?.total || 0,
+                        per_page: result.factures?.per_page || 15,
+                    },
+                });
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+        } finally {
+            setLoading(false);
+        }
+    }, [filters]);
+
+    // Effect pour charger les données au montage
+    useEffect(() => {
+        console.log('[useAdminFactures] Composant mounted, chargement initial des factures');
+        fetchFactures();
+    }, []); // Vide pour éviter les re-fetches inutiles
+
+    const handleSearch = (query: string) => {
+        searchRef.current = query;
+        
+        // Debounce: attendre 300ms avant de refetch
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+        }
+        debounceTimerRef.current = setTimeout(() => {
+            fetchFactures({ page: 1 });
+        }, 300);
+    };
+
+    const handleFilterChange = (newFilters: { status?: string; search?: string }) => {
+        setFilters(newFilters);
+    };
+
+    const handlePageChange = (page: number) => {
+        fetchFactures({ page });
+    };
+
+    // Cleanup du timer
+    useEffect(() => {
+        return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, []);
+
+    return {
+        ...facturesData,
+        loading,
+        error,
+        filters,
+        setSearch: handleSearch,
+        setFilters: handleFilterChange,
+        refresh: () => fetchFactures(),
+        onPageChange: handlePageChange,
+        refetch: fetchFactures,
     };
 }
 

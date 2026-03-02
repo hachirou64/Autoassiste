@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     Calendar, Clock, MapPin, Wrench, Star, FileText,
-    ChevronRight, Download, MessageSquare, Filter
+    ChevronRight, Download, MessageSquare, Filter, CreditCard
 } from 'lucide-react';
 import type { InterventionHistoryItem } from '@/types/client';
 import { DEMANDE_STATUS_LABELS, DEMANDE_STATUS_COLORS } from '@/types/client';
@@ -15,6 +15,7 @@ interface InterventionHistoryProps {
     onViewDetails?: (item: InterventionHistoryItem) => void;
     onDownloadFacture?: (factureId: number) => void;
     onEvaluer?: (item: InterventionHistoryItem) => void;
+    onPayer?: (factureId: number) => void;
 }
 
 export function InterventionHistory({
@@ -22,6 +23,7 @@ export function InterventionHistory({
     onViewDetails,
     onDownloadFacture,
     onEvaluer,
+    onPayer,
 }: InterventionHistoryProps) {
     const [filter, setFilter] = useState<'all' | 'terminees' | 'annulees'>('all');
     const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -168,28 +170,42 @@ export function InterventionHistory({
                                         ) : null}
 
                                         {/* Actions */}
-                                        <div className="flex gap-2 pt-2">
-                                            {onViewDetails && (
+                                        <div className="flex flex-col gap-2 pt-2">
+                                            {/* Bouton de paiement si facture impayée */}
+                                            {item.facture && item.factureStatus === 'en_attente' && onPayer && (
                                                 <Button
-                                                    variant="ghost"
                                                     size="sm"
-                                                    onClick={() => onViewDetails(item)}
-                                                    className="flex-1 text-gray-600 hover:text-gray-900"
+                                                    className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
+                                                    onClick={() => onPayer(item.facture!.id)}
                                                 >
-                                                    Détails
+                                                    <CreditCard className="h-4 w-4 mr-2" />
+                                                    Payer maintenant ({formatCurrency(item.montant)})
                                                 </Button>
                                             )}
-                                            {item.facture && onDownloadFacture && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => onDownloadFacture(item.facture!.id)}
-                                                    className="flex-1 text-gray-600 hover:text-gray-900"
-                                                >
-                                                    <Download className="h-4 w-4 mr-1" />
-                                                    Facture
-                                                </Button>
-                                            )}
+                                            
+                                            <div className="flex gap-2">
+                                                {onViewDetails && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => onViewDetails(item)}
+                                                        className="flex-1 text-gray-600 hover:text-gray-900"
+                                                    >
+                                                        Détails
+                                                    </Button>
+                                                )}
+                                                {item.facture && onDownloadFacture && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => onDownloadFacture(item.facture!.id)}
+                                                        className="flex-1 text-gray-600 hover:text-gray-900"
+                                                    >
+                                                        <Download className="h-4 w-4 mr-1" />
+                                                        Facture
+                                                    </Button>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 )}

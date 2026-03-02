@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
     Clock, MapPin, Phone, CheckCircle, Wrench, Navigation,
-    Star, MessageSquare, FileText
+    Star, MessageSquare, FileText, CreditCard
 } from 'lucide-react';
 import type { DemandeActive, AssignedDepanneur } from '@/types/client';
 import { DEMANDE_STATUS_LABELS, DEMANDE_STATUS_COLORS } from '@/types/client';
@@ -14,6 +14,9 @@ interface InterventionTrackerProps {
     onAnnuler?: () => void;
     onFacture?: () => void;
     onEvaluer?: () => void;
+    onPayer?: () => void;
+    factureId?: number;
+    montant?: number;
 }
 
 const STEPS = [
@@ -29,6 +32,9 @@ export function InterventionTracker({
     onAnnuler,
     onFacture,
     onEvaluer,
+    onPayer,
+    factureId,
+    montant,
 }: InterventionTrackerProps) {
     if (!demandeActive) {
         return (
@@ -71,8 +77,8 @@ export function InterventionTracker({
                         <Navigation className="h-5 w-5 text-blue-600" />
                         Suivi de l'intervention
                     </span>
-                    <Badge className={DEMANDE_STATUS_COLORS[demandeActive.status]}>
-                        {DEMANDE_STATUS_LABELS[demandeActive.status]}
+                    <Badge className={DEMANDE_STATUS_COLORS[demandeActive.status as keyof typeof DEMANDE_STATUS_COLORS]}>
+                        {DEMANDE_STATUS_LABELS[demandeActive.status as keyof typeof DEMANDE_STATUS_LABELS]}
                     </Badge>
                 </CardTitle>
             </CardHeader>
@@ -186,7 +192,7 @@ export function InterventionTracker({
                     </div>
                 )}
 
-                {/* Intervention terminée */}
+                {/* Intervention terminée - Avec paiement */}
                 {demandeActive.status === 'terminee' && (
                     <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                         <div className="flex items-center gap-2 mb-3">
@@ -194,9 +200,23 @@ export function InterventionTracker({
                             <h4 className="font-medium text-gray-900">Intervention terminée</h4>
                         </div>
                         <p className="text-sm text-gray-600 mb-4">
-                            L'intervention a été réalisée avec succès. Vous pouvez consulter la facture
-                            et laisser un avis sur le service.
+                            L'intervention a été réalisée avec succès. 
+                            {montant && (
+                                <span className="font-medium text-amber-600"> Montant à payer: {montant.toLocaleString('fr-FR')} CFA</span>
+                            )}
                         </p>
+                        
+                        {/* Bouton de paiement */}
+                        {factureId && onPayer && (
+                            <Button
+                                className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white mb-3"
+                                onClick={onPayer}
+                            >
+                                <CreditCard className="h-4 w-4 mr-2" />
+                                Payer maintenant
+                            </Button>
+                        )}
+                        
                         <div className="flex gap-2">
                             {onFacture && (
                                 <Button

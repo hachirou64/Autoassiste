@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
 use App\Models\Demande;
 use App\Models\Depanneur;
+use App\Models\Facture;
 use App\Models\Zone;
 use App\Models\Notification;
 use Illuminate\Http\Request;
@@ -535,7 +537,7 @@ class DemandeController extends Controller
     }
 
     /**
-     * API: Traiter un paiement
+     * API: Traiter un paiement - Mettre à jour la facture existante
      */
     public function processPayment(Request $request, $id)
     {
@@ -548,28 +550,57 @@ class DemandeController extends Controller
         $demande = Demande::findOrFail($id);
 
         // Vérifier l'ownership
-        $client = Client::where('id_utilisateur', $user->id)->first();
+        $client = $user->client ?? Client::where('id_utilisateur', $user->id)->first();
         
         if (!$client || $demande->id_client !== $client->id) {
             return response()->json(['error' => 'Accès non autorisé'], 403);
         }
 
         $validated = $request->validate([
-            'amount' => 'required|numeric|min:0.01',
+            'amount' => 'nullable|numeric|min:0.01',
             'method' => 'required|in:card,cash,mobile',
             'card_data' => 'nullable|array',
         ]);
 
         try {
-            // Créer une facture
-            $facture = Facture::create([
-                'code' => 'FAC-' . now()->format('YmdHis'),
-                'id_demande' => $demande->id,
-                'montant' => $validated['amount'],
+            // Trouver la facture existante liée à l'intervention de cette demande
+            $facture = Facture::whereHas('intervention', function($q) use ($demande) {
+                $q->where('id_demande', $demande->id);
+            })->first();
+
+            if (!$facture) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Aucune facture trouvée pour cette demande'
+                ], 404);
+            }
+
+            // Si un montant est fourni, le mettre à jour
+            if (!empty($validated['amount'])) {
+                $facture->update(['montant' => $validated['amount']]);
+            }
+
+            // Mapper la méthode de paiement
+            $mdePaiement = match($validated['method']) {
+                'card' => 'carte_bancaire',
+                'cash' => 'cash',
+                'mobile' => 'mobile_money',
+                default => 'mobile_money',
+            };
+
+            // Mettre à jour la facture existante comme payée
+            $facture->update([
+                'mdePaiement' => $mdePaiement,
                 'status' => 'payee',
-                'payment_method' => $validated['method'],
-                'createdAt' => now(),
-                'updatedAt' => now(),
+                'paidAt' => now(),
+            ]);
+
+            // Notifier le dépanneur du paiement
+            Notification::create([
+                'message' => 'Paiement reçu pour la facture - Montant: ' . number_format($facture->montant, 0, ',', ' ') . ' CFA',
+                'type' => 'paiement_recu',
+                'id_depanneur' => $demande->id_depanneur,
+                'id_demande' => $demande->id,
             ]);
 
             return response()->json([
@@ -577,13 +608,14 @@ class DemandeController extends Controller
                 'message' => 'Paiement traité avec succès',
                 'facture' => [
                     'id' => $facture->id,
-                    'code' => $facture->code,
                     'montant' => $facture->montant,
+                    'status' => $facture->status,
                 ],
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
+                'success' => false,
                 'error' => 'Erreur lors du traitement du paiement',
                 'message' => $e->getMessage(),
             ], 500);
@@ -643,6 +675,68 @@ class DemandeController extends Controller
                 'message' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * API: Obtenir les détails d'une intervention pour le client
+     */
+    public function getInterventionDetails($id)
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['error' => 'Non authentifié'], 401);
+        }
+
+        $demande = Demande::with(['depanneur', 'interventions.facture'])->findOrFail($id);
+
+        // Vérifier l'ownership
+        $client = $user->client ?? Client::where('id_utilisateur', $user->id)->first();
+        
+        if (!$client || $demande->id_client !== $client->id) {
+            return response()->json(['error' => 'Accès non autorisé'], 403);
+        }
+
+        // Récupérer l'intervention liée
+        $intervention = $demande->interventions()->first();
+        $facture = $intervention?->facture;
+
+        // Calculer la durée
+        $duree = 0;
+        if ($intervention && $intervention->startedAt && $intervention->completedAt) {
+            $duree = $intervention->startedAt->diffInMinutes($intervention->completedAt);
+        } elseif ($intervention && $intervention->startedAt) {
+            $duree = $intervention->startedAt->diffInMinutes(now());
+        }
+
+        return response()->json([
+            'success' => true,
+            'intervention' => [
+                'id' => $demande->id,
+                'codeDemande' => $demande->codeDemande,
+                'status' => $demande->status,
+                'typePanne' => $demande->typePanne,
+                'localisation' => $demande->localisation,
+                'date' => $demande->createdAt->toIsoString(),
+                'duree' => $duree,
+                'montant' => $facture ? $facture->montant : ($intervention ? $intervention->coutTotal : 0),
+                'depanneur' => $demande->depanneur ? [
+                    'fullName' => $demande->depanneur->promoteur_name,
+                    'etablissement_name' => $demande->depanneur->etablissement_name,
+                    'phone' => $demande->depanneur->phone,
+                    'rating' => $demande->depanneur->rating ?? 4.5,
+                ] : null,
+                'facture' => $facture ? [
+                    'id' => $facture->id,
+                    'status' => $facture->status,
+                    'montant' => $facture->montant,
+                ] : null,
+                'evaluation' => $intervention && $intervention->note ? [
+                    'note' => $intervention->note,
+                    'commentaire' => $intervention->commentaire_evaluation,
+                ] : null,
+            ],
+        ]);
     }
 }
 

@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { AdminStats, AdminAlert, RecentActivity, TrendsData, Demande, Intervention, Facture } from '@/types';
-import { useAdminData, useAdminClients, useAdminDepanneurs, useAdminDemandes, useContactMessages } from '@/hooks/use-admin-data';
+import { useAdminData, useAdminClients, useAdminDepanneurs, useAdminDemandes, useContactMessages, useAdminInterventions, useAdminFactures } from '@/hooks/use-admin-data';
 import { useApi } from '@/hooks/use-admin-data';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -773,11 +773,50 @@ function DemandesTab() {
 }
 
 function InterventionsTab() {
-    return <InterventionsTracking interventions={defaultInterventions} pagination={defaultPagination} />;
+    const { 
+        interventions: dynamicInterventions = [], 
+        pagination: interventionsPagination,
+        loading: loadingInterventions,
+        refresh: refreshInterventions,
+        setSearch,
+        setFilters,
+        onPageChange
+    } = useAdminInterventions({ per_page: 15 });
+
+    const handleView = async (intervention: import('@/types').Intervention) => {
+        alert(`Voir les details de l'intervention ${intervention.id}`);
+    };
+
+    return (
+        <InterventionsTracking 
+            interventions={dynamicInterventions} 
+            pagination={interventionsPagination}
+            isLoading={loadingInterventions}
+            onPageChange={onPageChange}
+            onView={handleView}
+        />
+    );
 }
 
 function FinancialTab() {
-    return <FinancialReports factures={defaultFactures} pagination={defaultPagination} />;
+    const { 
+        factures: dynamicFactures = [], 
+        pagination: facturesPagination,
+        loading: loadingFactures,
+        refresh: refreshFactures,
+        setSearch,
+        setFilters,
+        onPageChange
+    } = useAdminFactures({ per_page: 15 });
+
+    return (
+        <FinancialReports 
+            factures={dynamicFactures} 
+            pagination={facturesPagination}
+            isLoading={loadingFactures}
+            onPageChange={onPageChange}
+        />
+    );
 }
 
 function AnalyticsTab({ stats }: { stats: AdminStats }) {

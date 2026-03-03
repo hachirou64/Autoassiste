@@ -743,6 +743,83 @@ class DashboardController extends Controller
         return inertia('admin/Demandes', ['demandes' => $demandes]);
     }
 
+    /**
+     * API: Récupérer la liste des demandes (JSON)
+     */
+    public function demandesApi()
+    {
+        $perPage = request()->input('per_page', 15);
+        $page = request()->input('page', 1);
+        $search = request()->input('search', '');
+        $status = request()->input('status', '');
+
+        try {
+            $query = Demande::with(['client', 'depanneur']);
+
+            // Filtre par statut
+            if ($status && $status !== 'all') {
+                $query->where('status', $status);
+            }
+
+            // Filtre par recherche
+            if ($search) {
+                $query->where(function($q) use ($search) {
+                    $q->where('codeDemande', 'like', "%{$search}%")
+                      ->orWhere('localisation', 'like', "%{$search}%")
+                      ->orWhere('typePanne', 'like', "%{$search}%");
+                });
+            }
+
+            // Trier par date de création (plus récent en premier)
+            $demandes = $query->orderBy('createdAt', 'desc')
+                ->paginate($perPage, ['*'], 'page', $page);
+
+            // Transformer les données pour le frontend
+            $transformedData = collect($demandes->items())->map(function($demande) {
+                return [
+                    'id' => $demande->id,
+                    'codeDemande' => $demande->codeDemande,
+                    'typePanne' => $demande->typePanne,
+                    'descriptionProbleme' => $demande->descriptionProbleme,
+                    'localisation' => $demande->localisation,
+                    'latitude' => $demande->latitude,
+                    'longitude' => $demande->longitude,
+                    'status' => $demande->status,
+                    'createdAt' => $demande->createdAt->toIsoString(),
+                    'updatedAt' => $demande->updatedAt->toIsoString(),
+                    'client' => $demande->client ? [
+                        'id' => $demande->client->id,
+                        'fullName' => $demande->client->fullName,
+                        'phone' => $demande->client->phone,
+                    ] : null,
+                    'depanneur' => $demande->depanneur ? [
+                        'id' => $demande->depanneur->id,
+                        'etablissement_name' => $demande->depanneur->etablissement_name,
+                        'promoteur_name' => $demande->depanneur->promoteur_name,
+                    ] : null,
+                ];
+            })->values()->all();
+
+            return response()->json([
+                'data' => $transformedData,
+                'current_page' => $demandes->currentPage(),
+                'last_page' => $demandes->lastPage(),
+                'total' => $demandes->total(),
+                'per_page' => $demandes->perPage(),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('DemandesApi Error', ['error' => $e->getMessage()]);
+            return response()->json([
+                'error' => $e->getMessage(),
+                'data' => [],
+                'current_page' => 1,
+                'last_page' => 1,
+                'total' => 0,
+                'per_page' => $perPage,
+            ], 500);
+        }
+    }
+
     // ==================== INTERVENTIONS ====================
 
     public function interventions()
@@ -752,6 +829,108 @@ class DashboardController extends Controller
             ->paginate(30);
 
         return inertia('admin/Interventions', ['interventions' => $interventions]);
+    }
+
+    /**
+     * API: Récupérer la liste des interventions (JSON)
+     */
+    public function interventionsApi()
+    {
+        $perPage = request()->input('per_page', 15);
+        $page = request()->input('page', 1);
+        $search = request()->input('search', '');
+        $status = request()->input('status', '');
+
+        try {
+            $query = Intervention::with(['demande.client', 'depanneur', 'facture']);
+
+            // Filtre par statut
+            if ($status && $status !== 'all') {
+                $query->where('status', $status);
+            }
+
+            // Filtre par recherche
+            if ($search) {
+                $query->where(function($q) use ($search) {
+                    $q->where('id', 'like', "%{$search}%")
+                      ->orWhere('codeIntervention', 'like', "%{$search}%")
+                      ->orWhereHas('demande', function($dq) use ($search) {
+                          $dq->where('codeDemande', 'like', "%{$search}%");
+                      });
+                });
+            }
+
+            // Trier par date de création (plus récent en premier)
+            $interventions = $query->orderBy('createdAt', 'desc')
+                ->paginate($perPage, ['*'], 'page', $page);
+
+            // Transformer les données pour le frontend
+            $transformedData = collect($interventions->items())->map(function($intervention) {
+                $duree = null;
+                if ($intervention->startedAt && $intervention->completedAt) {
+                    $duree = $intervention->startedAt->diffInMinutes($intervention->completedAt);
+                } elseif ($intervention->startedAt) {
+                    $duree = $intervention->startedAt->diffInMinutes(now());
+                }
+
+                return [
+                    'id' => $intervention->id,
+                    'codeIntervention' => $intervention->codeIntervention ?? 'INT-'.$intervention->id,
+                    'id_demande' => $intervention->id_demande,
+                    'id_depanneur' => $intervention->id_depanneur,
+                    'status' => $intervention->status,
+                    'coutPiece' => $intervention->coutPiece ?? 0,
+                    'coutMainOeuvre' => $intervention->coutMainOeuvre ?? 0,
+                    'coutTotal' => $intervention->coutTotal ?? 0,
+                    'duree' => $duree,
+                    'duree_formatee' => $duree ? $duree . ' min' : null,
+                    'piecesremplacees' => $intervention->piecesremplacees,
+                    'notes' => $intervention->notes,
+                    'createdAt' => $intervention->createdAt->toIsoString(),
+                    'startedAt' => $intervention->startedAt?->toIsoString(),
+                    'completedAt' => $intervention->completedAt?->toIsoString(),
+                    'demande' => $intervention->demande ? [
+                        'id' => $intervention->demande->id,
+                        'codeDemande' => $intervention->demande->codeDemande,
+                        'typePanne' => $intervention->demande->typePanne,
+                        'localisation' => $intervention->demande->localisation,
+                        'client' => $intervention->demande->client ? [
+                            'id' => $intervention->demande->client->id,
+                            'fullName' => $intervention->demande->client->fullName,
+                            'phone' => $intervention->demande->client->phone,
+                        ] : null,
+                    ] : null,
+                    'depanneur' => $intervention->depanneur ? [
+                        'id' => $intervention->depanneur->id,
+                        'etablissement_name' => $intervention->depanneur->etablissement_name,
+                        'promoteur_name' => $intervention->depanneur->promoteur_name,
+                    ] : null,
+                    'facture' => $intervention->facture ? [
+                        'id' => $intervention->facture->id,
+                        'montant' => $intervention->facture->montant,
+                        'status' => $intervention->facture->status,
+                    ] : null,
+                ];
+            })->values()->all();
+
+            return response()->json([
+                'data' => $transformedData,
+                'current_page' => $interventions->currentPage(),
+                'last_page' => $interventions->lastPage(),
+                'total' => $interventions->total(),
+                'per_page' => $interventions->perPage(),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('InterventionsApi Error', ['error' => $e->getMessage()]);
+            return response()->json([
+                'error' => $e->getMessage(),
+                'data' => [],
+                'current_page' => 1,
+                'last_page' => 1,
+                'total' => 0,
+                'per_page' => $perPage,
+            ], 500);
+        }
     }
 
     // ==================== FACTURES ====================
@@ -1511,7 +1690,7 @@ class DashboardController extends Controller
             'id_client' => $intervention->demande->id_client,
             'id_depanneur' => $depanneur->id,
             'id_demande' => $intervention->demande->id,
-            'type' => 'terminee',
+            'type' => Notification::TYPE_INTERVENTION_TERMINEE,
             'titre' => 'Intervention terminée',
             'message' => 'Votre intervention est terminée. Montant à payer: ' . number_format($coutTotal, 0, ',', ' ') . ' FCA. Cliquez ici pour procéder au paiement.',
             'isRead' => false,

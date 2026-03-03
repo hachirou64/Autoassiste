@@ -86,10 +86,6 @@ Route::prefix('client')->middleware(['auth:web'])->group(function () {
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsReadApi'])->name('client.api.notifications.read-all');
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCountApi'])->name('client.api.notifications.unread-count');
     
-    // Factures - Paiement
-    Route::post('/factures/{id}/payer', [FactureController::class, 'payerApi'])->name('client.factures.payer');
-    Route::get('/factures/{id}/payment-data', [FactureController::class, 'getForPayment'])->name('client.factures.payment-data');
-    
     // Interventions - Détails
     Route::get('/intervention/{id}', [DemandeController::class, 'getInterventionDetails'])->name('client.intervention.details');
 });
@@ -162,10 +158,10 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
     Route::post('/depanneurs/{depanneur}/restore', [DepanneurController::class, 'restoreApi'])->name('admin.depanneur.restore');
     
     // Demandes API
-    Route::get('/demandes', [DashboardController::class, 'demandes'])->name('admin.api.demandes');
+    Route::get('/demandes', [DashboardController::class, 'demandesApi'])->name('admin.api.demandes');
     
     // Interventions API
-    Route::get('/interventions', [DashboardController::class, 'interventions'])->name('admin.api.interventions');
+    Route::get('/interventions', [DashboardController::class, 'interventionsApi'])->name('admin.api.interventions');
     
 // Factures API
     Route::get('/factures', [DashboardController::class, 'factures'])->name('admin.api.factures');

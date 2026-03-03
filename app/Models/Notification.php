@@ -215,6 +215,9 @@ class Notification extends Model
             self::TYPE_DEPANNAGE_EN_ROUTE,
             self::TYPE_INTERVENTION_TERMINEE,
             self::TYPE_PAIEMENT_RECU,
+            self::TYPE_COMPTE_ACTIVATE,
+            self::TYPE_COMPTE_DESACTIVATE,
+            self::TYPE_BIENVENUE,
             'acceptee', // Used when a depanneur accepts a request
             'annulee',  // Used when a depanneur cancels a request
             'refusee',  // Used when a depanneur refuses a request

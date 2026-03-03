@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Service;
 use App\Models\Intervention;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 
 class ServiceController extends Controller
@@ -65,7 +66,7 @@ class ServiceController extends Controller
     public function show(Service $service)
     {
         // Vérifier les autorisations
-        $utilisateur = auth()->utilisateur();
+        $utilisateur = Auth::user();
         
         if ($utilisateur->isDepanneur() && $service->id_depanneur !== $utilisateur->depanneur->id) {
             abort(403, 'Action non autorisée.');
@@ -101,7 +102,7 @@ class ServiceController extends Controller
     public function destroy(Service $service)
     {
         // Seul un admin ou le dépanneur concerné peut supprimer
-        $utilisateur = auth()->utilisateur();
+        $utilisateur = Auth::user();
         
         if (!$utilisateur->isAdmin() && $service->id_depanneur !== $utilisateur->depanneur->id) {
             abort(403, 'Action non autorisée.');

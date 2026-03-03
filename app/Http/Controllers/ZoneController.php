@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Zone;
 use App\Models\Depanneur;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ZoneController extends Controller
 {
@@ -13,7 +14,7 @@ class ZoneController extends Controller
     {
         // Seuls les admins peuvent créer/modifier/supprimer des zones
         $this->middleware(function ($request, $next) {
-            if (!auth()->utilisateur()->isAdmin()) {
+            if (!Auth::user()->isAdmin()) {
                 abort(403, 'Accès réservé aux administrateurs.');
             }
             return $next($request);
@@ -122,15 +123,15 @@ class ZoneController extends Controller
 
         return back()->with('success', "Zone {$status} avec succès.");
     }
-// Afficher les zones assignées au dépanneur connecté
+    // Afficher les zones assignées au dépanneur connecté
     public function myZones()
     {
         // Vérifier que c'est un dépanneur
-        if (!auth()->utilisateur()->isDepanneur()) {
+        if (!Auth::user()->isDepanneur()) {
             abort(403, 'Accès réservé aux dépanneurs.');
         }
 
-        $depanneur = auth()->utilisateur()->depanneur;
+        $depanneur = Auth::user()->depanneur;
         
         // Récupérer les zones du dépanneur avec les informations du pivot
         $zones = $depanneur->zones()

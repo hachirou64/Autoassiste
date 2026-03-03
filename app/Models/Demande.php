@@ -102,6 +102,14 @@ class Demande extends Model
     }
 
     /**
+     * Retourne la première intervention associée à cette demande
+     */
+    public function intervention(): HasOne
+    {
+        return $this->hasOne(Intervention::class, 'id_demande');
+    }
+
+    /**
      * Relation avec la zone géographique
      */
     public function zone(): BelongsTo

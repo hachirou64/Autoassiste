@@ -51,11 +51,13 @@ export default function ClientPaymentPage() {
     const fetchFactureData = async () => {
         setLoading(true);
         try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
             const response = await fetch(`/api/client/factures/${factureId}/payment-data`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
                 },
                 credentials: 'include',
             });

@@ -31,7 +31,7 @@ interface EvaluationPageProps {
 export default function EvaluationPage() {
     const { interventionId, intervention, alreadyEvaluated, error } = usePage<SharedData & EvaluationPageProps>().props;
     
-    const [loading, setLoading] = useState(!intervention);
+    const [loading, setLoading] = useState(false);
     const [interventionData, setInterventionData] = useState<InterventionInfo | null>(intervention || null);
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState('');
@@ -39,39 +39,8 @@ export default function EvaluationPage() {
     const [success, setSuccess] = useState(false);
     const [errorSubmit, setErrorSubmit] = useState<string | null>(null);
 
-    // Charger les données de l'intervention si pas fournies
-    useEffect(() => {
-        if (!interventionData && !alreadyEvaluated) {
-            fetchInterventionData();
-        }
-    }, [interventionId]);
-
-    const fetchInterventionData = async () => {
-        setLoading(true);
-        try {
-            const response = await fetch(`/api/client/intervention/${interventionId}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                credentials: 'include',
-            });
-
-            const result = await response.json();
-
-            if (result.success && result.intervention) {
-                setInterventionData(result.intervention);
-            } else {
-                setInterventionData(null);
-            }
-        } catch (err) {
-            console.error('Erreur:', err);
-            setInterventionData(null);
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Les données de l'intervention sont maintenant passées via les props du serveur
+    // Plus besoin de faire un appel API séparé
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -120,8 +89,72 @@ export default function EvaluationPage() {
         }
     };
 
-    if (alreadyEvaluated || (interventionData && interventionData.id && false)) {
-        // This case is handled by checking if the intervention was already evaluated
+    // Afficher un message si l'intervention a déjà été évaluée
+    if (alreadyEvaluated && interventionData) {
+        return (
+            <AppHeaderLayout>
+                <Head title="Évaluation déjà soumise - GoAssist" />
+                <div className="min-h-screen bg-slate-950 p-4 lg:p-8">
+                    <div className="max-w-xl mx-auto space-y-6">
+                        {/* Header */}
+                        <div className="flex items-center gap-4">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => router.visit('/client/dashboard')}
+                                className="text-slate-400 hover:text-white"
+                            >
+                                <ArrowLeft className="h-5 w-5" />
+                            </Button>
+                            <h1 className="text-2xl font-bold text-white">Évaluation déjà soumise</h1>
+                        </div>
+
+                        {/* Informations de l'intervention */}
+                        <Card className="bg-slate-800/50 border-slate-700">
+                            <CardHeader>
+                                <CardTitle className="text-white">{interventionData.codeDemande}</CardTitle>
+                                <CardDescription className="text-slate-400">
+                                    {interventionData.typePanne} - {interventionData.depanneur?.etablissement_name}
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex items-center gap-4 text-sm text-slate-400">
+                                    <div className="flex items-center gap-1">
+                                        <Clock className="h-4 w-4" />
+                                        {new Date(interventionData.date).toLocaleDateString('fr-FR')}
+                                    </div>
+                                    {interventionData.depanneur && (
+                                        <div className="flex items-center gap-1">
+                                            <Wrench className="h-4 w-4" />
+                                            {interventionData.depanneur.fullName}
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg text-center">
+                                    <CheckCircle className="h-8 w-8 text-green-400 mx-auto mb-2" />
+                                    <p className="text-green-400 font-medium">
+                                        Vous avez déjà évalué cette intervention
+                                    </p>
+                                    <p className="text-green-300 text-sm mt-1">
+                                        Merci pour votre retour!
+                                    </p>
+                                </div>
+
+                                <Button
+                                    variant="outline"
+                                    className="w-full bg-slate-800 border-slate-700 text-white hover:bg-slate-700"
+                                    onClick={() => router.visit('/client/dashboard')}
+                                >
+                                    <ArrowLeft className="h-4 w-4 mr-2" />
+                                    Retour au dashboard
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            </AppHeaderLayout>
+        );
     }
 
     if (loading) {

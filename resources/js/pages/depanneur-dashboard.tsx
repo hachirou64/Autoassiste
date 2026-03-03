@@ -159,10 +159,16 @@ export default function DepanneurDashboard() {
     // State pour le suivi de géolocalisation (synchrone avec le hook)
     const [isGeolocationTracking, setIsGeolocationTracking] = useState(false);
     
+    // State pour forcer le rechargement des données historique/finances
+    const [historyFinancesKey, setHistoryFinancesKey] = useState(0);
+    
     // Polling pour les demandes en temps réel
     const [isPolling, setIsPolling] = useState(false);
     const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
     const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    
+    // Polling pour les notifications (détecter les paiements)
+    const notificationsPollingRef = useRef<NodeJS.Timeout | null>(null);
 
     // Fonction pour rafraîchir les demandes
     const refreshDemandes = useCallback(async () => {
@@ -212,16 +218,72 @@ export default function DepanneurDashboard() {
         console.log('Polling stopped');
     }, []);
 
+    // Fonction pour rafraîchir les notifications (détecte les paiements)
+    const refreshNotifications = useCallback(async () => {
+        try {
+            const response = await fetch('/api/depanneur/notifications', {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+            });
+            const data = await response.json();
+            
+            // Vérifier s'il y a une nouvelle notification de paiement
+            if (data.notifications && data.notifications.length > 0) {
+                const newestNotification = data.notifications[0];
+                
+                // Si c'est une notification de paiement, déclencher un rechargement
+                if (newestNotification.type === 'paiement_recu' || newestNotification.message?.includes('Paiement')) {
+                    console.log('Nouveau paiement détecté! Rechargement des données...');
+                    // Forcer le rechargement des données finances/historique
+                    setHistoryFinancesKey(prev => prev + 1);
+                }
+            }
+            
+            return data;
+        } catch (error) {
+            console.error('Erreur polling notifications:', error);
+        }
+    }, []);
+
+    // Démarrer le polling des notifications (toutes les 30 secondes)
+    const startNotificationsPolling = useCallback(() => {
+        if (notificationsPollingRef.current) {
+            clearInterval(notificationsPollingRef.current);
+        }
+        
+        // Polling toutes les 30 secondes pour vérifier les paiements
+        notificationsPollingRef.current = setInterval(() => {
+            refreshNotifications();
+        }, 30000);
+        
+        console.log('Notifications polling started: every 30s');
+    }, [refreshNotifications]);
+
+    // Arrêter le polling des notifications
+    const stopNotificationsPolling = useCallback(() => {
+        if (notificationsPollingRef.current) {
+            clearInterval(notificationsPollingRef.current);
+            notificationsPollingRef.current = null;
+        }
+        console.log('Notifications polling stopped');
+    }, []);
+
     // Démarrer le polling quand le composant est prêt et disponible
     useEffect(() => {
         if (!loading && currentStatus === 'disponible') {
             startPolling(10000); // Poll every 10 seconds
         }
         
+        // Démarrer le polling des notifications (détecte les paiements)
+        startNotificationsPolling();
+        
         return () => {
             stopPolling();
+            stopNotificationsPolling();
         };
-    }, [loading, currentStatus, startPolling, stopPolling]);
+    }, [loading, currentStatus, startPolling, stopPolling, startNotificationsPolling, stopNotificationsPolling]);
 
     // Charger les données initiales
     useEffect(() => {
@@ -420,6 +482,15 @@ export default function DepanneurDashboard() {
         router.visit('/settings/password');
     }, []);
 
+    // Gestion du changement d'onglet - rafraîchir les données si nécessaire
+    const handleTabChange = useCallback((tab: TabType) => {
+        // Rafraîchir les données si on va vers history ou finances
+        if (tab === 'history' || tab === 'finances') {
+            setHistoryFinancesKey(prev => prev + 1);
+        }
+        setActiveTab(tab);
+    }, []);
+
     const renderTabContent = () => {
         if (loading) {
             return <LoadingPage text="Chargement de votre espace..." />;
@@ -526,9 +597,9 @@ export default function DepanneurDashboard() {
                     </div>
                 );
             case 'history':
-                return <InterventionHistory />;
+                return <InterventionHistory key={`history-${historyFinancesKey}`} fetchFromApi={true} />;
             case 'finances':
-                return <FinancialDashboard />;
+                return <FinancialDashboard key={`finances-${historyFinancesKey}`} fetchFromApi={true} />;
             case 'profile':
                 return <DepanneurProfile profile={props.profile || undefined} onChangePassword={handleChangePassword} onLogout={handleLogout} />;
             default:
@@ -634,7 +705,7 @@ export default function DepanneurDashboard() {
                             return (
                                 <button
                                     key={item.id}
-                                    onClick={() => setActiveTab(item.id as TabType)}
+                                    onClick={() => handleTabChange(item.id as TabType)}
                                     className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200 group ${
                                         isActive 
                                             ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-white border border-amber-500/30 shadow-lg shadow-amber-500/10' 
@@ -698,8 +769,8 @@ export default function DepanneurDashboard() {
                                     return (
                                         <button
                                             key={item.id}
-                                            onClick={() => {
-                                                setActiveTab(item.id as TabType);
+                                                onClick={() => {
+                                                handleTabChange(item.id as TabType);
                                                 setMobileMenuOpen(false);
                                             }}
                                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${

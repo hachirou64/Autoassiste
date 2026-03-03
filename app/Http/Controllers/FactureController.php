@@ -15,7 +15,7 @@ class FactureController extends Controller
 {
     public function index()
     {
-        $utilisateur = auth()->utilisateur();
+        $utilisateur = Auth::user();
 
         if ($utilisateur->isClient()) {
             // Client: voir uniquement ses factures
@@ -56,7 +56,7 @@ class FactureController extends Controller
     public function show(Facture $facture)
     {
         // VÉRIFICATION DES AUTORISATIONS
-        $utilisateur = auth()->utilisateur();
+        $utilisateur = Auth::user();
 
         if ($utilisateur->isClient() && $facture->intervention->demande->id_client !== $utilisateur->client->id) {
             abort(403, 'Accès non autorisé.');
@@ -82,7 +82,7 @@ class FactureController extends Controller
     public function payer(Request $request, Facture $facture)
     {
         // VÉRIFICATION: Le client doit être le propriétaire
-        $utilisateur = auth()->utilisateur();
+        $utilisateur = Auth::user();
 
         if (!$utilisateur->isClient() || $facture->intervention->demande->id_client !== $utilisateur->client->id) {
             abort(403, 'Action non autorisée.');
@@ -137,7 +137,7 @@ class FactureController extends Controller
      */
     public function payerApi(Request $request, $id)
     {
-        $utilisateur = auth()->utilisateur();
+        $utilisateur = Auth::user();
 
         if (!$utilisateur) {
             return response()->json(['success' => false, 'error' => 'Non authentifié'], 401);
@@ -206,7 +206,7 @@ class FactureController extends Controller
      */
     public function getForPayment($id)
     {
-        $utilisateur = auth()->utilisateur();
+        $utilisateur = Auth::user();
 
         if (!$utilisateur) {
             return response()->json(['success' => false, 'error' => 'Non authentifié'], 401);
@@ -250,7 +250,7 @@ class FactureController extends Controller
     public function downloadPdf(Facture $facture)
     {
         // VÉRIFICATION DES AUTORISATIONS
-        $utilisateur = auth()->utilisateur();
+        $utilisateur = Auth::user();
 
         if ($utilisateur->isClient() && $facture->intervention->demande->id_client !== $utilisateur->client->id) {
             abort(403, 'Accès non autorisé.');
@@ -273,7 +273,7 @@ class FactureController extends Controller
     public function annuler(Facture $facture)
     {
         // Vérifier que c'est un admin
-        if (!auth()->utilisateur()->isAdmin()) {
+        if (!Auth::user()->isAdmin()) {
             abort(403, 'Accès réservé aux administrateurs.');
         }
 
@@ -290,7 +290,7 @@ class FactureController extends Controller
     public function remboursser(Facture $facture)
     {
         // Vérifier que c'est un admin
-        if (!auth()->utilisateur()->isAdmin()) {
+        if (!Auth::user()->isAdmin()) {
             abort(403, 'Accès réservé aux administrateurs.');
         }
 
@@ -326,7 +326,7 @@ class FactureController extends Controller
     // Afficher les statistiques des factures (Admin uniquement)
     public function statistiques()
     {
-        if (!auth()->utilisateur()->isAdmin()) {
+        if (!Auth::user()->isAdmin()) {
             abort(403, 'Accès réservé aux administrateurs.');
         }
 

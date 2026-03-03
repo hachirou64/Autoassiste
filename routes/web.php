@@ -134,14 +134,161 @@ Route::get('/client/paiement/{factureId}', function ($factureId) {
     return Inertia::render('client/payment', ['factureId' => $factureId]);
 })->name('client.paiement')->middleware('auth');
 
+// Route API pour les données de paiement (utilise la session via web middleware)
+Route::get('/api/client/factures/{id}/payment-data', [App\Http\Controllers\FactureController::class, 'getForPayment'])
+    ->name('client.factures.payment-data')
+    ->middleware('auth');
+
+// Route API pour payer une facture
+Route::post('/api/client/factures/{id}/payer', [App\Http\Controllers\FactureController::class, 'payerApi'])
+    ->name('client.factures.payer')
+    ->middleware('auth');
+
+// Route API pour télécharger le PDF d'une facture
+Route::get('/api/client/factures/{id}/pdf', [App\Http\Controllers\FactureController::class, 'downloadPdf'])
+    ->name('client.factures.pdf')
+    ->middleware('auth');
+
 // Route Page de Détails d'intervention (protégée par auth)
 Route::get('/client/intervention/{id}/details', function ($id) {
-    return Inertia::render('client/intervention-details', ['interventionId' => $id]);
+    // Récupérer l'utilisateur connecté
+    $user = Auth::user();
+    
+    // Si pas connecté, rediriger vers login
+    if (!$user) {
+        return redirect()->route('login');
+    }
+    
+    // Récupérer le client
+    $client = $user->client ?? \App\Models\Client::where('id_utilisateur', $user->id)->first();
+    
+    if (!$client) {
+        return inertia('client/intervention-details', [
+            'interventionId' => (int) $id,
+            'intervention' => null,
+            'error' => 'Aucun compte client trouvé',
+        ]);
+    }
+    
+    // Récupérer la demande/intervention
+    $demande = \App\Models\Demande::with(['depanneur', 'interventions.facture'])
+        ->where('id_client', $client->id)
+        ->find($id);
+    
+    if (!$demande) {
+        return inertia('client/intervention-details', [
+            'interventionId' => (int) $id,
+            'intervention' => null,
+            'error' => 'Intervention non trouvée',
+        ]);
+    }
+    
+    // Récupérer l'intervention liée
+    $intervention = $demande->interventions()->first();
+    $facture = $intervention?->facture;
+    
+    // Calculer la durée
+    $duree = 0;
+    if ($intervention && $intervention->startedAt && $intervention->completedAt) {
+        $duree = $intervention->startedAt->diffInMinutes($intervention->completedAt);
+    } elseif ($intervention && $intervention->startedAt) {
+        $duree = $intervention->startedAt->diffInMinutes(now());
+    }
+    
+    // Préparer les données de l'intervention
+    $interventionData = [
+        'id' => $demande->id,
+        'codeDemande' => $demande->codeDemande,
+        'status' => $demande->status,
+        'typePanne' => $demande->typePanne,
+        'localisation' => $demande->localisation,
+        'date' => $demande->createdAt->toIsoString(),
+        'duree' => $duree,
+        'montant' => $facture ? $facture->montant : ($intervention ? $intervention->coutTotal : 0),
+        'depanneur' => $demande->depanneur ? [
+            'fullName' => $demande->depanneur->promoteur_name,
+            'etablissement_name' => $demande->depanneur->etablissement_name,
+            'phone' => $demande->depanneur->phone,
+            'rating' => $demande->depanneur->rating ?? 4.5,
+        ] : null,
+        'facture' => $facture ? [
+            'id' => $facture->id,
+            'status' => $facture->status,
+            'montant' => $facture->montant,
+        ] : null,
+        'evaluation' => $intervention && $intervention->note ? [
+            'note' => $intervention->note,
+            'commentaire' => $intervention->commentaire_evaluation,
+        ] : null,
+    ];
+    
+    return inertia('client/intervention-details', [
+        'interventionId' => (int) $id,
+        'intervention' => $interventionData,
+        'error' => null,
+    ]);
 })->name('client.intervention.details')->middleware('auth');
 
 // Route Page d'Évaluation (protégée par auth)
 Route::get('/client/intervention/{id}/evaluer', function ($id) {
-    return Inertia::render('client/evaluation', ['interventionId' => $id]);
+    // Récupérer l'utilisateur connecté
+    $user = Auth::user();
+    
+    // Si pas connecté, rediriger vers login
+    if (!$user) {
+        return redirect()->route('login');
+    }
+    
+    // Récupérer le client
+    $client = $user->client ?? \App\Models\Client::where('id_utilisateur', $user->id)->first();
+    
+    if (!$client) {
+        return inertia('client/evaluation', [
+            'interventionId' => (int) $id,
+            'intervention' => null,
+            'error' => 'Aucun compte client trouvé',
+        ]);
+    }
+    
+    // Récupérer la demande/intervention
+    $demande = \App\Models\Demande::with(['depanneur', 'interventions.facture'])
+        ->where('id_client', $client->id)
+        ->find($id);
+    
+    if (!$demande) {
+        return inertia('client/evaluation', [
+            'interventionId' => (int) $id,
+            'intervention' => null,
+            'error' => 'Intervention non trouvée',
+        ]);
+    }
+    
+    // Récupérer l'intervention liée
+    $intervention = $demande->interventions()->first();
+    $facture = $intervention?->facture;
+    
+    // Préparer les données de l'intervention
+    $interventionData = [
+        'id' => $demande->id,
+        'codeDemande' => $demande->codeDemande,
+        'typePanne' => $demande->typePanne,
+        'date' => $demande->createdAt->toIsoString(),
+        'depanneur' => $demande->depanneur ? [
+            'fullName' => $demande->depanneur->promoteur_name,
+            'etablissement_name' => $demande->depanneur->etablissement_name,
+        ] : null,
+        'status' => $demande->status,
+    ];
+    
+    // Vérifier si déjà évaluée
+    $alreadyEvaluated = $intervention && $intervention->note ? true : false;
+    
+    return inertia('client/evaluation', [
+        'interventionId' => (int) $id,
+        'intervention' => $interventionData,
+        'alreadyEvaluated' => $alreadyEvaluated,
+        'error' => null,
+    ]);
 })->name('client.intervention.evaluer')->middleware('auth');
 
 // Route Dashboard (alias for client dashboard) - Protégée par auth

@@ -550,7 +550,7 @@ class DemandeController extends Controller
         $demande = Demande::findOrFail($id);
 
         // Vérifier l'ownership
-        $client = $user->client ?? Client::where('id_utilisateur', $user->id)->first();
+        $client = $user->client ?? Client::where('id', $user->id_client)->first();
         
         if (!$client || $demande->id_client !== $client->id) {
             return response()->json(['error' => 'Accès non autorisé'], 403);
@@ -636,7 +636,7 @@ class DemandeController extends Controller
         $demande = Demande::findOrFail($id);
 
         // Vérifier l'ownership
-        $client = Client::where('id_utilisateur', $user->id)->first();
+        $client = $user->client;
         
         if (!$client || $demande->id_client !== $client->id) {
             return response()->json(['error' => 'Accès non autorisé'], 403);
@@ -691,7 +691,7 @@ class DemandeController extends Controller
         $demande = Demande::with(['depanneur', 'interventions.facture'])->findOrFail($id);
 
         // Vérifier l'ownership
-        $client = $user->client ?? Client::where('id_utilisateur', $user->id)->first();
+        $client = $user->client ?? Client::where('id', $user->id_client)->first();
         
         if (!$client || $demande->id_client !== $client->id) {
             return response()->json(['error' => 'Accès non autorisé'], 403);

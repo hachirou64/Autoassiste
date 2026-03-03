@@ -45,42 +45,11 @@ interface InterventionDetailsPageProps {
 export default function InterventionDetailsPage() {
     const { interventionId, intervention, error } = usePage<SharedData & InterventionDetailsPageProps>().props;
     
-    const [loading, setLoading] = useState(!intervention);
+    const [loading, setLoading] = useState(false);
     const [interventionData, setInterventionData] = useState<InterventionDetails | null>(intervention || null);
 
-    // Charger les données de l'intervention si pas fournies
-    useEffect(() => {
-        if (!interventionData) {
-            fetchInterventionData();
-        }
-    }, [interventionId]);
-
-    const fetchInterventionData = async () => {
-        setLoading(true);
-        try {
-            const response = await fetch(`/api/client/intervention/${interventionId}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                credentials: 'include',
-            });
-
-            const result = await response.json();
-
-            if (result.success && result.intervention) {
-                setInterventionData(result.intervention);
-            } else {
-                setInterventionData(null);
-            }
-        } catch (err) {
-            console.error('Erreur:', err);
-            setInterventionData(null);
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Les données de l'intervention sont maintenant passées via les props du serveur
+    // Plus besoin de faire un appel API séparé
 
     const formatDate = (dateStr: string) => {
         return new Date(dateStr).toLocaleDateString('fr-FR', {

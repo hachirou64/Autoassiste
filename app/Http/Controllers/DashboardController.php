@@ -579,11 +579,10 @@ class DashboardController extends Controller
                 ];
             });
 
-        // Notifications non lues
+        // Notifications (toutes les notifications, pas seulement les non lues)
         $notifications = $client->notifications()
-            ->where('isRead', false)
             ->orderBy('createdAt', 'desc')
-            ->limit(10)
+            ->limit(20)
             ->get()
             ->map(fn($n) => [
                 'id' => $n->id,

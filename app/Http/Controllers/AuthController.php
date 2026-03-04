@@ -6,6 +6,7 @@ use App\Models\Utilisateur;
 use App\Models\Client;
 use App\Models\Depanneur;
 use App\Models\TypeCompte;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -115,7 +116,31 @@ class AuthController extends Controller
         // ÉTAPE 5: Connecter automatiquement l'utilisateur
         Auth::login($utilisateur);
 
-        // ÉTAPE 6: Rediriger selon le type de compte
+        // ÉTAPE 6: Envoyer les notifications (email + in-app)
+        try {
+            $notificationService = app(NotificationService::class);
+            
+            // Déterminer le type de notification selon le type de compte
+            $notificationType = match ($typeCompte->name) {
+                'Client' => NotificationService::TYPE_CLIENT,
+                'Depanneur' => NotificationService::TYPE_DEPANNEUR,
+                'Admin' => NotificationService::TYPE_ADMIN,
+                default => NotificationService::TYPE_CLIENT,
+            };
+
+            $notificationService->sendWelcomeNotifications(
+                $utilisateur,
+                $notificationType,
+                true,  // sendEmail
+                true,  // sendSMS
+                true   // sendInApp
+            );
+        } catch (\Exception $e) {
+            // Log l'erreur mais ne pas bloquer l'inscription
+            \Log::error('Erreur notification inscription: ' . $e->getMessage());
+        }
+
+        // ÉTAPE 7: Rediriger selon le type de compte
         if ($utilisateur->isAdmin()) {
             return redirect()->route('admin.dashboard')
                            ->with('success', 'Compte créé avec succès !');

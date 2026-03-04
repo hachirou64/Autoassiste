@@ -29,7 +29,9 @@ class Intervention extends Model
         'startedAt',          
         'completedAt',       
         'id_demande',         
-        'id_depanneur',     
+        'id_depanneur',
+        'note',
+        'commentaire_evaluation',
     ];
 
    

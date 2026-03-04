@@ -1,0 +1,15 @@
+<parameter name="content"><?php
+$envFile = __DIR__ . '/.env';
+$content = file_get_contents($envFile);
+
+// Add Google OAuth credentials
+if (!str_contains($content, 'GOOGLE_CLIENT_ID')) {
+    $content .= "\nGOOGLE_CLIENT_ID=304921519559-knsri091kon6m2oc0o7g4jbq63v3o52n.apps.googleusercontent.com\n";
+}
+if (!str_contains($content, 'GOOGLE_CLIENT_SECRET')) {
+    $content .= "GOOGLE_CLIENT_SECRET=GOCSPX-3EluJgGnKqJd2N2T0Z7pXw\n";
+}
+
+file_put_contents($envFile, $content);
+echo "Done! Google OAuth credentials added to .env\n";
+?>

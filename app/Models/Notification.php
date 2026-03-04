@@ -68,6 +68,9 @@ class Notification extends Model
 
     const TYPE_BIENVENUE = 'bienvenue';
 
+    // Type: Évaluation d'intervention
+    const TYPE_EVALUATION = 'evaluation';
+
    
     public function client(): BelongsTo
     {
@@ -142,6 +145,7 @@ class Notification extends Model
             'acceptee' => 'Demande acceptée',
             'refusee' => 'Demande refusée',
             'annulee' => 'Demande annulée',
+            'evaluation' => 'Évaluation',
         ];
 
         return $labels[$this->type] ?? $this->type;
@@ -161,6 +165,7 @@ class Notification extends Model
             self::TYPE_PAIEMENT_RECU => '💰',
             self::TYPE_COMPTE_ACTIVATE => '✅',
             self::TYPE_COMPTE_DESACTIVATE => '🚫',
+            'evaluation' => '⭐',
         ];
 
         return $icons[$this->type] ?? '🔔';
@@ -182,6 +187,7 @@ class Notification extends Model
             self::TYPE_COMPTE_DESACTIVATE => 'danger',
             'annulee' => 'danger',
             'refusee' => 'warning',
+            'evaluation' => 'warning',
         ];
 
         return $colors[$this->type] ?? 'secondary';
@@ -221,6 +227,7 @@ class Notification extends Model
             'acceptee', // Used when a depanneur accepts a request
             'annulee',  // Used when a depanneur cancels a request
             'refusee',  // Used when a depanneur refuses a request
+            'evaluation', // Used when a client evaluates an intervention
         ];
 
         if (!in_array($value, $validTypes)) {
@@ -267,6 +274,7 @@ class Notification extends Model
             self::TYPE_PAIEMENT_RECU => 'Paiement reçu',
             self::TYPE_COMPTE_ACTIVATE => 'Compte activé',
             self::TYPE_COMPTE_DESACTIVATE => 'Compte désactivé',
+            self::TYPE_EVALUATION => 'Évaluation',
         ];
     }
 }

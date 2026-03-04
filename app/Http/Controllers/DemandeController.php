@@ -648,17 +648,27 @@ class DemandeController extends Controller
         ]);
 
         try {
+            // Mettre à jour l'intervention avec l'évaluation
+            $intervention = $demande->interventions()->first();
+            
+            if ($intervention) {
+                $intervention->update([
+                    'note' => $validated['rating'],
+                    'commentaire_evaluation' => $validated['comment'] ?? null,
+                ]);
+            }
+
             // Créer une notification pour le dépanneur
             if ($demande->id_depanneur) {
                 $depanneur = Depanneur::findOrFail($demande->id_depanneur);
                 
                 Notification::create([
                     'titre' => 'Nouvelle évaluation',
-                    'contenu' => "Note: {$validated['rating']}/5 - {$validated['comment']}",
+                    'message' => "Note: {$validated['rating']}/5 - {$validated['comment']}",
                     'type' => 'evaluation',
-                    'id_utilisateur' => $depanneur->id_utilisateur,
+                    'id_depanneur' => $demande->id_depanneur,
                     'id_demande' => $demande->id,
-                    'is_read' => false,
+                    'isRead' => false,
                     'createdAt' => now(),
                     'updatedAt' => now(),
                 ]);
@@ -671,6 +681,7 @@ class DemandeController extends Controller
 
         } catch (\Exception $e) {
             return response()->json([
+                'success' => false,
                 'error' => 'Erreur lors de l\'enregistrement',
                 'message' => $e->getMessage(),
             ], 500);

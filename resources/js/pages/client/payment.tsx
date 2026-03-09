@@ -89,10 +89,10 @@ export default function ClientPaymentPage() {
         return (
             <AppHeaderLayout>
                 <Head title="Paiement - GoAssist" />
-                <div className="min-h-screen bg-slate-950 p-4 flex items-center justify-center">
+                <div className="min-h-screen bg-white p-4 flex items-center justify-center">
                     <div className="text-center">
                         <Loader2 className="h-8 w-8 animate-spin text-blue-500 mx-auto mb-4" />
-                        <p className="text-slate-400">Chargement de la facture...</p>
+                        <p className="text-slate-600">Chargement de la facture...</p>
                     </div>
                 </div>
             </AppHeaderLayout>
@@ -103,10 +103,10 @@ export default function ClientPaymentPage() {
         return (
             <AppHeaderLayout>
                 <Head title="Erreur - GoAssist" />
-                <div className="min-h-screen bg-slate-950 p-4 flex items-center justify-center">
-                    <Card className="bg-slate-800/50 border-slate-700 max-w-md">
+                <div className="min-h-screen bg-white p-4 flex items-center justify-center">
+                    <Card className="bg-slate-50 border-slate-200 max-w-md">
                         <CardContent className="p-8 text-center">
-                            <p className="text-red-400 mb-4">{error || 'Facture non trouvée'}</p>
+                            <p className="text-red-500 mb-4">{error || 'Facture non trouvée'}</p>
                             <Button onClick={() => router.visit('/client/dashboard')}>
                                 <ArrowLeft className="h-4 w-4 mr-2" />
                                 Retour au dashboard
@@ -122,17 +122,17 @@ export default function ClientPaymentPage() {
         return (
             <AppHeaderLayout>
                 <Head title="Paiement réussi - GoAssist" />
-                <div className="min-h-screen bg-slate-950 p-4 flex items-center justify-center">
-                    <Card className="bg-green-500/10 border-green-500/30 max-w-md">
+                <div className="min-h-screen bg-white p-4 flex items-center justify-center">
+                    <Card className="bg-green-50 border-green-200 max-w-md">
                         <CardContent className="p-8 text-center">
-                            <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <CheckCircle className="h-8 w-8 text-green-400" />
+                            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <CheckCircle className="h-8 w-8 text-green-600" />
                             </div>
-                            <h2 className="text-xl font-bold text-green-400 mb-2">Paiement réussi!</h2>
-                            <p className="text-green-300 mb-4">
+                            <h2 className="text-xl font-bold text-green-700 mb-2">Paiement réussi!</h2>
+                            <p className="text-green-600 mb-4">
                                 Votre paiement a été traité avec succès. Redirection...
                             </p>
-                            <Loader2 className="h-5 w-5 animate-spin text-green-400 mx-auto" />
+                            <Loader2 className="h-5 w-5 animate-spin text-green-500 mx-auto" />
                         </CardContent>
                     </Card>
                 </div>
@@ -144,7 +144,7 @@ export default function ClientPaymentPage() {
         <AppHeaderLayout>
             <Head title={`Paiement - ${factureData.montant.toLocaleString('fr-FR')} CFA - GoAssist`} />
 
-            <div className="min-h-screen bg-slate-950 p-4 lg:p-8">
+            <div className="min-h-screen bg-white p-4 lg:p-8">
                 <div className="max-w-2xl mx-auto space-y-6">
                     {/* Header */}
                     <div className="flex items-center gap-4">
@@ -152,19 +152,19 @@ export default function ClientPaymentPage() {
                             variant="ghost"
                             size="icon"
                             onClick={() => router.visit('/client/dashboard')}
-                            className="text-slate-400 hover:text-white"
+                            className="text-slate-600 hover:text-slate-900"
                         >
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
-                        <h1 className="text-2xl font-bold text-white">Paiement de la facture</h1>
+                        <h1 className="text-2xl font-bold text-slate-900">Paiement de la facture</h1>
                     </div>
 
                     {/* Détails de la facture */}
-                    <Card className="bg-slate-800/50 border-slate-700">
+                    <Card className="bg-slate-50 border-slate-200">
                         <CardHeader>
-                            <CardTitle className="text-white flex items-center justify-between">
+                            <CardTitle className="text-slate-900 flex items-center justify-between">
                                 <span>Facture #{factureData.transactionId}</span>
-                                <span className="text-2xl font-bold text-amber-400">
+                                <span className="text-2xl font-bold text-amber-600">
                                     {factureData.montant.toLocaleString('fr-FR')} CFA
                                 </span>
                             </CardTitle>
@@ -172,20 +172,20 @@ export default function ClientPaymentPage() {
                         <CardContent className="space-y-3">
                             <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div>
-                                    <p className="text-slate-400">Demande</p>
-                                    <p className="text-white font-medium">{factureData.intervention.demande.codeDemande}</p>
+                                    <p className="text-slate-500">Demande</p>
+                                    <p className="text-slate-900 font-medium">{factureData.intervention.demande.codeDemande}</p>
                                 </div>
                                 <div>
-                                    <p className="text-slate-400">Type de panne</p>
-                                    <p className="text-white font-medium">{factureData.intervention.demande.typePanne}</p>
+                                    <p className="text-slate-500">Type de panne</p>
+                                    <p className="text-slate-900 font-medium">{factureData.intervention.demande.typePanne}</p>
                                 </div>
                                 <div>
-                                    <p className="text-slate-400">Dépanneur</p>
-                                    <p className="text-white font-medium">{factureData.intervention.depanneur.etablissement_name}</p>
+                                    <p className="text-slate-500">Dépanneur</p>
+                                    <p className="text-slate-900 font-medium">{factureData.intervention.depanneur.etablissement_name}</p>
                                 </div>
                                 <div>
-                                    <p className="text-slate-400">Date</p>
-                                    <p className="text-white font-medium">
+                                    <p className="text-slate-500">Date</p>
+                                    <p className="text-slate-900 font-medium">
                                         {new Date(factureData.createdAt).toLocaleDateString('fr-FR')}
                                     </p>
                                 </div>
@@ -201,10 +201,10 @@ export default function ClientPaymentPage() {
                     />
 
                     {/* Aide */}
-                    <Card className="bg-slate-800/30 border-slate-700/50">
+                    <Card className="bg-slate-50 border-slate-200">
                         <CardContent className="p-4">
-                            <p className="text-slate-400 text-sm text-center">
-                                Besoin d'aide? <span className="text-blue-400 cursor-pointer hover:underline">Contactez le support</span>
+                            <p className="text-slate-600 text-sm text-center">
+                                Besoin d'aide? <span className="text-blue-600 cursor-pointer hover:underline">Contactez le support</span>
                             </p>
                         </CardContent>
                     </Card>

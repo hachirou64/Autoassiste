@@ -6,9 +6,10 @@ import type { ClientStats } from '@/types';
 
 interface ClientStatsCardsProps {
     stats: ClientStats;
+    onCardClick?: (type: string) => void;
 }
 
-export function ClientStatsCards({ stats }: ClientStatsCardsProps) {
+export function ClientStatsCards({ stats, onCardClick }: ClientStatsCardsProps) {
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('fr-FR', {
             style: 'currency',
@@ -19,12 +20,13 @@ export function ClientStatsCards({ stats }: ClientStatsCardsProps) {
 
     const cards = [
         {
-            title: 'Total demandes',
+            title: 'Totales des demandes',
             value: stats.total_demandes,
             subtitle: 'Depuis votre inscription',
             icon: FileText,
             color: 'text-blue-500',
             bgColor: 'bg-blue-500/10',
+            type: 'all',
         },
         {
             title: 'En cours',
@@ -33,14 +35,16 @@ export function ClientStatsCards({ stats }: ClientStatsCardsProps) {
             icon: Clock,
             color: 'text-orange-500',
             bgColor: 'bg-orange-500/10',
+            type: 'en_cours',
         },
         {
-            title: 'Terminées',
+            title: 'Traitées',
             value: stats.demandes_terminees,
             subtitle: 'Interventions complétées',
             icon: CheckCircle,
             color: 'text-green-500',
             bgColor: 'bg-green-500/10',
+            type: 'terminee',
         },
         {
             title: 'Total dépensé',
@@ -49,6 +53,7 @@ export function ClientStatsCards({ stats }: ClientStatsCardsProps) {
             icon: DollarSign,
             color: 'text-emerald-500',
             bgColor: 'bg-emerald-500/10',
+            type: 'depenses',
         },
     ];
 
@@ -60,13 +65,18 @@ export function ClientStatsCards({ stats }: ClientStatsCardsProps) {
             icon: AlertCircle,
             color: 'text-amber-500',
             bgColor: 'bg-amber-500/10',
+            type: 'active',
         });
     }
 
     return (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {cards.map((card) => (
-                <Card key={card.title} className="bg-white border-gray-200 shadow-sm">
+                <Card 
+                    key={card.title} 
+                    className={`bg-white border-gray-200 shadow-sm ${onCardClick ? 'cursor-pointer hover:shadow-md hover:border-blue-300 transition-all duration-200' : ''}`}
+                    onClick={() => onCardClick?.(card.type)}
+                >
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium text-gray-600">
                             {card.title}

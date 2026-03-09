@@ -7,9 +7,11 @@ use App\Models\Client;
 use App\Models\SocialAccount;
 use App\Models\Utilisateur;
 use App\Models\TypeCompte;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
@@ -82,7 +84,7 @@ class SocialAuthController extends Controller
                         $user = Utilisateur::create([
                             'fullName' => $socialUser->getName() ?? $socialUser->getEmail(),
                             'email' => $socialUser->getEmail(),
-                            'password' => bcrypt(str_random(16)), // Mot de passe aléatoire
+                            'password' => bcrypt(Str::random(16)), // Mot de passe aléatoire
                             'id_type_compte' => $typeCompteClient->id,
                             'id_client' => $client->id,
                             'email_verified' => true,
@@ -120,6 +122,28 @@ class SocialAuthController extends Controller
 
             // Régénérer la session pour sécurité
             request()->session()->regenerate();
+
+            // Envoyer les notifications de bienvenue (email + in-app)
+            try {
+                $notificationService = app(NotificationService::class);
+                $notificationService->sendWelcomeNotifications(
+                    $user,
+                    NotificationService::TYPE_CLIENT,
+                    true,  // sendEmail
+                    false, // sendSMS (pas de téléphone via OAuth)
+                    true   // sendInApp
+                );
+            } catch (\Exception $e) {
+                // Log l'erreur mais ne pas bloquer la connexion
+                \Log::error('Erreur notification inscription sociale: ' . $e->getMessage());
+            }
+
+            // Pour les clients qui se connectent via Google, toujours rediriger vers la page 
+            // de nouvelle demande pour compléter leur profil avant d'accéder au dashboard
+            if ($user->isClient()) {
+                return redirect()->route('demande.nouvelle')
+                    ->with('info', 'Bienvenue ! Veuillez ajouter un numéro de téléphone pour vos futures demandes.');
+            }
 
             // Rediriger vers le dashboard approprié selon le type de compte
             return $this->redirectToDashboard($user);
@@ -166,7 +190,7 @@ class SocialAuthController extends Controller
             return redirect()->intended(route('admin.dashboard'))
                 ->with('success', 'Bienvenue ! Connexion réussie avec Google.');
         } elseif ($user->isClient()) {
-            return redirect()->intended(route('client.dashboard'))
+            return redirect()->intended(route('/demande/nouvelle'))
                 ->with('success', 'Bienvenue ! Connexion réussie avec Google.');
         } elseif ($user->isDepanneur()) {
             return redirect()->intended(route('depanneur.dashboard'))

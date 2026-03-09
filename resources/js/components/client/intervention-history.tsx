@@ -75,13 +75,13 @@ export function InterventionHistory({
                 <div className="flex items-center justify-between mb-4">
                     <Tabs defaultValue={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
                         <TabsList className="bg-gray-100">
-                            <TabsTrigger value="all" className="data-[state=active]:bg-blue-500">
+                            <TabsTrigger value="all" className="data-[state=active]:bg-blue-500 hover:bg-blue-400 hover:text-white transition-colors">
                                 Toutes
                             </TabsTrigger>
-                            <TabsTrigger value="terminees" className="data-[state=active]:bg-blue-500">
+                            <TabsTrigger value="terminees" className="data-[state=active]:bg-blue-500 hover:bg-blue-400 hover:text-white transition-colors">
                                 Terminées
                             </TabsTrigger>
-                            <TabsTrigger value="annulees" className="data-[state=active]:bg-blue-500">
+                            <TabsTrigger value="annulees" className="data-[state=active]:bg-blue-500 hover:bg-blue-400 hover:text-white transition-colors">
                                 Annulées
                             </TabsTrigger>
                         </TabsList>

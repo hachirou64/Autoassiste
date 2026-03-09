@@ -121,48 +121,49 @@ export function QuickRegistrationForm({ onSuccess, onLoginClick }: QuickRegistra
                         </div>
                     )}
 
-                    {/* Nom complet */}
-                    <div className="space-y-2">
-                        <Label htmlFor="fullName" className="text-gray-700">
-                            Nom complet *
-                        </Label>
-                        <div className="relative">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                            <Input
-                                id="fullName"
-                                type="text"
-                                placeholder="Jean Dupont"
-                                value={formData.fullName}
-                                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                                className="pl-10 bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
-                                required
-                            />
+                    {/* Ligne 1: Nom complet + Email */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="fullName" className="text-gray-700">
+                                Nom complet *
+                            </Label>
+                            <div className="relative">
+                                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Input
+                                    id="fullName"
+                                    type="text"
+                                    placeholder="Jean Dupont"
+                                    value={formData.fullName}
+                                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                                    className="pl-10 bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="email" className="text-gray-700">
+                                Adresse email *
+                            </Label>
+                            <div className="relative">
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    placeholder="jean@example.com"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    className="pl-10 bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
+                                    required
+                                />
+                            </div>
                         </div>
                     </div>
 
-                    {/* Email */}
-                    <div className="space-y-2">
-                        <Label htmlFor="email" className="text-gray-700">
-                            Adresse email *
-                        </Label>
-                        <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                            <Input
-                                id="email"
-                                type="email"
-                                placeholder="jean@example.com"
-                                value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                className="pl-10 bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
-                                required
-                            />
-                        </div>
-                    </div>
-
-                    {/* Téléphone */}
+                    {/* Ligne 2: Téléphone (pleine largeur) */}
                     <div className="space-y-2">
                         <Label htmlFor="phone" className="text-gray-700">
-                            Numéro de téléphone *
+                            Téléphone *
                         </Label>
                         <div className="relative">
                             <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -178,42 +179,43 @@ export function QuickRegistrationForm({ onSuccess, onLoginClick }: QuickRegistra
                         </div>
                     </div>
 
-                    {/* Mot de passe */}
-                    <div className="space-y-2">
-                        <Label htmlFor="password" className="text-gray-700">
-                            Mot de passe *
-                        </Label>
-                        <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                            <Input
-                                id="password"
-                                type="password"
-                                placeholder="••••••••"
-                                value={formData.password}
-                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                className="pl-10 bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
-                                required
-                                minLength={6}
-                            />
+                    {/* Ligne 3: Mot de passe + Confirmation */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="password" className="text-gray-700">
+                                Mot de passe *
+                            </Label>
+                            <div className="relative">
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Input
+                                    id="password"
+                                    type="password"
+                                    placeholder="••••••••"
+                                    value={formData.password}
+                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                    className="pl-10 bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
+                                    required
+                                    minLength={6}
+                                />
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Confirmer mot de passe */}
-                    <div className="space-y-2">
-                        <Label htmlFor="passwordConfirmation" className="text-gray-700">
-                            Confirmer le mot de passe *
-                        </Label>
-                        <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                            <Input
-                                id="passwordConfirmation"
-                                type="password"
-                                placeholder="••••••••"
-                                value={formData.passwordConfirmation}
-                                onChange={(e) => setFormData({ ...formData, passwordConfirmation: e.target.value })}
-                                className="pl-10 bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
-                                required
-                            />
+                        <div className="space-y-2">
+                            <Label htmlFor="passwordConfirmation" className="text-gray-700">
+                                Confirmation *
+                            </Label>
+                            <div className="relative">
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Input
+                                    id="passwordConfirmation"
+                                    type="password"
+                                    placeholder="••••••••"
+                                    value={formData.passwordConfirmation}
+                                    onChange={(e) => setFormData({ ...formData, passwordConfirmation: e.target.value })}
+                                    className="pl-10 bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
+                                    required
+                                />
+                            </div>
                         </div>
                     </div>
 

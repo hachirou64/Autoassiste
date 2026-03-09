@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Head, usePage, router } from '@inertiajs/react';
 import AppHeaderLayout from '@/layouts/app/app-header-layout';
@@ -91,8 +92,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 // Navigation items
 const navItems = [
-    { id: 'overview', label: 'Aperçu', icon: LayoutDashboard },
+    { id: 'overview', label: 'Tableau de bord', icon: LayoutDashboard },
     { id: 'demandes', label: 'Demandes', icon: MapPin },
+    { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'intervention', label: 'Intervention', icon: Wrench },
     { id: 'history', label: 'Historique', icon: Clock },
     { id: 'finances', label: 'Finances', icon: DollarSign },
@@ -100,7 +102,7 @@ const navItems = [
 ];
 
 // Types de vues
-type TabType = 'overview' | 'demandes' | 'intervention' | 'history' | 'finances' | 'profile';
+type TabType = 'overview' | 'demandes' | 'notifications' | 'intervention' | 'history' | 'finances' | 'profile';
 
 export default function DepanneurDashboard() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -116,9 +118,9 @@ export default function DepanneurDashboard() {
     const [filters, setFilters] = useState<DemandeFilters>({ rayon: 10 });
     const [soundEnabled, setSoundEnabled] = useState(true);
     const [currentStatus, setCurrentStatus] = useState<StatusDisponibilite>((props.currentStatus as StatusDisponibilite) || 'disponible');
-    const [interventionStatus, setInterventionStatus] = useState<'aucune' | 'acceptee' | 'en_cours'>(
+    const [interventionStatus, setInterventionStatus] = useState<'aucune' | 'acceptee' | 'en_attente_confirmation' | 'en_cours'>(
         props.interventionEnCours 
-            ? (props.interventionEnCours.status === 'en_cours' ? 'en_cours' : 'acceptee')
+            ? (props.interventionEnCours.status === 'en_cours' ? 'en_cours' : props.interventionEnCours.status === 'en_attente_confirmation' ? 'en_attente_confirmation' : 'acceptee')
             : 'aucune'
     );
     
@@ -414,7 +416,8 @@ export default function DepanneurDashboard() {
             const data = await response.json();
             
             if (data.success) {
-                setInterventionStatus('en_cours');
+                // Maintenant on attend la confirmation du client
+                setInterventionStatus('en_attente_confirmation');
             }
         } catch (error) {
             console.error('Erreur:', error);
@@ -435,6 +438,21 @@ export default function DepanneurDashboard() {
                 body: JSON.stringify(data),
             });
             
+            // Vérifier si la réponse est OK avant de parser le JSON
+            if (!response.ok) {
+                // Essayer de parser comme JSON même si status n'est pas 200
+                try {
+                    const errorResult = await response.json();
+                    console.error('Erreur API:', errorResult);
+                    alert(errorResult.message || errorResult.error || `Erreur ${response.status}: ${errorResult.error || 'Erreur lors de la fin de l\'intervention'}`);
+                } catch {
+                    // Si ce n'est pas du JSON, afficher un message générique
+                    console.error('Erreur de réponse:', response.status, response.statusText);
+                    alert(`Erreur de connexion (${response.status}): Veuillez réessayer ou contacter le support si le problème persiste.`);
+                }
+                return;
+            }
+            
             const result = await response.json();
             
             if (result.success) {
@@ -448,11 +466,12 @@ export default function DepanneurDashboard() {
                     revenus_aujourdhui: prev.revenus_aujourdhui + (data.coutPiece + data.coutMainOeuvre),
                 }) : null);
             } else {
-                alert(result.error || 'Erreur lors de la fin de l\'intervention');
+                // Afficher le message d'erreur détaillé du backend
+                alert(result.message || result.error || 'Erreur lors de la fin de l\'intervention');
             }
         } catch (error) {
             console.error('Erreur:', error);
-            alert('Erreur de connexion');
+            alert('Erreur de connexion: Veuillez vérifier votre connexion internet et réessayer.');
         }
     }, [currentIntervention]);
 
@@ -556,6 +575,15 @@ export default function DepanneurDashboard() {
                         />
                     </div>
                 );
+            case 'notifications':
+                return (
+                    <DepanneurNotifications
+                        notifications={props.notifications}
+                        onMarkAsRead={handleMarkNotificationAsRead}
+                        onMarkAllAsRead={handleMarkAllNotificationsAsRead}
+                        fetchFromApi={true}
+                    />
+                );
             case 'intervention':
                 return (
                     <div className="grid gap-6 lg:grid-cols-2">
@@ -633,6 +661,7 @@ export default function DepanneurDashboard() {
         const titles: Record<TabType, string> = {
             overview: 'Tableau de bord',
             demandes: 'Demandes disponibles',
+            notifications: 'Notifications',
             intervention: 'Intervention en cours',
             history: 'Historique',
             finances: 'Finances',
@@ -640,6 +669,35 @@ export default function DepanneurDashboard() {
         };
         return titles[activeTab];
     };
+
+    // Handlers pour les notifications
+    const handleMarkNotificationAsRead = useCallback(async (id: number) => {
+        try {
+            await fetch(`/api/depanneur/notifications/${id}/read`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+            });
+        } catch (error) {
+            console.error('Erreur:', error);
+        }
+    }, []);
+
+    const handleMarkAllNotificationsAsRead = useCallback(async () => {
+        try {
+            await fetch('/api/depanneur/notifications/read-all', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+            });
+        } catch (error) {
+            console.error('Erreur:', error);
+        }
+    }, []);
 
     return (
         <AppHeaderLayout breadcrumbs={breadcrumbs}>
@@ -854,7 +912,7 @@ interface OverviewTabProps {
     onRefuse: (id: number) => void;
     soundEnabled: boolean;
     onToggleSound: () => void;
-    interventionStatus: 'aucune' | 'acceptee' | 'en_cours';
+    interventionStatus: 'aucune' | 'acceptee' | 'en_attente_confirmation' | 'en_cours';
     profile?: DepanneurProfileType;
     currentLocation: { lat: number; lng: number };
     // Nouvelles props pour la géolocalisation
@@ -914,63 +972,6 @@ function OverviewTab({
 
             {/* Stats */}
             {stats && <DepanneurStatsCards stats={stats} />}
-
-            {/* Demandes et Map */}
-            <div className="grid gap-6 lg:grid-cols-2">
-                <DemandesStream
-                    demandes={demandes}
-                    filters={filters}
-                    onFiltersChange={onFiltersChange}
-                    onAccept={onAccept}
-                    onRefuse={onRefuse}
-                    soundEnabled={soundEnabled}
-                    onToggleSound={onToggleSound}
-                />
-                <DepanneurMap
-                    currentLocation={currentLocation}
-                    demandes={demandes}
-                    rayon={filters.rayon}
-                    onRayonChange={(rayon) => onFiltersChange({ ...filters, rayon })}
-                    interventionEnCours={interventionStatus !== 'aucune' ? {
-                        latitude: currentLocation.lat,
-                        longitude: currentLocation.lng,
-                        adresse: 'Position actuelle',
-                        distance: 3.5,
-                        dureeEstimee: 15,
-                    } : undefined}
-                    onMarkerClick={(id) => console.log('Marqueur click:', id)}
-                    onAccepterClick={onAccept}
-                />
-            </div>
-
-            {/* Intervention en cours ou Notifications */}
-            {interventionStatus !== 'aucune' ? (
-                <CurrentIntervention
-                    status={interventionStatus}
-                    intervention={currentIntervention ? {
-                        id: currentIntervention.id,
-                        codeIntervention: currentIntervention.codeIntervention,
-                        status: currentIntervention.status,
-                        demande: currentIntervention.demande,
-                        client: currentIntervention.client,
-                        vehicle: currentIntervention.vehicle || undefined,
-                        startedAt: currentIntervention.startedAt,
-                        coutPiece: 0,
-                        coutMainOeuvre: 0,
-                        coutTotal: 0,
-                        distanceClient: 0,
-                        dureeEstimee: 0,
-                        adresseClient: currentIntervention.demande.localisation,
-                    } : undefined}
-                    onStart={onStartIntervention || (() => {})}
-                    onEnd={onEndIntervention || (() => {})}
-                    onCancel={onCancelIntervention || (() => {})}
-                    onCallClient={onCallClient || (() => {})}
-                    onOpenMaps={onOpenMaps || (() => {})}
-                />
-            ) : (
-                <DepanneurNotifications notifications={[]} />
-            )}
         </div>
     );
 }

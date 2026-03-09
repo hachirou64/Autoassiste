@@ -94,7 +94,7 @@ export default function EvaluationPage() {
         return (
             <AppHeaderLayout>
                 <Head title="Évaluation déjà soumise - GoAssist" />
-                <div className="min-h-screen bg-slate-950 p-4 lg:p-8">
+                <div className="min-h-screen bg-white p-4 lg:p-8">
                     <div className="max-w-xl mx-auto space-y-6">
                         {/* Header */}
                         <div className="flex items-center gap-4">
@@ -102,23 +102,23 @@ export default function EvaluationPage() {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => router.visit('/client/dashboard')}
-                                className="text-slate-400 hover:text-white"
+                                className="text-slate-600 hover:text-slate-900"
                             >
                                 <ArrowLeft className="h-5 w-5" />
                             </Button>
-                            <h1 className="text-2xl font-bold text-white">Évaluation déjà soumise</h1>
+                            <h1 className="text-2xl font-bold text-slate-900">Évaluation déjà soumise</h1>
                         </div>
 
                         {/* Informations de l'intervention */}
-                        <Card className="bg-slate-800/50 border-slate-700">
+                        <Card className="bg-slate-50 border-slate-200">
                             <CardHeader>
-                                <CardTitle className="text-white">{interventionData.codeDemande}</CardTitle>
-                                <CardDescription className="text-slate-400">
+                                <CardTitle className="text-slate-900">{interventionData.codeDemande}</CardTitle>
+                                <CardDescription className="text-slate-600">
                                     {interventionData.typePanne} - {interventionData.depanneur?.etablissement_name}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="flex items-center gap-4 text-sm text-slate-400">
+                                <div className="flex items-center gap-4 text-sm text-slate-600">
                                     <div className="flex items-center gap-1">
                                         <Clock className="h-4 w-4" />
                                         {new Date(interventionData.date).toLocaleDateString('fr-FR')}
@@ -131,19 +131,19 @@ export default function EvaluationPage() {
                                     )}
                                 </div>
                                 
-                                <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg text-center">
-                                    <CheckCircle className="h-8 w-8 text-green-400 mx-auto mb-2" />
-                                    <p className="text-green-400 font-medium">
+                                <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-center">
+                                    <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                                    <p className="text-green-700 font-medium">
                                         Vous avez déjà évalué cette intervention
                                     </p>
-                                    <p className="text-green-300 text-sm mt-1">
+                                    <p className="text-green-600 text-sm mt-1">
                                         Merci pour votre retour!
                                     </p>
                                 </div>
 
                                 <Button
                                     variant="outline"
-                                    className="w-full bg-slate-800 border-slate-700 text-white hover:bg-slate-700"
+                                    className="w-full bg-white border-slate-300 text-slate-700 hover:bg-slate-50"
                                     onClick={() => router.visit('/client/dashboard')}
                                 >
                                     <ArrowLeft className="h-4 w-4 mr-2" />
@@ -161,10 +161,10 @@ export default function EvaluationPage() {
         return (
             <AppHeaderLayout>
                 <Head title="Évaluation - GoAssist" />
-                <div className="min-h-screen bg-slate-950 p-4 flex items-center justify-center">
+                <div className="min-h-screen bg-white p-4 flex items-center justify-center">
                     <div className="text-center">
                         <Loader2 className="h-8 w-8 animate-spin text-blue-500 mx-auto mb-4" />
-                        <p className="text-slate-400">Chargement...</p>
+                        <p className="text-slate-600">Chargement...</p>
                     </div>
                 </div>
             </AppHeaderLayout>
@@ -175,10 +175,10 @@ export default function EvaluationPage() {
         return (
             <AppHeaderLayout>
                 <Head title="Erreur - GoAssist" />
-                <div className="min-h-screen bg-slate-950 p-4 flex items-center justify-center">
-                    <Card className="bg-slate-800/50 border-slate-700 max-w-md">
+                <div className="min-h-screen bg-white p-4 flex items-center justify-center">
+                    <Card className="bg-slate-50 border-slate-200 max-w-md">
                         <CardContent className="p-8 text-center">
-                            <p className="text-red-400 mb-4">{error || 'Intervention non trouvée'}</p>
+                            <p className="text-red-500 mb-4">{error || 'Intervention non trouvée'}</p>
                             <Button onClick={() => router.visit('/client/dashboard')}>
                                 <ArrowLeft className="h-4 w-4 mr-2" />
                                 Retour au dashboard
@@ -194,17 +194,17 @@ export default function EvaluationPage() {
         return (
             <AppHeaderLayout>
                 <Head title="Merci pour votre évaluation - GoAssist" />
-                <div className="min-h-screen bg-slate-950 p-4 flex items-center justify-center">
-                    <Card className="bg-green-500/10 border-green-500/30 max-w-md">
+                <div className="min-h-screen bg-white p-4 flex items-center justify-center">
+                    <Card className="bg-green-50 border-green-200 max-w-md">
                         <CardContent className="p-8 text-center">
-                            <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <CheckCircle className="h-8 w-8 text-green-400" />
+                            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <CheckCircle className="h-8 w-8 text-green-600" />
                             </div>
-                            <h2 className="text-xl font-bold text-green-400 mb-2">Merci pour votre évaluation!</h2>
-                            <p className="text-green-300 mb-4">
+                            <h2 className="text-xl font-bold text-green-700 mb-2">Merci pour votre évaluation!</h2>
+                            <p className="text-green-600 mb-4">
                                 Votre feedback nous aide à améliorer notre service.
                             </p>
-                            <Loader2 className="h-5 w-5 animate-spin text-green-400 mx-auto" />
+                            <Loader2 className="h-5 w-5 animate-spin text-green-500 mx-auto" />
                         </CardContent>
                     </Card>
                 </div>
@@ -216,7 +216,7 @@ export default function EvaluationPage() {
         <AppHeaderLayout>
             <Head title={`Évaluer ${interventionData.codeDemande} - GoAssist`} />
 
-            <div className="min-h-screen bg-slate-950 p-4 lg:p-8">
+            <div className="min-h-screen bg-white p-4 lg:p-8">
                 <div className="max-w-xl mx-auto space-y-6">
                     {/* Header */}
                     <div className="flex items-center gap-4">
@@ -224,23 +224,23 @@ export default function EvaluationPage() {
                             variant="ghost"
                             size="icon"
                             onClick={() => router.visit('/client/dashboard')}
-                            className="text-slate-400 hover:text-white"
+                            className="text-slate-600 hover:text-slate-900"
                         >
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
-                        <h1 className="text-2xl font-bold text-white">Évaluer l'intervention</h1>
+                        <h1 className="text-2xl font-bold text-slate-900">Évaluer l'intervention</h1>
                     </div>
 
                     {/* Informations de l'intervention */}
-                    <Card className="bg-slate-800/50 border-slate-700">
+                    <Card className="bg-slate-50 border-slate-200">
                         <CardHeader>
-                            <CardTitle className="text-white">{interventionData.codeDemande}</CardTitle>
-                            <CardDescription className="text-slate-400">
+                            <CardTitle className="text-slate-900">{interventionData.codeDemande}</CardTitle>
+                            <CardDescription className="text-slate-600">
                                 {interventionData.typePanne} - {interventionData.depanneur.etablissement_name}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="flex items-center gap-4 text-sm text-slate-400">
+                            <div className="flex items-center gap-4 text-sm text-slate-600">
                                 <div className="flex items-center gap-1">
                                     <Clock className="h-4 w-4" />
                                     {new Date(interventionData.date).toLocaleDateString('fr-FR')}
@@ -254,10 +254,10 @@ export default function EvaluationPage() {
                     </Card>
 
                     {/* Formulaire d'évaluation */}
-                    <Card className="bg-slate-800/50 border-slate-700">
+                    <Card className="bg-slate-50 border-slate-200">
                         <CardHeader>
-                            <CardTitle className="text-white">Votre note</CardTitle>
-                            <CardDescription className="text-slate-400">
+                            <CardTitle className="text-slate-900">Votre note</CardTitle>
+                            <CardDescription className="text-slate-600">
                                 Comment avez-vous trouvé le service ?
                             </CardDescription>
                         </CardHeader>
@@ -276,13 +276,13 @@ export default function EvaluationPage() {
                                                 className={`h-12 w-12 ${
                                                     star <= rating
                                                         ? 'text-yellow-400 fill-yellow-400'
-                                                        : 'text-slate-600 hover:text-yellow-200'
+                                                        : 'text-slate-300 hover:text-yellow-200'
                                                 }`}
                                             />
                                         </button>
                                     ))}
                                 </div>
-                                <p className="text-center text-slate-400 text-sm">
+                                <p className="text-center text-slate-600 text-sm">
                                     {rating === 1 && 'Très insatisfait'}
                                     {rating === 2 && 'Insatisfait'}
                                     {rating === 3 && 'Neutre'}
@@ -293,7 +293,7 @@ export default function EvaluationPage() {
 
                                 {/* Commentaire */}
                                 <div className="space-y-2">
-                                    <Label htmlFor="comment" className="text-slate-300">
+                                    <Label htmlFor="comment" className="text-slate-700">
                                         Commentaire (optionnel)
                                     </Label>
                                     <Textarea
@@ -301,18 +301,18 @@ export default function EvaluationPage() {
                                         value={comment}
                                         onChange={(e) => setComment(e.target.value)}
                                         placeholder="Partagez votre expérience..."
-                                        className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-500 min-h-[100px]"
+                                        className="bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 min-h-[100px]"
                                         maxLength={500}
                                     />
-                                    <p className="text-slate-500 text-xs text-right">
+                                    <p className="text-slate-400 text-xs text-right">
                                         {comment.length}/500
                                     </p>
                                 </div>
 
                                 {/* Erreur */}
                                 {errorSubmit && (
-                                    <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
-                                        <p className="text-red-400 text-sm">{errorSubmit}</p>
+                                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                                        <p className="text-red-600 text-sm">{errorSubmit}</p>
                                     </div>
                                 )}
 
@@ -321,7 +321,7 @@ export default function EvaluationPage() {
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        className="flex-1 bg-slate-800 border-slate-700 text-white hover:bg-slate-700"
+                                        className="flex-1 bg-white border-slate-300 text-slate-700 hover:bg-slate-50"
                                         onClick={() => router.visit('/client/dashboard')}
                                         disabled={submitting}
                                     >

@@ -73,17 +73,17 @@ export default function InterventionDetailsPage() {
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'terminee':
-                return 'bg-green-500/20 text-green-400 border-green-500/30';
+                return 'bg-green-100 text-green-700 border-green-200';
             case 'en_cours':
-                return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+                return 'bg-orange-100 text-orange-700 border-orange-200';
             case 'acceptee':
-                return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+                return 'bg-blue-100 text-blue-700 border-blue-200';
             case 'en_attente':
-                return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+                return 'bg-yellow-100 text-yellow-700 border-yellow-200';
             case 'annulee':
-                return 'bg-red-500/20 text-red-400 border-red-500/30';
+                return 'bg-red-100 text-red-700 border-red-200';
             default:
-                return 'bg-slate-500/20 text-slate-400';
+                return 'bg-slate-100 text-slate-600 border-slate-200';
         }
     };
 
@@ -108,10 +108,10 @@ export default function InterventionDetailsPage() {
         return (
             <AppHeaderLayout>
                 <Head title="Détails de l'intervention - GoAssist" />
-                <div className="min-h-screen bg-slate-950 p-4 flex items-center justify-center">
+                <div className="min-h-screen bg-white p-4 flex items-center justify-center">
                     <div className="text-center">
                         <Loader2 className="h-8 w-8 animate-spin text-blue-500 mx-auto mb-4" />
-                        <p className="text-slate-400">Chargement des détails...</p>
+                        <p className="text-slate-600">Chargement des détails...</p>
                     </div>
                 </div>
             </AppHeaderLayout>
@@ -122,10 +122,10 @@ export default function InterventionDetailsPage() {
         return (
             <AppHeaderLayout>
                 <Head title="Erreur - GoAssist" />
-                <div className="min-h-screen bg-slate-950 p-4 flex items-center justify-center">
-                    <Card className="bg-slate-800/50 border-slate-700 max-w-md">
+                <div className="min-h-screen bg-white p-4 flex items-center justify-center">
+                    <Card className="bg-slate-50 border-slate-200 max-w-md">
                         <CardContent className="p-8 text-center">
-                            <p className="text-red-400 mb-4">{error || 'Intervention non trouvée'}</p>
+                            <p className="text-red-500 mb-4">{error || 'Intervention non trouvée'}</p>
                             <Button onClick={() => router.visit('/client/dashboard')}>
                                 <ArrowLeft className="h-4 w-4 mr-2" />
                                 Retour au dashboard
@@ -141,7 +141,7 @@ export default function InterventionDetailsPage() {
         <AppHeaderLayout>
             <Head title={`Détails ${interventionData.codeDemande} - GoAssist`} />
 
-            <div className="min-h-screen bg-slate-950 p-4 lg:p-8">
+            <div className="min-h-screen bg-white p-4 lg:p-8">
                 <div className="max-w-3xl mx-auto space-y-6">
                     {/* Header */}
                     <div className="flex items-center gap-4">
@@ -149,12 +149,12 @@ export default function InterventionDetailsPage() {
                             variant="ghost"
                             size="icon"
                             onClick={() => router.visit('/client/dashboard')}
-                            className="text-slate-400 hover:text-white"
+                            className="text-slate-600 hover:text-slate-900"
                         >
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
                         <div className="flex-1">
-                            <h1 className="text-2xl font-bold text-white">{interventionData.codeDemande}</h1>
+                            <h1 className="text-2xl font-bold text-slate-900">{interventionData.codeDemande}</h1>
                             <Badge className={getStatusColor(interventionData.status)}>
                                 {getStatusLabel(interventionData.status)}
                             </Badge>
@@ -162,9 +162,9 @@ export default function InterventionDetailsPage() {
                     </div>
 
                     {/* Informations principales */}
-                    <Card className="bg-slate-800/50 border-slate-700">
+                    <Card className="bg-slate-50 border-slate-200">
                         <CardHeader>
-                            <CardTitle className="text-white flex items-center gap-2">
+                            <CardTitle className="text-slate-900 flex items-center gap-2">
                                 <Wrench className="h-5 w-5 text-blue-500" />
                                 Informations de l'intervention
                             </CardTitle>
@@ -172,20 +172,20 @@ export default function InterventionDetailsPage() {
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <p className="text-slate-400 text-sm">Type de panne</p>
-                                    <p className="text-white font-medium">{interventionData.typePanne}</p>
+                                    <p className="text-slate-500 text-sm">Type de panne</p>
+                                    <p className="text-slate-900 font-medium">{interventionData.typePanne}</p>
                                 </div>
                                 <div>
-                                    <p className="text-slate-400 text-sm">Date</p>
-                                    <p className="text-white font-medium">{formatDate(interventionData.date)}</p>
+                                    <p className="text-slate-500 text-sm">Date</p>
+                                    <p className="text-slate-900 font-medium">{formatDate(interventionData.date)}</p>
                                 </div>
                                 <div>
-                                    <p className="text-slate-400 text-sm">Durée</p>
-                                    <p className="text-white font-medium">{interventionData.duree} minutes</p>
+                                    <p className="text-slate-500 text-sm">Durée</p>
+                                    <p className="text-slate-900 font-medium">{interventionData.duree} minutes</p>
                                 </div>
                                 <div>
-                                    <p className="text-slate-400 text-sm">Montant</p>
-                                    <p className="text-white font-medium text-amber-400">
+                                    <p className="text-slate-500 text-sm">Montant</p>
+                                    <p className="text-slate-900 font-medium text-amber-600">
                                         {formatCurrency(interventionData.montant)}
                                     </p>
                                 </div>
@@ -193,8 +193,8 @@ export default function InterventionDetailsPage() {
 
                             {/* Localisation */}
                             <div>
-                                <p className="text-slate-400 text-sm">Localisation</p>
-                                <p className="text-white font-medium flex items-center gap-2">
+                                <p className="text-slate-500 text-sm">Localisation</p>
+                                <p className="text-slate-900 font-medium flex items-center gap-2">
                                     <MapPin className="h-4 w-4 text-blue-500" />
                                     {interventionData.localisation}
                                 </p>
@@ -203,9 +203,9 @@ export default function InterventionDetailsPage() {
                     </Card>
 
                     {/* Informations du dépanneur */}
-                    <Card className="bg-slate-800/50 border-slate-700">
+                    <Card className="bg-slate-50 border-slate-200">
                         <CardHeader>
-                            <CardTitle className="text-white flex items-center gap-2">
+                            <CardTitle className="text-slate-900 flex items-center gap-2">
                                 <Wrench className="h-5 w-5 text-blue-500" />
                                 Dépanneur
                             </CardTitle>
@@ -218,8 +218,8 @@ export default function InterventionDetailsPage() {
                                     </span>
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-white font-medium">{interventionData.depanneur.fullName}</p>
-                                    <p className="text-slate-400 text-sm">{interventionData.depanneur.etablissement_name}</p>
+                                    <p className="text-slate-900 font-medium">{interventionData.depanneur.fullName}</p>
+                                    <p className="text-slate-500 text-sm">{interventionData.depanneur.etablissement_name}</p>
                                     <div className="flex items-center gap-1 mt-1">
                                         {[1, 2, 3, 4, 5].map((star) => (
                                             <Star
@@ -227,11 +227,11 @@ export default function InterventionDetailsPage() {
                                                 className={`h-4 w-4 ${
                                                     star <= Math.floor(interventionData.depanneur.rating)
                                                         ? 'text-yellow-400 fill-yellow-400'
-                                                        : 'text-gray-500'
+                                                        : 'text-slate-300'
                                                 }`}
                                             />
                                         ))}
-                                        <span className="text-slate-400 text-sm ml-1">
+                                        <span className="text-slate-500 text-sm ml-1">
                                             ({interventionData.depanneur.rating})
                                         </span>
                                     </div>
@@ -239,7 +239,7 @@ export default function InterventionDetailsPage() {
                                 <Button
                                     variant="outline"
                                     size="icon"
-                                    className="bg-green-500/10 border-green-500/30 text-green-400 hover:bg-green-500/20"
+                                    className="bg-green-50 border-green-200 text-green-600 hover:bg-green-100"
                                     onClick={() => window.open(`tel:${interventionData.depanneur.phone}`)}
                                 >
                                     <Phone className="h-4 w-4" />
@@ -250,9 +250,9 @@ export default function InterventionDetailsPage() {
 
                     {/* Facture */}
                     {interventionData.facture && (
-                        <Card className="bg-slate-800/50 border-slate-700">
+                        <Card className="bg-slate-50 border-slate-200">
                             <CardHeader>
-                                <CardTitle className="text-white flex items-center gap-2">
+                                <CardTitle className="text-slate-900 flex items-center gap-2">
                                     <FileText className="h-5 w-5 text-blue-500" />
                                     Facture
                                 </CardTitle>
@@ -260,21 +260,21 @@ export default function InterventionDetailsPage() {
                             <CardContent className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-slate-400 text-sm">Montant</p>
-                                        <p className="text-white font-bold text-xl">
+                                        <p className="text-slate-500 text-sm">Montant</p>
+                                        <p className="text-slate-900 font-bold text-xl">
                                             {formatCurrency(interventionData.facture.montant)}
                                         </p>
                                     </div>
                                     <Badge className={interventionData.facture.status === 'payee' 
-                                        ? 'bg-green-500/20 text-green-400' 
-                                        : 'bg-yellow-500/20 text-yellow-400'}>
+                                        ? 'bg-green-100 text-green-700 border-green-200' 
+                                        : 'bg-yellow-100 text-yellow-700 border-yellow-200'}>
                                         {interventionData.facture.status === 'payee' ? 'Payée' : 'En attente'}
                                     </Badge>
                                 </div>
 
                                 {interventionData.facture.status === 'en_attente' && (
                                     <Button
-                                        className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
+                                        className="w-full bg-green-500 hover:bg-green-600 text-white"
                                         onClick={() => router.visit(`/client/paiement/${interventionData.facture!.id}`)}
                                     >
                                         <CreditCard className="h-4 w-4 mr-2" />
@@ -287,9 +287,9 @@ export default function InterventionDetailsPage() {
 
                     {/* Évaluation */}
                     {interventionData.evaluation ? (
-                        <Card className="bg-slate-800/50 border-slate-700">
+                        <Card className="bg-slate-50 border-slate-200">
                             <CardHeader>
-                                <CardTitle className="text-white flex items-center gap-2">
+                                <CardTitle className="text-slate-900 flex items-center gap-2">
                                     <Star className="h-5 w-5 text-amber-500" />
                                     Votre évaluation
                                 </CardTitle>
@@ -302,23 +302,23 @@ export default function InterventionDetailsPage() {
                                             className={`h-6 w-6 ${
                                                 star <= interventionData.evaluation!.note
                                                     ? 'text-yellow-400 fill-yellow-400'
-                                                    : 'text-gray-500'
+                                                    : 'text-slate-300'
                                             }`}
                                         />
                                     ))}
-                                    <span className="text-white font-medium ml-2">
+                                    <span className="text-slate-900 font-medium ml-2">
                                         {interventionData.evaluation.note}/5
                                     </span>
                                 </div>
                                 {interventionData.evaluation.commentaire && (
-                                    <p className="text-slate-300 italic">"{interventionData.evaluation.commentaire}"</p>
+                                    <p className="text-slate-600 italic">"{interventionData.evaluation.commentaire}"</p>
                                 )}
                             </CardContent>
                         </Card>
                     ) : interventionData.status === 'terminee' ? (
-                        <Card className="bg-slate-800/50 border-slate-700">
+                        <Card className="bg-slate-50 border-slate-200">
                             <CardContent className="p-6 text-center">
-                                <p className="text-slate-400 mb-4">Vous n'avez pas encore évalué cette intervention</p>
+                                <p className="text-slate-600 mb-4">Vous n'avez pas encore évalué cette intervention</p>
                                 <Button
                                     className="bg-blue-500 hover:bg-blue-600 text-white"
                                     onClick={() => router.visit(`/client/intervention/${interventionData.id}/evaluer`)}
@@ -334,7 +334,7 @@ export default function InterventionDetailsPage() {
                     <div className="flex gap-4">
                         <Button
                             variant="outline"
-                            className="flex-1 bg-slate-800 border-slate-700 text-white hover:bg-slate-700"
+                            className="flex-1 bg-white border-slate-300 text-slate-700 hover:bg-slate-50"
                             onClick={() => router.visit('/client/dashboard')}
                         >
                             <ArrowLeft className="h-4 w-4 mr-2" />

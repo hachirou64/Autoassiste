@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Menu, Search } from 'lucide-react';
+import { Menu, Search, Bell, X, Check, Filter, Clock, CheckCircle, AlertCircle, Info, Wrench, CreditCard, Car } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -50,6 +51,166 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
     const { auth } = page.props;
     const getInitials = useInitials();
     const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
+    
+    // State for notifications
+    const [notifications, setNotifications] = useState<Array<{
+        id: number;
+        type: string;
+        titre: string;
+        message: string;
+        isRead: boolean;
+        createdAt: string;
+    }>>([]);
+    const [loadingNotifications, setLoadingNotifications] = useState(false);
+    const [notificationFilter, setNotificationFilter] = useState<'all' | 'unread' | 'demande' | 'paiement' | 'intervention'>('all');
+
+    // Get unique notification types from data
+    const notificationTypes = useMemo(() => {
+        const types = new Set(notifications.map(n => n.type));
+        return Array.from(types);
+    }, [notifications]);
+
+    // Filter notifications based on selected filter
+    const filteredNotifications = useMemo(() => {
+        let filtered = notifications;
+        
+        // Filter by read status
+        if (notificationFilter === 'unread') {
+            filtered = filtered.filter(n => !n.isRead);
+        } else if (notificationFilter === 'demande') {
+            filtered = filtered.filter(n => n.type.includes('demande') || n.type.includes('nouvelle'));
+        } else if (notificationFilter === 'paiement') {
+            filtered = filtered.filter(n => n.type.includes('paiement') || n.type.includes('paye'));
+        } else if (notificationFilter === 'intervention') {
+            filtered = filtered.filter(n => n.type.includes('intervention') || n.type.includes('depannage') || n.type.includes('terminee'));
+        }
+        
+        return filtered;
+    }, [notifications, notificationFilter]);
+
+    // Get unread count
+    const unreadCount = useMemo(() => notifications.filter(n => !n.isRead).length, [notifications]);
+
+    // Fetch notifications on mount
+    useEffect(() => {
+        fetchNotifications();
+    }, []);
+
+    const fetchNotifications = async () => {
+        setLoadingNotifications(true);
+        try {
+            const response = await fetch('/api/client/notifications', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                credentials: 'include',
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    setNotifications(data.notifications || []);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
+            // Use empty array on error
+            setNotifications([]);
+        } finally {
+            setLoadingNotifications(false);
+        }
+    };
+
+    const markAsRead = async (id: number) => {
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            const response = await fetch(`/api/client/notifications/${id}/read`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                credentials: 'include',
+            });
+            
+            if (response.ok) {
+                setNotifications(prev => 
+                    prev.map(n => n.id === id ? { ...n, isRead: true } : n)
+                );
+            }
+        } catch (error) {
+            console.error('Error marking notification as read:', error);
+        }
+    };
+
+    const markAllAsRead = async () => {
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            const response = await fetch('/api/client/notifications/read-all', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                credentials: 'include',
+            });
+            
+            if (response.ok) {
+                setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+            }
+        } catch (error) {
+            console.error('Error marking all notifications as read:', error);
+        }
+    };
+
+    const formatTimeAgo = (dateString: string): string => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+        
+        if (diffInSeconds < 60) {
+            return 'À l\'instant';
+        } else if (diffInSeconds < 3600) {
+            const minutes = Math.floor(diffInSeconds / 60);
+            return `Il y a ${minutes} min`;
+        } else if (diffInSeconds < 86400) {
+            const hours = Math.floor(diffInSeconds / 3600);
+            return `Il y a ${hours}h`;
+        } else {
+            const days = Math.floor(diffInSeconds / 86400);
+            return `Il y a ${days}j`;
+        }
+    };
+
+    // Get icon based on notification type
+    const getNotificationIcon = (type: string) => {
+        if (type.includes('demande') || type.includes('nouvelle')) {
+            return <Car className="h-4 w-4 text-blue-500" />;
+        } else if (type.includes('paiement') || type.includes('paye')) {
+            return <CreditCard className="h-4 w-4 text-green-500" />;
+        } else if (type.includes('intervention') || type.includes('depannage') || type.includes('terminee')) {
+            return <Wrench className="h-4 w-4 text-orange-500" />;
+        } else if (type.includes('annule') || type.includes('refuse')) {
+            return <AlertCircle className="h-4 w-4 text-red-500" />;
+        } else if (type.includes('accepte') || type.includes('active')) {
+            return <CheckCircle className="h-4 w-4 text-green-500" />;
+        }
+        return <Info className="h-4 w-4 text-gray-500" />;
+    };
+
+    // Get filter label
+    const getFilterLabel = (filter: string): string => {
+        switch (filter) {
+            case 'all': return 'Toutes';
+            case 'unread': return 'Non lues';
+            case 'demande': return 'Demandes';
+            case 'paiement': return 'Paiements';
+            case 'intervention': return 'Interventions';
+            default: return filter;
+        }
+    };
     return (
         <>
             <div className="border-b border-sidebar-border/80">
@@ -160,6 +321,112 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                             >
                                 <Search className="!size-5 opacity-80 group-hover:opacity-100" />
                             </Button>
+                            
+                            {/* Notifications Dropdown */}
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="group h-9 w-9 cursor-pointer relative"
+                                    >
+                                        <Bell className="!size-5 opacity-80 group-hover:opacity-100" />
+                                        {unreadCount > 0 && (
+                                            <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-500 text-[10px] font-bold text-white flex items-center justify-center">
+                                                {unreadCount}
+                                            </span>
+                                        )}
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-96 max-h-[500px] overflow-y-auto">
+                                    {/* Header with filters */}
+                                    <div className="sticky top-0 bg-white border-b px-4 py-3">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <span className="font-semibold text-gray-900">Notifications</span>
+                                            {unreadCount > 0 && (
+                                                <button 
+                                                    onClick={markAllAsRead}
+                                                    className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                                                >
+                                                    Tout marquer comme lu
+                                                </button>
+                                            )}
+                                        </div>
+                                        
+                                        {/* Filter tabs */}
+                                        <div className="flex flex-wrap gap-1">
+                                            {(['all', 'unread', 'demande', 'paiement', 'intervention'] as const).map((filter) => (
+                                                <button
+                                                    key={filter}
+                                                    onClick={() => setNotificationFilter(filter)}
+                                                    className={`px-3 py-1 text-xs rounded-full transition-colors ${
+                                                        notificationFilter === filter
+                                                            ? 'bg-blue-500 text-white'
+                                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                    }`}
+                                                >
+                                                    {getFilterLabel(filter)}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Notifications list */}
+                                    {loadingNotifications ? (
+                                        <div className="px-4 py-8 text-center text-gray-500">
+                                            <div className="animate-spin h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-2"></div>
+                                            Chargement...
+                                        </div>
+                                    ) : filteredNotifications.length === 0 ? (
+                                        <div className="px-4 py-8 text-center text-gray-500">
+                                            {notificationFilter === 'all' 
+                                                ? 'Aucune notification' 
+                                                : `Aucune notification ${getFilterLabel(notificationFilter).toLowerCase()}`}
+                                        </div>
+                                    ) : (
+                                        filteredNotifications.slice(0, 20).map((notification) => (
+                                            <div
+                                                key={notification.id}
+                                                className={`px-4 py-3 border-b last:border-b-0 hover:bg-gray-50 cursor-pointer transition-colors ${
+                                                    !notification.isRead ? 'bg-blue-50/50' : ''
+                                                }`}
+                                                onClick={() => markAsRead(notification.id)}
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <div className="mt-0.5">
+                                                        {getNotificationIcon(notification.type)}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <p className="text-sm font-medium text-gray-900 truncate">
+                                                                {notification.titre}
+                                                            </p>
+                                                            {!notification.isRead && (
+                                                                <span className="h-2 w-2 rounded-full bg-blue-500 flex-shrink-0 mt-1.5"></span>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                                                            {notification.message}
+                                                        </p>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <Clock className="h-3 w-3 text-gray-400" />
+                                                            <p className="text-xs text-gray-400">
+                                                                {formatTimeAgo(notification.createdAt)}
+                                                            </p>
+                                                            <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
+                                                                {getFilterLabel(notification.type.includes('demande') || notification.type.includes('nouvelle') ? 'demande' : 
+                                                                    notification.type.includes('paiement') || notification.type.includes('paye') ? 'paiement' : 
+                                                                    notification.type.includes('intervention') || notification.type.includes('depannage') || notification.type.includes('terminee') ? 'intervention' : 'all')}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                            
                             <div className="ml-1 hidden gap-1 lg:flex">
                                 {rightNavItems.map((item) => (
                                     <TooltipProvider
@@ -208,7 +475,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-56" align="end">
-                                <UserMenuContent user={auth.user} />
+                                {auth.user && <UserMenuContent user={auth.user} />}
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>

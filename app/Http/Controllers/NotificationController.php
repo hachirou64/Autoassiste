@@ -37,24 +37,27 @@ class NotificationController extends Controller
         $utilisateur = Auth::user();
         
         if (!$utilisateur) {
-            return response()->json(['error' => 'Non authentifié'], 401);
+            return response()->json(['success' => false, 'error' => 'Non authentifié'], 401);
         }
 
         $notifications = Notification::where('id_client', $utilisateur->client->id)
             ->orderBy('createdAt', 'desc')
-            ->limit(20)
+            ->limit(50)
             ->get()
             ->map(fn($n) => [
                 'id' => $n->id,
                 'type' => $n->type,
-                'titre' => $n->titre,
+                'titre' => $n->titre ?? $n->type_label,
                 'message' => $n->message,
                 'isRead' => (bool) $n->isRead,
                 'createdAt' => $n->createdAt->toIsoString(),
                 'demande_id' => $n->id_demande,
             ]);
 
-        return response()->json(['notifications' => $notifications]);
+        return response()->json([
+            'success' => true, 
+            'notifications' => $notifications
+        ]);
     }
 
     // API: Marquer une notification comme lue (JSON)

@@ -3,15 +3,9 @@ import { Head, usePage } from '@inertiajs/react';
 import AppHeaderLayout from '@/layouts/app/app-header-layout';
 import { QuickRegistrationForm } from '@/components/auth/quick-registration-form';
 import { Card, CardContent } from '@/components/ui/card';
-import { Car, MapPin, Shield } from 'lucide-react';
+import { Car, MapPin, Shield, Truck } from 'lucide-react';
 
 export default function RegisterPage() {
-    const [mounted, setMounted] = useState<boolean>(false);
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
     const handleSuccess = () => {
         const urlParams = new URLSearchParams(window.location.search);
         const isAdminMode = urlParams.get('admin') === 'true';
@@ -45,7 +39,7 @@ export default function RegisterPage() {
         'Inscription en 30 secondes',
         'Aucun engagement',
         'Service disponible immédiatement',
-        'Notation des dépanneurs',
+        'Notation des services',
     ];
 
     return (
@@ -57,13 +51,18 @@ export default function RegisterPage() {
                     <div className="grid lg:grid-cols-2 gap-12 items-start">
                         {/* Left: Features - 2 columns parallel, vertical */}
                         <div className="hidden lg:block">
-                            <div className="mb-6">
-                                <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                                    GoAssist
-                                </h1>
-                                <p className="text-lg text-gray-600">
-                                    Votre service de dépannage automobile de confiance
-                                </p>
+                            <div className="mb-6 flex items-center gap-3">
+                                <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center text-white">
+                                    <Truck size={28} />
+                                </div>
+                                <div>
+                                    <h1 className="text-4xl font-bold text-gray-900">
+                                        GoAssist<span className="text-amber-500">.</span>
+                                    </h1>
+                                    <p className="text-lg text-gray-600">
+                                        Votre service de dépannage automobile de confiance
+                                    </p>
+                                </div>
                             </div>
                             
                             {/* 2 columns parallel - First row */}
@@ -128,14 +127,14 @@ export default function RegisterPage() {
                                     </CardContent>
                                 </Card>
 
-                                {/* Card 4 - Why Choose */}
+                                {/* Card 4 - Why Choose - Tous les éléments dans un seul cadre */}
                                 <Card className="bg-white border-gray-200 shadow-sm">
                                     <CardContent className="p-4">
                                         <h3 className="font-semibold text-gray-900 text-sm mb-2">
                                             Pourquoi choisir GoAssist ?
                                         </h3>
                                         <ul className="space-y-1">
-                                            {whyChoose.slice(0, 2).map((item, index) => (
+                                            {whyChoose.map((item, index) => (
                                                 <li key={index} className="flex items-center gap-1 text-xs text-gray-600">
                                                     <span className="text-amber-500">✓</span>
                                                     {item}
@@ -145,20 +144,6 @@ export default function RegisterPage() {
                                     </CardContent>
                                 </Card>
                             </div>
-
-                            {/* Remaining Why Choose items */}
-                            <Card className="bg-white border-gray-200 shadow-sm">
-                                <CardContent className="p-4">
-                                    <ul className="space-y-1">
-                                        {whyChoose.slice(2).map((item, index) => (
-                                            <li key={index} className="flex items-center gap-1 text-xs text-gray-600">
-                                                <span className="text-amber-500">✓</span>
-                                                {item}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </CardContent>
-                            </Card>
                         </div>
 
                         {/* Right: Registration Form */}

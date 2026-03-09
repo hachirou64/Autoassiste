@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AppHeaderLayout from '@/layouts/app/app-header-layout';
 import type { BreadcrumbItem } from '@/types';
@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { AdminStats, AdminAlert, RecentActivity, TrendsData, Demande, Intervention, Facture } from '@/types';
-import { useAdminData, useAdminClients, useAdminDepanneurs, useAdminDemandes, useContactMessages, useAdminInterventions, useAdminFactures } from '@/hooks/use-admin-data';
+import { useAdminData, useAdminClients, useAdminDepanneurs, useAdminDemandes, useContactMessages, useAdminInterventions, useAdminFactures, useAdminAlertsPaginated, useAdminActivitiesPaginated } from '@/hooks/use-admin-data';
 import { useApi } from '@/hooks/use-admin-data';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -337,19 +337,48 @@ export default function AdminDashboard() {
     );
 }
 
-function OverviewTab({ stats, alerts, activities }: { stats: AdminStats; alerts: AdminAlert[]; activities: RecentActivity[] }) {
+function OverviewTab({ stats, alerts, activities }: { stats: AdminStats; alerts: AdminAlert[]; activities: RecentActivity[] }): React.ReactNode {
+    // Hooks pour la pagination
+    const {
+        items: paginatedAlertItems = [],
+        pagination: alertsPagination,
+        loading: loadingAlerts,
+        onPageChange: onAlertsPageChange
+    } = useAdminAlertsPaginated(10);
+    
+    const {
+        activities: paginatedActivities = [],
+        pagination: activitiesPagination,
+        loading: loadingActivities,
+        onPageChange: onActivitiesPageChange
+    } = useAdminActivitiesPaginated(10);
+
     return (
         <div className="space-y-6">
             <StatsCards stats={stats} />
             <div className="grid gap-6 lg:grid-cols-2">
-                <AlertsPanel alerts={alerts} />
-                <RecentActivities activities={activities} />
+                {/* Alerts avec pagination - afficher la vue paginée si on clique sur "Voir les détails" */}
+                <AlertsPanel 
+                    alerts={alerts} 
+                    showPaginatedView={true}
+                    paginatedItems={paginatedAlertItems}
+                    pagination={alertsPagination}
+                    isLoading={loadingAlerts}
+                    onPageChange={onAlertsPageChange}
+                />
+                {/* Recent Activities avec pagination */}
+                <RecentActivities 
+                    activities={paginatedActivities.length > 0 ? paginatedActivities : activities} 
+                    pagination={activitiesPagination}
+                    isLoading={loadingActivities}
+                    onPageChange={onActivitiesPageChange}
+                />
             </div>
         </div>
     );
 }
 
-function ClientsTab({ clients, pagination, isLoading, onSearch, onPageChange }: { clients: import('@/types').Client[]; pagination: { current_page: number; last_page: number; total: number; per_page: number }; isLoading: boolean; onSearch?: (query: string) => void; onPageChange?: (page: number) => void }) {
+function ClientsTab({ clients, pagination, isLoading, onSearch, onPageChange }: { clients: import('@/types').Client[]; pagination: { current_page: number; last_page: number; total: number; per_page: number }; isLoading: boolean; onSearch?: (query: string) => void; onPageChange?: (page: number) => void }): React.ReactNode {
     const [selectedClient, setSelectedClient] = useState<import('@/types').Client | null>(null);
     const [showViewModal, setShowViewModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);

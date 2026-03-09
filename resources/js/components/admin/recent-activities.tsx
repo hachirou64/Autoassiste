@@ -1,12 +1,25 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Clock, User, Wrench, ArrowRight } from 'lucide-react';
+import { Clock, User, Wrench, ArrowRight, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import type { RecentActivity, Demande } from '@/types';
 
 interface RecentActivitiesProps {
     activities: RecentActivity[];
+    pagination?: {
+        current_page: number;
+        last_page: number;
+        total: number;
+        per_page: number;
+    };
+    onPageChange?: (page: number) => void;
+    isLoading?: boolean;
 }
 
-export function RecentActivities({ activities }: RecentActivitiesProps) {
+export function RecentActivities({ 
+    activities, 
+    pagination, 
+    onPageChange,
+    isLoading 
+}: RecentActivitiesProps) {
     const getStatusColor = (status: Demande['status']) => {
         switch (status) {
             case 'en_attente':
@@ -52,6 +65,8 @@ export function RecentActivities({ activities }: RecentActivitiesProps) {
         return date.toLocaleDateString('fr-FR');
     };
 
+    const { current_page, last_page, total, per_page } = pagination || {};
+
     return (
         <Card className="bg-slate-800/60 border-slate-700/50 backdrop-blur-sm">
             <CardHeader>
@@ -60,59 +75,100 @@ export function RecentActivities({ activities }: RecentActivitiesProps) {
                         <Clock className="h-4 w-4 text-white" />
                     </div>
                     Activités récentes
+                    {pagination && (
+                        <span className="ml-auto text-sm text-slate-400 font-normal">
+                            {total} total
+                        </span>
+                    )}
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="space-y-3">
-                    {activities.map((activity) => (
-                        <div
-                            key={activity.id}
-                            className="flex items-start gap-4 p-4 rounded-xl bg-slate-700/30 hover:bg-slate-700/50 transition-all duration-300 hover:scale-[1.01] cursor-pointer group"
-                        >
-                            <div className="flex-shrink-0">
-                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
-                                    activity.client 
-                                        ? 'bg-gradient-to-br from-blue-500 to-blue-600' 
-                                        : 'bg-gradient-to-br from-amber-500 to-orange-500'
-                                }`}>
-                                    {activity.client ? (
-                                        <User className="h-5 w-5 text-white" />
-                                    ) : (
-                                        <Wrench className="h-5 w-5 text-white" />
-                                    )}
+                {isLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-8 w-8 text-blue-400 animate-spin" />
+                    </div>
+                ) : (
+                    <>
+                        <div className="space-y-3">
+                            {activities.map((activity) => (
+                                <div
+                                    key={activity.id}
+                                    className="flex items-start gap-4 p-4 rounded-xl bg-slate-700/30 hover:bg-slate-700/50 transition-all duration-300 hover:scale-[1.01] cursor-pointer group"
+                                >
+                                    <div className="flex-shrink-0">
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+                                            activity.client 
+                                                ? 'bg-gradient-to-br from-blue-500 to-blue-600' 
+                                                : 'bg-gradient-to-br from-amber-500 to-orange-500'
+                                        }`}>
+                                            {activity.client ? (
+                                                <User className="h-5 w-5 text-white" />
+                                            ) : (
+                                                <Wrench className="h-5 w-5 text-white" />
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="font-medium text-white truncate">
+                                                {activity.client?.fullName || 'Client anonyme'}
+                                            </span>
+                                            <span className={`text-xs px-2 py-0.5 rounded-full border ${getStatusColor(activity.status as Demande['status'])}`}>
+                                                {activity.status_label}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-slate-400 flex items-center gap-2">
+                                            <span className="font-mono text-blue-400">{activity.codeDemande}</span>
+                                            {activity.depanneur && (
+                                                <span className="text-slate-500">• Assigné à: <span className="text-amber-400">{activity.depanneur.etablissement_name}</span></span>
+                                            )}
+                                        </p>
+                                    </div>
+                                    <div className="flex-shrink-0 text-right flex flex-col items-end gap-1">
+                                        <p className="text-xs text-slate-500">
+                                            {formatDate(activity.created_at)}
+                                        </p>
+                                        <ArrowRight className={`h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity ${getStatusIcon(activity.status as Demande['status'])}`} />
+                                    </div>
+                                </div>
+                            ))}
+                            {activities.length === 0 && (
+                                <div className="flex flex-col items-center justify-center py-8 text-slate-400">
+                                    <Clock className="h-12 w-12 mb-2 text-slate-600" />
+                                    <p>Aucune activité récente</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Pagination Controls */}
+                        {pagination && last_page! > 1 && (
+                            <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-700/50">
+                                <span className="text-sm text-slate-400">
+                                    {(current_page! - 1) * per_page! + 1} - {Math.min(current_page! * per_page!, total!)} sur {total}
+                                </span>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => onPageChange?.(current_page! - 1)}
+                                        disabled={current_page === 1}
+                                        className="p-2 rounded-lg bg-slate-700/50 text-slate-300 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </button>
+                                    <span className="text-sm text-slate-300">
+                                        {current_page} / {last_page}
+                                    </span>
+                                    <button
+                                        onClick={() => onPageChange?.(current_page! + 1)}
+                                        disabled={current_page === last_page}
+                                        className="p-2 rounded-lg bg-slate-700/50 text-slate-300 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        <ChevronRight className="h-4 w-4" />
+                                    </button>
                                 </div>
                             </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className="font-medium text-white truncate">
-                                        {activity.client?.fullName || 'Client anonyme'}
-                                    </span>
-                                    <span className={`text-xs px-2 py-0.5 rounded-full border ${getStatusColor(activity.status as Demande['status'])}`}>
-                                        {activity.status_label}
-                                    </span>
-                                </div>
-                                <p className="text-sm text-slate-400 flex items-center gap-2">
-                                    <span className="font-mono text-blue-400">{activity.codeDemande}</span>
-                                    {activity.depanneur && (
-                                        <span className="text-slate-500">• Assigné à: <span className="text-amber-400">{activity.depanneur.etablissement_name}</span></span>
-                                    )}
-                                </p>
-                            </div>
-                            <div className="flex-shrink-0 text-right flex flex-col items-end gap-1">
-                                <p className="text-xs text-slate-500">
-                                    {formatDate(activity.created_at)}
-                                </p>
-                                <ArrowRight className={`h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity ${getStatusIcon(activity.status as Demande['status'])}`} />
-                            </div>
-                        </div>
-                    ))}
-                    {activities.length === 0 && (
-                        <div className="flex flex-col items-center justify-center py-8 text-slate-400">
-                            <Clock className="h-12 w-12 mb-2 text-slate-600" />
-                            <p>Aucune activité récente</p>
-                        </div>
-                    )}
-                </div>
+                        )}
+                    </>
+                )}
             </CardContent>
         </Card>
     );

@@ -28,7 +28,7 @@ Route::post('/logout', [App\Http\Controllers\AuthController::class, 'logout'])->
 Route::get('/api/auth/check-session', [App\Http\Controllers\AuthController::class, 'checkSession'])->name('api.auth.check-session');
 Route::post('/api/auth/reauth', [App\Http\Controllers\AuthController::class, 'reauth'])->name('api.auth.reauth');
 
-// Routes d'authentification sociale (Google, Facebook)
+// Routes d'authentification sociale (Google,)
 Route::prefix('auth')->group(function () {
     // Routes OAuth génériques avec paramètre provider
     Route::get('/{provider}', [App\Http\Controllers\SocialAuthController::class, 'redirectToProvider'])->name('auth.social');
@@ -329,7 +329,7 @@ Route::prefix('api/client')->group(function () {
 Route::post('/client/register', [App\Http\Controllers\Api\ClientRegistrationController::class, 'register'])->name('client.register.web')->middleware('guest');
 
 // API Route pour les données du dashboard client
-Route::get('/api/client/dashboard', [App\Http\Controllers\DashboardController::class, 'getClientDashboardData'])->name('api.client.dashboard');
+Route::get('/api/client/dashboard', [App\Http\Controllers\DashboardController::class, 'getClientDashboardData'])->name('api.client.dashboard')->middleware('auth');
 
 // Routes Client - Suivi et completion demandes
 Route::prefix('client')->middleware(['auth'])->group(function () {
@@ -378,6 +378,10 @@ Route::prefix('api/depanneur')->middleware(['auth'])->group(function () {
     Route::post('/interventions/{id}/start', [App\Http\Controllers\DashboardController::class, 'startIntervention'])->name('depanneur.api.interventions.start');
     Route::post('/interventions/{id}/end', [App\Http\Controllers\DashboardController::class, 'endIntervention'])->name('depanneur.api.interventions.end');
     
+    // Confirmation de démarrage d'intervention (pour le client)
+    Route::post('/interventions/{id}/confirm-start', [App\Http\Controllers\DashboardController::class, 'confirmInterventionStart'])->name('api.interventions.confirm-start');
+    Route::post('/interventions/{id}/refuse-start', [App\Http\Controllers\DashboardController::class, 'refuseInterventionStart'])->name('api.interventions.refuse-start');
+    
     // Localisation
     Route::post('/location', [App\Http\Controllers\DashboardController::class, 'updateLocation'])->name('depanneur.api.location');
     Route::get('/location', [App\Http\Controllers\DashboardController::class, 'getLocation'])->name('depanneur.api.location.get');
@@ -385,6 +389,7 @@ Route::prefix('api/depanneur')->middleware(['auth'])->group(function () {
     // Notifications
     Route::get('/notifications', [App\Http\Controllers\DashboardController::class, 'getDepanneurNotifications'])->name('depanneur.api.notifications');
     Route::post('/notifications/{id}/read', [App\Http\Controllers\DashboardController::class, 'markNotificationRead'])->name('depanneur.api.notifications.read');
+    Route::post('/notifications/read-all', [App\Http\Controllers\DashboardController::class, 'markAllNotificationsRead'])->name('depanneur.api.notifications.read-all');
     
     // Statistiques
     Route::get('/stats', [App\Http\Controllers\DashboardController::class, 'getDepanneurStats'])->name('depanneur.api.stats');

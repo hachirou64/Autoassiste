@@ -7,19 +7,15 @@ import {
     Clock, 
     Phone, 
     Car, 
-    Bike,
     X, 
     Check, 
     Volume2,
     VolumeX,
-    RefreshCw,
-    Navigation,
-    AlertCircle
+    RefreshCw
 } from 'lucide-react';
-import type { DemandeAvailable, DemandeFilters, TypePanne } from '@/types/depanneur';
+import type { DemandeAvailable, DemandeFilters } from '@/types/depanneur';
 import { TYPES_PANNE_DEPANNAGE } from '@/types/depanneur';
 import { DEMANDE_STATUS_COLORS } from '@/types/client';
-import { VEHICLE_TYPES, type VehicleType } from '@/types/vehicle';
 
 interface DemandesStreamProps {
     demandes: DemandeAvailable[];
@@ -109,10 +105,9 @@ const mockDemandes: DemandeAvailable[] = [
     },
 ];
 
-const mockTypePanne = TYPES_PANNE_DEPANNAGE;
-
 function getTypePanneInfo(typePanne: string) {
-    return mockTypePanne.find(t => t.value === typePanne) || { value: typePanne, label: typePanne, icon: '❓', color: 'text-slate-500' };
+    const typeInfo = TYPES_PANNE_DEPANNAGE.find(t => t.value === typePanne);
+    return typeInfo || { value: typePanne, label: typePanne, icon: '❓', color: 'text-slate-500' };
 }
 
 function formatDistance(distance: number): string {
@@ -157,7 +152,6 @@ export function DemandesStream({
     // Lecture son lors de nouvelle demande
     useEffect(() => {
         if (demandes.length > prevCountRef.current && soundEnabled) {
-            // Son de notification (simulation)
             if (audioRef.current) {
                 audioRef.current.play().catch(() => {});
             }
@@ -165,37 +159,14 @@ export function DemandesStream({
         prevCountRef.current = demandes.length;
     }, [demandes.length, soundEnabled]);
 
-    // Timer pour chaque demande - timers sont mis à jour par le parent
-    useEffect(() => {
-        // Les timers sont gérés par le composant parent qui passe les données
-        // Cette fonction peut être utilisée pour des mises à jour périodiques si nécessaire
-        return () => {
-            // Cleanup si nécessaire
-        };
-    }, []);
-
     // Filtrer les demandes selon les filtres actifs
     const filteredDemandes = demandes.filter((demande) => {
-        // Filtrer par type de panne
         if (filters.typePanne && demande.typePanne !== filters.typePanne) {
             return false;
         }
-        
-        // Filtrer par distance (rayon)
         if (demande.distance > filters.rayon) {
             return false;
         }
-        
-        // Filtrer par type de véhicule (si spécifié)
-        if (filters.vehicleType && filters.vehicleType !== 'all') {
-            // Note: Les données du véhicule ne sont pas toujours présentes
-            // Donc on filtre uniquement si on a l'info
-            if (demande.vehicle) {
-                // Pour l'instant, le type de véhicule n'est pas dans les données de la demande
-                // Donc on laisse passer toutes les demandes
-            }
-        }
-        
         return true;
     });
 
@@ -211,7 +182,7 @@ export function DemandesStream({
 
     return (
         <div className="space-y-4">
-            {/* Header avec filtres */}
+            {/* Header - Affichage épuré professionnel */}
             <Card className="bg-white border-gray-200">
                 <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
@@ -224,7 +195,6 @@ export function DemandesStream({
                         </CardTitle>
                         
                         <div className="flex items-center gap-2">
-                            {/* Toggle son */}
                             <Button
                                 variant="ghost"
                                 size="icon"
@@ -237,8 +207,6 @@ export function DemandesStream({
                                     <VolumeX className="h-5 w-5" />
                                 )}
                             </Button>
-                            
-                            {/* Rafraîchir */}
                             <Button
                                 variant="ghost"
                                 size="icon"
@@ -249,110 +217,9 @@ export function DemandesStream({
                         </div>
                     </div>
                 </CardHeader>
-                
-                <CardContent className="pb-3">
-                    {/* Filtres par rayon et type de véhicule */}
-                    <div className="flex flex-wrap gap-2 mb-3">
-                        <span className="text-sm text-gray-600 flex items-center">
-                            <Navigation className="h-4 w-4 mr-1" />
-                            Rayon:
-                        </span>
-                        {[5, 10, 20, 50].map((rayon) => (
-                            <Button
-                                key={rayon}
-                                variant={filters.rayon === rayon ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => onFiltersChange({ ...filters, rayon })}
-                                className={
-                                    filters.rayon === rayon
-                                        ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                                }
-                            >
-                                {rayon} km
-                            </Button>
-                        ))}
-                    </div>
-                    
-                    {/* Filtre par type de véhicule */}
-                    <div className="flex flex-wrap gap-2">
-                        <span className="text-sm text-gray-600 flex items-center">
-                            {filters.vehicleType === 'voiture' ? (
-                                <Car className="h-4 w-4 mr-1" />
-                            ) : filters.vehicleType === 'moto' ? (
-                                <Bike className="h-4 w-4 mr-1" />
-                            ) : (
-                                <Car className="h-4 w-4 mr-1" />
-                            )}
-                            Type:
-                        </span>
-                        <Button
-                            variant={filters.vehicleType === undefined || filters.vehicleType === 'all' ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => onFiltersChange({ ...filters, vehicleType: 'all' })}
-                            className={
-                                filters.vehicleType === undefined || filters.vehicleType === 'all'
-                                    ? 'bg-amber-500 hover:bg-amber-600 text-white'
-                                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                            }
-                        >
-                            Tous
-                        </Button>
-                        {VEHICLE_TYPES.map((type) => (
-                            <Button
-                                key={type.value}
-                                variant={filters.vehicleType === type.value ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => onFiltersChange({ ...filters, vehicleType: type.value })}
-                                className={
-                                    filters.vehicleType === type.value
-                                        ? 'bg-amber-500 hover:bg-amber-600 text-white'
-                                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                                }
-                            >
-                                {type.icon} {type.label}
-                            </Button>
-                        ))}
-                    </div>
-                    
-                    {/* Filtre par type de panne */}
-                    <div className="flex flex-wrap gap-2 mt-2">
-                        <span className="text-sm text-gray-600 flex items-center">
-                            <AlertCircle className="h-4 w-4 mr-1" />
-                            Panne:
-                        </span>
-                        <Button
-                            variant={!filters.typePanne ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => onFiltersChange({ ...filters, typePanne: undefined })}
-                            className={
-                                !filters.typePanne
-                                    ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                            }
-                        >
-                            Toutes
-                        </Button>
-                        {TYPES_PANNE_DEPANNAGE.map((type) => (
-                            <Button
-                                key={type.value}
-                                variant={filters.typePanne === type.value ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => onFiltersChange({ ...filters, typePanne: type.value })}
-                                className={
-                                    filters.typePanne === type.value
-                                        ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                                }
-                            >
-                                {type.icon} {type.label}
-                            </Button>
-                        ))}
-                    </div>
-                </CardContent>
             </Card>
 
-            {/* Liste des demandes */}
+            {/* Liste des demandes - Affichage professionnel sans filtres */}
             <div className="space-y-3">
                 {filteredDemandes.length === 0 ? (
                     <Card className="bg-white border-gray-200">
@@ -366,7 +233,6 @@ export function DemandesStream({
                                 </h3>
                                 <p className="text-gray-500 text-sm">
                                     Aucune demande dans votre zone pour le moment.
-                                    Élargissez votre rayon de recherche ou attendez de nouvelles demandes.
                                 </p>
                             </div>
                         </CardContent>
@@ -389,7 +255,6 @@ export function DemandesStream({
                                 }} />}
                                 
                                 <CardContent className="p-4">
-                                    {/* Header avec code et timer */}
                                     <div className="flex items-center justify-between mb-3">
                                         <div className="flex items-center gap-2">
                                             <Badge className="bg-blue-50 text-blue-600 border-blue-200">
@@ -409,18 +274,13 @@ export function DemandesStream({
                                         </div>
                                     </div>
 
-                                    {/* Info principale */}
                                     <div className="flex gap-4">
-                                        {/* Avatar ou icône type panne */}
                                         <div className="flex-shrink-0">
-                                            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ${
-                                                'bg-gray-100'
-                                            }`}>
+                                            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl bg-gray-100`}>
                                                 {typeInfo.icon}
                                             </div>
                                         </div>
                                         
-                                        {/* Détails */}
                                         <div className="flex-1 min-w-0">
                                             <h4 className="font-medium text-gray-900 flex items-center gap-2">
                                                 <span>{typeInfo.label}</span>
@@ -449,7 +309,6 @@ export function DemandesStream({
                                         </div>
                                     </div>
 
-                                    {/* Info client */}
                                     <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-200">
                                         <div className="flex items-center gap-2">
                                             <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
@@ -471,7 +330,6 @@ export function DemandesStream({
                                         </div>
                                         
                                         <div className="flex items-center gap-2">
-                                            {/* Bouton refuser */}
                                             <Button
                                                 variant="outline"
                                                 size="sm"
@@ -482,7 +340,6 @@ export function DemandesStream({
                                                 Refuser
                                             </Button>
                                             
-                                            {/* Bouton accepter */}
                                             <Button
                                                 size="sm"
                                                 onClick={() => handleAccept(demande.id)}
@@ -494,7 +351,6 @@ export function DemandesStream({
                                         </div>
                                     </div>
                                     
-                                    {/* Expanded details */}
                                     {isSelected && (
                                         <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
                                             <h5 className="text-sm font-medium text-gray-900 mb-2">
@@ -538,7 +394,6 @@ export function DemandesStream({
                 )}
             </div>
 
-            {/* Audio element pour les notifications */}
             <audio ref={audioRef} src="/sounds/notification.mp3" preload="auto" />
         </div>
     );

@@ -339,9 +339,21 @@ export interface RevenusParPeriode {
 
 // ==================== NOTIFICATIONS ====================
 
+export type NotificationType = 
+    | 'nouvelle_demande' 
+    | 'rappel' 
+    | 'message' 
+    | 'system' 
+    | 'evaluation'
+    | 'paiement_recu'
+    | 'acceptee'
+    | 'refusee'
+    | 'intervention_demalee'
+    | 'intervention_terminee';
+
 export interface DepanneurNotification {
     id: number;
-    type: 'nouvelle_demande' | 'rappel' | 'message' | 'system' | 'evaluation';
+    type: NotificationType;
     titre: string;
     message: string;
     isRead: boolean;

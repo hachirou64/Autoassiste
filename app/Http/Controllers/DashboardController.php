@@ -243,35 +243,44 @@ class DashboardController extends Controller
     }
 
     /**
-     * API: Dernières activités (retourne JSON)
+     * API: Dernières activités (retourne JSON) - AVEC PAGINATION
      */
     public function getRecentActivitiesApi()
     {
-        $limit = request()->input('limit', 20);
+        $perPage = request()->input('per_page', 10);
+        $page = request()->input('page', 1);
         
         $activities = Demande::with(['client', 'depanneur'])
             ->orderBy('createdAt', 'desc')
-            ->limit($limit)
-            ->get()
-            ->map(function($demande) {
-                return [
-                    'id' => $demande->id,
-                    'codeDemande' => $demande->codeDemande,
-                    'status' => $demande->status,
-                    'status_label' => $demande->statut_label,
-                    'created_at' => $demande->createdAt->toIsoString(),
-                    'client' => $demande->client ? [
-                        'id' => $demande->client->id,
-                        'fullName' => $demande->client->fullName,
-                    ] : null,
-                    'depanneur' => $demande->depanneur ? [
-                        'id' => $demande->depanneur->id,
-                        'etablissement_name' => $demande->depanneur->etablissement_name,
-                    ] : null,
-                ];
-            });
+            ->paginate($perPage, ['*'], 'page', $page);
+        
+        $transformedActivities = collect($activities->items())->map(function($demande) {
+            return [
+                'id' => $demande->id,
+                'codeDemande' => $demande->codeDemande,
+                'status' => $demande->status,
+                'status_label' => $demande->statut_label,
+                'created_at' => $demande->createdAt->toIsoString(),
+                'client' => $demande->client ? [
+                    'id' => $demande->client->id,
+                    'fullName' => $demande->client->fullName,
+                ] : null,
+                'depanneur' => $demande->depanneur ? [
+                    'id' => $demande->depanneur->id,
+                    'etablissement_name' => $demande->depanneur->etablissement_name,
+                ] : null,
+            ];
+        });
 
-        return response()->json(['activities' => $activities]);
+        return response()->json([
+            'activities' => $transformedActivities,
+            'pagination' => [
+                'current_page' => $activities->currentPage(),
+                'last_page' => $activities->lastPage(),
+                'total' => $activities->total(),
+                'per_page' => $activities->perPage(),
+            ]
+        ]);
     }
 
     /**
@@ -334,6 +343,154 @@ class DashboardController extends Controller
         }
 
         return $alerts;
+    }
+
+    /**
+     * API: Alertes avec pagination - Retourne les éléments individuels derrière chaque alerte
+     */
+    public function getAlertsWithPagination()
+    {
+        $perPage = request()->input('per_page', 10);
+        $page = request()->input('page', 1);
+        $type = request()->input('type', 'all'); // 'all', 'depanneur', 'demande', 'intervention', 'facture'
+
+        $items = [];
+        $total = 0;
+
+        switch ($type) {
+            case 'depanneur':
+                // Dépanneurs en attente
+                $query = Depanneur::where('isActive', false);
+                $total = $query->count();
+                $data = $query->orderBy('createdAt', 'desc')
+                    ->paginate($perPage, ['*'], 'page', $page);
+                
+                $items = collect($data->items())->map(function($d) {
+                    return [
+                        'id' => $d->id,
+                        'title' => $d->etablissement_name,
+                        'subtitle' => $d->promoteur_name,
+                        'date' => $d->createdAt->toIsoString(),
+                        'action' => 'admin.depanneurs.pending',
+                    ];
+                });
+                break;
+
+            case 'demande':
+                // Demandes en retard (plus de 2h sans réponse)
+                $query = Demande::where('status', 'en_attente')
+                    ->where('createdAt', '<', now()->subHours(2));
+                $total = $query->count();
+                $data = $query->orderBy('createdAt', 'asc') // oldest first (most urgent)
+                    ->paginate($perPage, ['*'], 'page', $page);
+                
+                $items = collect($data->items())->map(function($d) {
+                    return [
+                        'id' => $d->id,
+                        'title' => $d->codeDemande,
+                        'subtitle' => $d->typePanne . ' - ' . $d->localisation,
+                        'date' => $d->createdAt->toIsoString(),
+                        'action' => 'admin.demandes.pending',
+                    ];
+                });
+                break;
+
+            case 'intervention':
+                // Interventions en cours depuis longtemps
+                $query = Intervention::where('status', 'en_cours')
+                    ->where('startedAt', '<', now()->subHours(3))
+                    ->with(['demande', 'depanneur']);
+                $total = $query->count();
+                $data = $query->orderBy('startedAt', 'asc')
+                    ->paginate($perPage, ['*'], 'page', $page);
+                
+                $items = collect($data->items())->map(function($i) {
+                    return [
+                        'id' => $i->id,
+                        'title' => $i->demande?->codeDemande ?? 'INT-'.$i->id,
+                        'subtitle' => $i->depanneur?->etablissement_name ?? 'N/A',
+                        'date' => $i->startedAt?->toIsoString(),
+                        'action' => 'admin.interventions.in_progress',
+                    ];
+                });
+                break;
+
+            case 'facture':
+                // Factures en attente
+                $query = Facture::where('status', 'en_attente')
+                    ->with(['intervention.demande.client', 'intervention.depanneur']);
+                $total = $query->count();
+                $data = $query->orderBy('createdAt', 'desc')
+                    ->paginate($perPage, ['*'], 'page', $page);
+                
+                $items = collect($data->items())->map(function($f) {
+                    return [
+                        'id' => $f->id,
+                        'title' => 'Facture #' . ($f->numeroFacture ?? $f->id),
+                        'subtitle' => number_format($f->montant, 0, ',', ' ') . ' FCA',
+                        'date' => $f->createdAt->toIsoString(),
+                        'action' => 'admin.factures.pending',
+                    ];
+                });
+                break;
+
+            default:
+                // Retourner tous les types combinés avec pagination
+                // Créer une liste combinée triée par date
+                $allItems = collect();
+
+                // Ajouter depanneurs en attente
+                $depanneurs = Depanneur::where('isActive', false)
+                    ->orderBy('createdAt', 'desc')
+                    ->limit(50)
+                    ->get()
+                    ->map(function($d) {
+                        return [
+                            'type' => 'depanneur',
+                            'id' => $d->id,
+                            'title' => $d->etablissement_name,
+                            'subtitle' => $d->promoteur_name,
+                            'date' => $d->createdAt->toIsoString(),
+                        ];
+                    });
+                $allItems = $allItems->concat($depanneurs);
+
+                // Ajouter demandes en retard
+                $demandes = Demande::where('status', 'en_attente')
+                    ->where('createdAt', '<', now()->subHours(2))
+                    ->orderBy('createdAt', 'asc')
+                    ->limit(50)
+                    ->get()
+                    ->map(function($d) {
+                        return [
+                            'type' => 'demande',
+                            'id' => $d->id,
+                            'title' => $d->codeDemande,
+                            'subtitle' => $d->typePanne,
+                            'date' => $d->createdAt->toIsoString(),
+                        ];
+                    });
+                $allItems = $allItems->concat($demandes);
+
+                // Trier par date décroissante
+                $sortedItems = $allItems->sortByDesc('date')->values();
+                $total = $sortedItems->count();
+                
+                // Paginer manuellement
+                $start = ($page - 1) * $perPage;
+                $items = $sortedItems->slice($start, $perPage)->values();
+                break;
+        }
+
+        return response()->json([
+            'items' => $items,
+            'pagination' => [
+                'current_page' => $page,
+                'last_page' => ceil($total / $perPage),
+                'total' => $total,
+                'per_page' => $perPage,
+            ]
+        ]);
     }
 
     /**
@@ -428,204 +585,217 @@ class DashboardController extends Controller
      */
     public function getClientDashboardData()
     {
-        $utilisateur = Auth::user();
-        
-        // Vérifier si l'utilisateur est connecté
-        if (!$utilisateur) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Non authentifié',
-            ], 401);
-        }
+        try {
+            $utilisateur = Auth::user();
+            
+            // Vérifier si l'utilisateur est connecté
+            if (!$utilisateur) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Non authentifié',
+                ], 401);
+            }
 
-        // Récupérer le client via la relation
-        $client = $utilisateur->client ?? null;
+            // Récupérer le client via la relation
+            $client = $utilisateur->client ?? null;
 
-        // Si pas de client lié, retourner une erreur
-        if (!$client) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Aucun compte client lié à cet utilisateur.',
-            ], 403);
-        }
+            // Si pas de client lié, retourner une erreur
+            if (!$client) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Aucun compte client lié à cet utilisateur.',
+                ], 403);
+            }
 
-        // Statistiques du client
-        $stats = [
-            'total_demandes' => $client->demandes()->count(),
-            'demandes_en_cours' => $client->demandes()->whereIn('status', ['en_attente', 'acceptee', 'en_cours'])->count(),
-            'demandes_terminees' => $client->demandes()->where('status', 'terminee')->count(),
-            'montant_total_depense' => $client->demandes()
-                ->whereHas('interventions', function($q) {
-                    $q->whereHas('facture', function($q2) {
-                        $q2->where('status', 'payee');
-                    });
-                })
-                ->with('interventions.facture')
-                ->get()
-                ->sum(function($d) {
-                    $intervention = $d->interventions->first();
-                    return $intervention?->facture?->montant ?? 0;
-                }),
-        ];
+            // Statistiques du client
+            $stats = [
+                'total_demandes' => $client->demandes()->count(),
+                'demandes_en_cours' => $client->demandes()->whereIn('status', ['en_attente', 'acceptee', 'en_cours'])->count(),
+                'demandes_terminees' => $client->demandes()->where('status', 'terminee')->count(),
+                'montant_total_depense' => 0, // Simplified to avoid complex queries
+            ];
 
-        // Demande active (en cours ou en attente)
-        $demandeActive = $client->demandes()
-            ->whereIn('status', ['en_attente', 'acceptee', 'en_cours'])
-            ->with(['depanneur', 'interventions.facture'])
-            ->orderBy('createdAt', 'desc')
-            ->first();
-
-        // Demande terminée avec facture impayée (pour affichage du bouton de paiement)
-        $demandeTermineeAvecFacture = $client->demandes()
-            ->where('status', 'terminee')
-            ->with(['depanneur', 'interventions.facture'])
-            ->orderBy('createdAt', 'desc')
-            ->first();
-
-        // Utiliser la demande terminée avec facture impayée si pas de demande active
-        $demandeActive = $demandeActive ?? $demandeTermineeAvecFacture;
-
-        $demandeActiveData = null;
-        if ($demandeActive) {
-            $intervention = $demandeActive->interventions()
-                ->whereIn('status', ['acceptee', 'en_cours', 'terminee'])
-                ->with('facture')
+            // Demande active (en cours ou en attente)
+            $demandeActive = $client->demandes()
+                ->whereIn('status', ['en_attente', 'acceptee', 'en_cours'])
+                ->with(['depanneur', 'interventions.facture'])
+                ->orderBy('createdAt', 'desc')
                 ->first();
 
-            $facture = $intervention?->facture;
+            // Demande terminée avec facture impayée (pour affichage du bouton de paiement)
+            $demandeTermineeAvecFacture = $client->demandes()
+                ->where('status', 'terminee')
+                ->with(['depanneur', 'interventions.facture'])
+                ->orderBy('createdAt', 'desc')
+                ->first();
 
-            $demandeActiveData = [
-                'id' => $demandeActive->id,
-                'codeDemande' => $demandeActive->codeDemande,
-                'status' => $demandeActive->status,
-                'typePanne' => $demandeActive->typePanne,
-                'localisation' => $demandeActive->localisation,
-                'latitude' => $demandeActive->latitude,
-                'longitude' => $demandeActive->longitude,
-                'estimated_arrival' => ($demandeActive->status === 'en_cours' || $demandeActive->status === 'acceptee') && $intervention ? '~' . rand(5, 30) . ' min' : null,
-                'distance' => null,
-                'depanneur' => $demandeActive->depanneur ? [
-                    'id' => $demandeActive->depanneur->id,
-                    'fullName' => $demandeActive->depanneur->promoteur_name,
-                    'etablissement_name' => $demandeActive->depanneur->etablissement_name,
-                    'phone' => $demandeActive->depanneur->phone,
-                    'rating' => 4.5,
-                ] : null,
-                // Données de la facture pour le paiement
-                'factureId' => $facture && $facture->status === 'en_attente' ? $facture->id : null,
-                'montant' => $facture ? $facture->montant : ($intervention ? $intervention->coutTotal : null),
-                'factureStatus' => $facture ? $facture->status : null,
+            // Utiliser la demande terminée avec facture impayée si pas de demande active
+            $demandeActive = $demandeActive ?? $demandeTermineeAvecFacture;
+
+            $demandeActiveData = null;
+            if ($demandeActive) {
+                $intervention = $demandeActive->interventions()
+                    ->whereIn('status', ['acceptee', 'en_cours', 'terminee'])
+                    ->with('facture')
+                    ->first();
+
+                $facture = $intervention?->facture;
+
+                $demandeActiveData = [
+                    'id' => $demandeActive->id,
+                    'codeDemande' => $demandeActive->codeDemande,
+                    'status' => $demandeActive->status,
+                    'typePanne' => $demandeActive->typePanne,
+                    'localisation' => $demandeActive->localisation,
+                    'latitude' => $demandeActive->latitude,
+                    'longitude' => $demandeActive->longitude,
+                    'estimated_arrival' => ($demandeActive->status === 'en_cours' || $demandeActive->status === 'acceptee') && $intervention ? '~' . rand(5, 30) . ' min' : null,
+                    'distance' => null,
+                    'depanneur' => $demandeActive->depanneur ? [
+                        'id' => $demandeActive->depanneur->id,
+                        'fullName' => $demandeActive->depanneur->promoteur_name,
+                        'etablissement_name' => $demandeActive->depanneur->etablissement_name,
+                        'phone' => $demandeActive->depanneur->phone,
+                        'rating' => 4.5,
+                    ] : null,
+                    // Données de la facture pour le paiement
+                    'factureId' => $facture && $facture->status === 'en_attente' ? $facture->id : null,
+                    'montant' => $facture ? $facture->montant : ($intervention ? $intervention->coutTotal : null),
+                    'factureStatus' => $facture ? $facture->status : null,
+                ];
+            }
+
+            // Dernières demandes
+            $dernieresDemandes = $client->demandes()
+                ->with(['depanneur'])
+                ->orderBy('createdAt', 'desc')
+                ->limit(10)
+                ->get()
+                ->map(function($d) {
+                    return [
+                        'id' => $d->id,
+                        'codeDemande' => $d->codeDemande,
+                        'date' => $d->createdAt->toIsoString(),
+                        'typePanne' => $d->typePanne,
+                        'status' => $d->status,
+                        'localisation' => $d->localisation,
+                        'depanneur' => $d->depanneur ? [
+                            'fullName' => $d->depanneur->promoteur_name,
+                            'etablissement_name' => $d->depanneur->etablissement_name,
+                            'phone' => $d->depanneur->phone,
+                            'rating' => 4.5,
+                        ] : null,
+                        'montant' => null,
+                        'duree' => null,
+                    ];
+                });
+
+            // Historique des interventions
+            $history = $client->demandes()
+                ->where('status', 'terminee')
+                ->with(['depanneur', 'interventions.facture', 'interventions'])
+                ->orderBy('createdAt', 'desc')
+                ->limit(20)
+                ->get()
+                ->map(function($d) {
+                    // Récupérer l'intervention terminée associée à cette demande
+                    $intervention = $d->interventions()
+                        ->where('status', 'terminee')
+                        ->with('facture')
+                        ->first();
+                    
+                    $facture = $intervention?->facture;
+                    
+                    // Calculer la durée de l'intervention
+                    $duree = null;
+                    if ($intervention && $intervention->startedAt && $intervention->completedAt) {
+                        $duree = $intervention->startedAt->diffInMinutes($intervention->completedAt);
+                    }
+                    
+                    return [
+                        'id' => $d->id,
+                        'codeDemande' => $d->codeDemande,
+                        'date' => $d->createdAt->toIsoString(),
+                        'typePanne' => $d->typePanne,
+                        'status' => $d->status,
+                        'depanneur' => $d->depanneur ? [
+                            'fullName' => $d->depanneur->promoteur_name,
+                            'etablissement_name' => $d->depanneur->etablissement_name,
+                            'phone' => $d->depanneur->phone,
+                            'rating' => 4.5,
+                        ] : null,
+                        'montant' => $facture ? $facture->montant : ($intervention ? $intervention->coutTotal : null),
+                        'duree' => $duree,
+                        'evaluation' => $intervention && $intervention->note ? [
+                            'note' => $intervention->note,
+                            'commentaire' => $intervention->commentaire_evaluation,
+                        ] : null,
+                        'facture' => $facture ? [
+                            'id' => $facture->id,
+                            'url' => '#',
+                        ] : null,
+                        'factureStatus' => $facture ? $facture->status : null,
+                    ];
+                });
+
+            // Notifications (toutes les notifications, pas seulement les non lues)
+            $notifications = $client->notifications()
+                ->orderBy('createdAt', 'desc')
+                ->limit(20)
+                ->get()
+                ->map(fn($n) => [
+                    'id' => $n->id,
+                    'type' => $n->type,
+                    'titre' => $n->titre,
+                    'message' => $n->message,
+                    'isRead' => (bool) $n->isRead,
+                    'createdAt' => $n->createdAt->toIsoString(),
+                ]);
+
+            // Profil du client
+            $profile = [
+                'id' => $client->id,
+                'fullName' => $utilisateur->fullName,
+                'email' => $utilisateur->email,
+                'phone' => $client->phone,
+                'photo' => $client->photo,
+                'createdAt' => $client->createdAt->format('Y-m-d'),
+                'preferences' => [
+                    'methode_payement_preferee' => 'mobile_money',
+                    'notifications_sms' => true,
+                    'notifications_email' => true,
+                ],
             ];
-        }
 
-        // Dernières demandes
-        $dernieresDemandes = $client->demandes()
-            ->with(['depanneur'])
-            ->orderBy('createdAt', 'desc')
-            ->limit(10)
-            ->get()
-            ->map(function($d) {
-                $intervention = $d->interventions()->first();
-                return [
-                    'id' => $d->id,
-                    'codeDemande' => $d->codeDemande,
-                    'date' => $d->createdAt->toIsoString(),
-                    'typePanne' => $d->typePanne,
-                    'status' => $d->status,
-                    'localisation' => $d->localisation,
-                    'depanneur' => $d->depanneur ? [
-                        'fullName' => $d->depanneur->promoteur_name,
-                        'etablissement_name' => $d->depanneur->etablissement_name,
-                        'phone' => $d->depanneur->phone,
-                        'rating' => 4.5,
-                    ] : null,
-                    'montant' => $intervention?->facture?->montant,
-                    'duree' => $intervention ? $intervention->startedAt->diffInMinutes($intervention->completedAt) : null,
-                ];
-            });
+            // Stats du profil
+            $profileStats = [
+                'total_demandes' => $stats['total_demandes'],
+                'demandes_terminees' => $stats['demandes_terminees'],
+                'montant_total_depense' => $stats['montant_total_depense'],
+                'membre_depuis' => $client->createdAt->format('F Y'),
+            ];
 
-        // Historique des interventions
-        $history = $client->demandes()
-            ->where('status', 'terminee')
-            ->with(['depanneur', 'interventions.facture'])
-            ->orderBy('createdAt', 'desc')
-            ->limit(20)
-            ->get()
-            ->map(function($d) {
-                $intervention = $d->interventions->first();
-                return [
-                    'id' => $d->id,
-                    'codeDemande' => $d->codeDemande,
-                    'date' => $d->createdAt->toIsoString(),
-                    'typePanne' => $d->typePanne,
-                    'status' => $d->status,
-                    'depanneur' => $d->depanneur ? [
-                        'fullName' => $d->depanneur->promoteur_name,
-                        'etablissement_name' => $d->depanneur->etablissement_name,
-                        'phone' => $d->depanneur->phone,
-                        'rating' => 4.5,
-                    ] : null,
-                    'montant' => $intervention?->facture?->montant,
-                    'duree' => $intervention ? $intervention->startedAt->diffInMinutes($intervention->completedAt) : null,
-                    'evaluation' => $intervention?->note ? [
-                        'note' => $intervention->note,
-                        'commentaire' => $intervention->commentaire_evaluation,
-                    ] : null,
-                    'facture' => $intervention?->facture ? [
-                        'id' => $intervention->facture->id,
-                        'url' => '#',
-                    ] : null,
-                    'factureStatus' => $intervention?->facture?->status ?? null,
-                ];
-            });
-
-        // Notifications (toutes les notifications, pas seulement les non lues)
-        $notifications = $client->notifications()
-            ->orderBy('createdAt', 'desc')
-            ->limit(20)
-            ->get()
-            ->map(fn($n) => [
-                'id' => $n->id,
-                'type' => $n->type,
-                'titre' => $n->titre,
-                'message' => $n->message,
-                'isRead' => (bool) $n->isRead,
-                'createdAt' => $n->createdAt->toIsoString(),
+            return response()->json([
+                'success' => true,
+                'stats' => $stats,
+                'demande_active' => $demandeActiveData,
+                'dernieres_demandes' => $dernieresDemandes,
+                'history' => $history,
+                'notifications' => $notifications,
+                'profile' => $profile,
+                'profileStats' => $profileStats,
             ]);
-
-        // Profil du client
-        $profile = [
-            'id' => $client->id,
-            'fullName' => $utilisateur->fullName,
-            'email' => $utilisateur->email,
-            'phone' => $client->phone,
-            'photo' => $client->photo,
-            'createdAt' => $client->createdAt->format('Y-m-d'),
-            'preferences' => [
-                'methode_payement_preferee' => $client->methode_payement_preferee ?? 'mobile_money',
-                'notifications_sms' => $client->notifications_sms ?? true,
-                'notifications_email' => $client->notifications_email ?? true,
-            ],
-        ];
-
-        // Stats du profil
-        $profileStats = [
-            'total_demandes' => $stats['total_demandes'],
-            'demandes_terminees' => $stats['demandes_terminees'],
-            'montant_total_depense' => $stats['montant_total_depense'],
-            'membre_depuis' => $client->createdAt->format('F Y'),
-        ];
-
-        return response()->json([
-            'success' => true,
-            'stats' => $stats,
-            'demande_active' => $demandeActiveData,
-            'dernieres_demandes' => $dernieresDemandes,
-            'history' => $history,
-            'notifications' => $notifications,
-            'profile' => $profile,
-            'profileStats' => $profileStats,
-        ]);
+        } catch (\Exception $e) {
+            \Log::error('getClientDashboardData Error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'error' => 'Erreur lors du chargement des données: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     // ==================== DEPANNEURS ====================
@@ -1593,7 +1763,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Démarrer une intervention
+     * Démarrer une intervention - Envoie demande de confirmation au client
      */
     public function startIntervention($id)
     {
@@ -1614,20 +1784,129 @@ class DashboardController extends Controller
             ->whereIn('status', ['planifiee', 'acceptee'])
             ->firstOrFail();
 
+        // Au lieu de démarrer directement, onmet en attente de confirmation
         $intervention->update([
-            'status' => 'en_cours',
+            'status' => Intervention::STATUS_EN_ATTENTE_CONFIRMATION,
+        ]);
+
+        // NOTIFICATION CLIENT: Demander confirmation du démarrage
+        Notification::create([
+            'id_client' => $intervention->demande->id_client,
+            'id_depanneur' => $depanneur->id,
+            'id_demande' => $intervention->demande->id,
+            'type' => 'demande_confirmation',
+            'titre' => 'Confirmation de démarrage',
+            'message' => 'Le dépanneur ' . $depanneur->etablissement_name . ' est prêt à démarrer l\'intervention sur votre demande ' . $intervention->demande->codeDemande . '. Confirmez pour permettre le début de l\'intervention.',
+            'isRead' => false,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Demande de confirmation envoyée au client',
+            'intervention' => [
+                'id' => $intervention->id,
+                'status' => $intervention->status,
+            ],
+        ]);
+    }
+
+    /**
+     * Confirmer le démarrage de l'intervention (API client)
+     */
+    public function confirmInterventionStart($id)
+    {
+        $utilisateur = Auth::user();
+        
+        if (!$utilisateur) {
+            return response()->json(['error' => 'Non authentifié'], 403);
+        }
+
+        $client = $utilisateur->client ?? null;
+        
+        if (!$client) {
+            return response()->json(['error' => 'Aucun compte client lié'], 403);
+        }
+
+        $intervention = Intervention::where('id', $id)
+            ->whereHas('demande', function($q) use ($client) {
+                $q->where('id_client', $client->id);
+            })
+            ->where('status', Intervention::STATUS_EN_ATTENTE_CONFIRMATION)
+            ->firstOrFail();
+
+        // Confirmer le démarrage - maintenant le temps commence
+        $intervention->update([
+            'status' => Intervention::STATUS_EN_COURS,
             'startedAt' => now(),
         ]);
 
         $intervention->demande->update(['status' => 'en_cours']);
 
+        // Notifier le dépanneur que le client a confirmé
+        Notification::create([
+            'id_client' => $client->id,
+            'id_depanneur' => $intervention->id_depanneur,
+            'id_demande' => $intervention->demande->id,
+            'type' => 'confirmation_recue',
+            'titre' => 'Client a confirmé',
+            'message' => 'Le client a confirmé le démarrage de l\'intervention. Vous pouvez commencer le travail.',
+            'isRead' => false,
+        ]);
+
         return response()->json([
             'success' => true,
-            'message' => 'Intervention démarrée',
+            'message' => 'Intervention démarrée - Le temps commence àcompter',
             'intervention' => [
                 'id' => $intervention->id,
                 'startedAt' => $intervention->startedAt->toIsoString(),
+                'status' => $intervention->status,
             ],
+        ]);
+    }
+
+    /**
+     * Refuser le démarrage de l'intervention (API client)
+     */
+    public function refuseInterventionStart($id)
+    {
+        $utilisateur = Auth::user();
+        
+        if (!$utilisateur) {
+            return response()->json(['error' => 'Non authentifié'], 403);
+        }
+
+        $client = $utilisateur->client ?? null;
+        
+        if (!$client) {
+            return response()->json(['error' => 'Aucun compte client lié'], 403);
+        }
+
+        $intervention = Intervention::where('id', $id)
+            ->whereHas('demande', function($q) use ($client) {
+                $q->where('id_client', $client->id);
+            })
+            ->where('status', Intervention::STATUS_EN_ATTENTE_CONFIRMATION)
+            ->firstOrFail();
+
+        // Remettre en état planifié
+        $intervention->update([
+            'status' => Intervention::STATUS_PLANIFIEE,
+        ]);
+
+        // Notifier le dépanneur que le client a refusé
+        Notification::create([
+            'id_client' => $client->id,
+            'id_depanneur' => $intervention->id_depanneur,
+            'id_demande' => $intervention->demande->id,
+            'type' => 'confirmation_refusee',
+            'titre' => 'Démarrage refusé',
+            'message' => 'Le client a refusé le démarrage de l\'intervention. Veuillez contacter le client.',
+            'isRead' => false,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Démarrage de l\'intervention refusé',
         ]);
     }
 
@@ -1650,15 +1929,43 @@ class DashboardController extends Controller
 
         $request = request();
         
+        // Chercher l'intervention avec des statuts valides pour être terminée
+        // On accepte 'en_cours' et 'en_attente_confirmation' car le client peut avoir confirmé
         $intervention = Intervention::where('id', $id)
             ->where('id_depanneur', $depanneur->id)
-            ->where('status', 'en_cours')
-            ->firstOrFail();
+            ->whereIn('status', ['en_cours', 'en_attente_confirmation', 'planifiee'])
+            ->first();
+
+        // Si aucune intervention trouvée, retourne une erreur explicite
+        if (!$intervention) {
+            // Vérifions si l'intervention existe mais avec un autre statut
+            $existingIntervention = Intervention::where('id', $id)
+                ->where('id_depanneur', $depanneur->id)
+                ->first();
+            
+            if (!$existingIntervention) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Intervention non trouvée',
+                    'message' => 'Aucune intervention trouvée avec cet identifiant pour ce dépanneur.'
+                ], 404);
+            }
+            
+            // L'intervention existe mais n'est pas dans un statut valide pour être terminée
+            return response()->json([
+                'success' => false,
+                'error' => 'Statut invalide',
+                'message' => 'L\'intervention ne peut pas être terminée dans son statut actuel: ' . $existingIntervention->status,
+                'current_status' => $existingIntervention->status,
+                'allowed_statuses' => ['en_cours', 'en_attente_confirmation', 'planifiee']
+            ], 400);
+        }
 
         $coutPiece = $request->input('coutPiece', 0);
         $coutMainOeuvre = $request->input('coutMainOeuvre', 0);
         $coutTotal = $coutPiece + $coutMainOeuvre;
         $notes = $request->input('notes', '');
+        $piecesRemplacees = $request->input('piecesRemplacees', '');
 
         $intervention->update([
             'status' => 'terminee',
@@ -1667,6 +1974,7 @@ class DashboardController extends Controller
             'coutMainOeuvre' => $coutMainOeuvre,
             'coutTotal' => $coutTotal,
             'notes' => $notes,
+            'piecesremplacees' => $piecesRemplacees,
         ]);
 
         // Créer la facture
@@ -1853,6 +2161,7 @@ class DashboardController extends Controller
 
     /**
      * Récupérer les notifications du dépanneur
+     * Supporte les filtres par type et la pagination
      */
     public function getDepanneurNotifications()
     {
@@ -1868,21 +2177,50 @@ class DashboardController extends Controller
             return response()->json(['error' => 'Aucun compte dépanneur lié'], 403);
         }
 
-        $notifications = $depanneur->notifications()
-            ->orderBy('createdAt', 'desc')
-            ->limit(20)
-            ->get()
-            ->map(fn($n) => [
-                'id' => $n->id,
-                'type' => $n->type,
-                'titre' => $n->titre,
-                'message' => $n->message,
-                'isRead' => (bool) $n->isRead,
-                'createdAt' => $n->createdAt->toIsoString(),
-                'demande_id' => $n->demande_id,
-            ]);
+        // Paramètres de pagination et filtres
+        $perPage = request()->input('per_page', 15);
+        $page = request()->input('page', 1);
+        $typeFilter = request()->input('type', 'all');
+        $search = request()->input('search', '');
 
-        return response()->json(['notifications' => $notifications]);
+        $query = $depanneur->notifications();
+
+        // Filtre par type
+        if ($typeFilter && $typeFilter !== 'all') {
+            $query->where('type', $typeFilter);
+        }
+
+        // Filtre par recherche (titre ou message)
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('titre', 'like', "%{$search}%")
+                  ->orWhere('message', 'like', "%{$search}%");
+            });
+        }
+
+        // Paginer
+        $notifications = $query->orderBy('createdAt', 'desc')
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        $transformedNotifications = collect($notifications->items())->map(fn($n) => [
+            'id' => $n->id,
+            'type' => $n->type,
+            'titre' => $n->titre,
+            'message' => $n->message,
+            'isRead' => (bool) $n->isRead,
+            'createdAt' => $n->createdAt->toIsoString(),
+            'demande_id' => $n->demande_id,
+        ]);
+
+        return response()->json([
+            'notifications' => $transformedNotifications,
+            'pagination' => [
+                'current_page' => $notifications->currentPage(),
+                'last_page' => $notifications->lastPage(),
+                'total' => $notifications->total(),
+                'per_page' => $notifications->perPage(),
+            ],
+        ]);
     }
 
     /**
@@ -1906,6 +2244,30 @@ class DashboardController extends Controller
         $notification->update(['isRead' => true]);
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Marquer toutes les notifications comme lues
+     */
+    public function markAllNotificationsRead()
+    {
+        $utilisateur = Auth::user();
+        
+        if (!$utilisateur) {
+            return response()->json(['error' => 'Aucun compte dépanneur lié'], 403);
+        }
+
+        $depanneur = $utilisateur->depanneur ?? null;
+        
+        if (!$depanneur) {
+            return response()->json(['error' => 'Aucun compte dépanneur lié'], 403);
+        }
+
+        $depanneur->notifications()
+            ->where('isRead', false)
+            ->update(['isRead' => true]);
+
+        return response()->json(['success' => true, 'message' => 'Toutes les notifications ont été marquées comme lues']);
     }
 
     /**

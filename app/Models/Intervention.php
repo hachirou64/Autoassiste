@@ -51,7 +51,7 @@ class Intervention extends Model
 
     
     const STATUS_PLANIFIEE = 'planifiee';
-
+    const STATUS_EN_ATTENTE_CONFIRMATION = 'en_attente_confirmation';
     const STATUS_EN_COURS = 'en_cours';
 
    
@@ -160,6 +160,7 @@ class Intervention extends Model
     {
         $labels = [
             self::STATUS_PLANIFIEE => 'Planifiée',
+            self::STATUS_EN_ATTENTE_CONFIRMATION => 'En attente de confirmation',
             self::STATUS_EN_COURS => 'En cours',
             self::STATUS_TERMINEE => 'Terminée',
         ];
@@ -213,6 +214,7 @@ class Intervention extends Model
     {
         $validStatuses = [
             self::STATUS_PLANIFIEE,
+            self::STATUS_EN_ATTENTE_CONFIRMATION,
             self::STATUS_EN_COURS,
             self::STATUS_TERMINEE,
         ];

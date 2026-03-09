@@ -7,20 +7,21 @@ import { GMapComponent } from '@/components/client/gmap-component';
 import { DemandeForm } from '@/components/client/demande-form';
 import { DemandeList } from '@/components/client/demande-list';
 import { InterventionTracker } from '@/components/client/intervention-tracker';
-import { ClientNotifications } from '@/components/client/client-notifications';
 import { InterventionHistory } from '@/components/client/intervention-history';
 import { UserProfile } from '@/components/client/user-profile';
 import { LoadingPage, LoadingGrid } from '@/components/ui/loading-spinner';
-import { useAppearance } from '@/hooks/use-appearance';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
     Home, PlusCircle, FileText, User, Bell,
     MapPin, Clock, ChevronRight, Menu, X, AlertCircle,
-    LogOut, Sun, Moon
+    LogOut, BellRing
 } from 'lucide-react';
 import type { ClientStats, ClientNotification, InterventionHistoryItem, UserProfile as UserProfileType, DemandeActive } from '@/types/client';
+import { PaymentModal } from '@/components/client/payment-modal';
+import { EvaluationModal } from '@/components/client/evaluation-modal';
+import { InterventionDetailsModal } from '@/components/client/intervention-details-modal';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
@@ -101,12 +102,13 @@ const mockProfileStats = {
     membre_depuis: 'janvier 2024',
 };
 
-type TabType = 'home' | 'new-demande' | 'demandes' | 'history' | 'profile';
+type TabType = 'home' | 'new-demande' | 'demandes' | 'history' | 'profile' | 'notifications';
 
 const navItems = [
-    { id: 'home', label: 'Accueil', icon: Home },
+    { id: 'home', label: 'Tableau de bord', icon: Home },
     { id: 'new-demande', label: 'Nouvelle demande', icon: PlusCircle },
     { id: 'demandes', label: 'Mes demandes', icon: FileText },
+    { id: 'notifications', label: 'Notifications', icon: BellRing },
     { id: 'history', label: 'Historique', icon: Clock },
     { id: 'profile', label: 'Profil', icon: User },
 ];
@@ -115,6 +117,18 @@ export default function ClientDashboard() {
     const [activeTab, setActiveTab] = useState<TabType>('home');
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [demandesFilter, setDemandesFilter] = useState<string>('all');
+    
+    // États pour les modales
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [showEvaluationModal, setShowEvaluationModal] = useState(false);
+    const [showDetailsModal, setShowDetailsModal] = useState(false);
+    
+    // Données pour les modales
+    const [selectedFactureId, setSelectedFactureId] = useState<number | undefined>(undefined);
+    const [selectedInterventionId, setSelectedInterventionId] = useState<number | undefined>(undefined);
+    const [selectedIntervention, setSelectedIntervention] = useState<any>(undefined);
+    const [selectedFacture, setSelectedFacture] = useState<any>(undefined);
     
     // États pour les données et le chargement
     const [loading, setLoading] = useState(true);
@@ -229,6 +243,30 @@ export default function ClientDashboard() {
         fetchDashboardData();
     }, [fetchDashboardData]);
 
+    // Rafraîchir les données quand la page devient visible (après retour du paiement)
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                // La page est devenue visible, rafraîchir les données
+                fetchDashboardData();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        // También监听窗口聚焦事件
+        const handleFocus = () => {
+            fetchDashboardData();
+        };
+        
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('focus', handleFocus);
+        };
+    }, [fetchDashboardData]);
+
     // Fonction pour gérer la soumission d'une nouvelle demande
     const handleNewDemande = async (data: { vehicleType: string; typePanne: string; description: string; localisation: string; depanneurId?: number }) => {
         console.log('Nouvelle demande:', data);
@@ -290,8 +328,22 @@ export default function ClientDashboard() {
     };
 
     const handleViewDetails = (item: InterventionHistoryItem) => {
-        // Rediriger vers la page de détails de l'intervention
-        router.visit(`/client/intervention/${item.id}/details`);
+        // Ouvrir la modal de détails avec les données de l'intervention
+        setSelectedIntervention({
+            id: item.id,
+            codeDemande: item.codeDemande,
+            status: item.status,
+            typePanne: item.typePanne,
+            localisation: 'Cotonou, Rue de la Paix', // Could be enhanced
+            date: item.date,
+            duree: item.duree,
+            montant: item.montant,
+            depanneur: item.depanneur,
+            facture: item.facture ? { id: item.facture.id, status: item.factureStatus || 'en_attente', montant: item.montant } : undefined,
+            evaluation: item.evaluation,
+        });
+        setSelectedInterventionId(item.id);
+        setShowDetailsModal(true);
     };
 
     const handleDownloadFacture = (factureId: number) => {
@@ -300,15 +352,22 @@ export default function ClientDashboard() {
     };
 
     const handlePayer = (factureId: number) => {
-        // Rediriger vers la page de paiement
-        if (factureId) {
-            router.visit(`/client/paiement/${factureId}`);
-        }
+        // Ouvrir la modal de paiement
+        setSelectedFactureId(factureId);
+        setShowPaymentModal(true);
     };
 
     const handleEvaluer = (item: InterventionHistoryItem) => {
-        // Rediriger vers la page d'évaluation
-        router.visit(`/client/intervention/${item.id}/evaluer`);
+        // Ouvrir la modal d'évaluation
+        setSelectedInterventionId(item.id);
+        setSelectedIntervention({
+            id: item.id,
+            codeDemande: item.codeDemande,
+            typePanne: item.typePanne,
+            date: item.date,
+            depanneur: item.depanneur,
+        });
+        setShowEvaluationModal(true);
     };
 
     const handleSaveProfile = (data: Partial<UserProfileType>) => {
@@ -323,6 +382,14 @@ export default function ClientDashboard() {
     const handleLogout = () => {
         // Déconnexion via Inertia router vers la route /logout (POST)
         router.post('/logout');
+    };
+
+    // Fonction pour naviguer vers un onglet avec un filtre
+    const handleNavigate = (tab: TabType, filter?: string) => {
+        if (filter) {
+            setDemandesFilter(filter);
+        }
+        setActiveTab(tab);
     };
 
     const renderTabContent = () => {
@@ -357,25 +424,28 @@ export default function ClientDashboard() {
 
         switch (activeTab) {
             case 'home':
-                return <HomeTab data={data} onRefresh={fetchDashboardData} />;
+                return <HomeTab data={data} onRefresh={fetchDashboardData} onNavigate={handleNavigate} onPayer={handlePayer} onEvaluer={handleEvaluer} />;
             case 'new-demande':
                 return <NewDemandeTab onSubmit={handleNewDemande} />;
             case 'demandes':
-                return <DemandesTab data={data} />;
+                return <DemandesTab data={data} filter={demandesFilter} onFilterChange={setDemandesFilter} />;
             case 'history':
-                return <HistoryTab data={data} onViewDetails={handleViewDetails} onDownloadFacture={handleDownloadFacture} onEvaluer={handleEvaluer} />;
+                return <HistoryTab data={data} onViewDetails={handleViewDetails} onDownloadFacture={handleDownloadFacture} onEvaluer={handleEvaluer} onPayer={handlePayer} />;
+            case 'notifications':
+                return <NotificationsTab />;
             case 'profile':
                 return <ProfileTab data={data} onSaveProfile={handleSaveProfile} onChangePassword={handleChangePassword} />;
             default:
-                return <HomeTab data={data} />;
+                return <HomeTab data={data} onRefresh={fetchDashboardData} onNavigate={handleNavigate} onPayer={handlePayer} onEvaluer={handleEvaluer} />;
         }
     };
 
     const getPageTitle = (): string => {
         const titles: Record<TabType, string> = {
-            home: 'Mon Espace',
+            home: 'Tableau de bord',
             'new-demande': 'Nouvelle demande',
             demandes: 'Mes demandes',
+            notifications: 'Notifications',
             history: 'Historique',
             profile: 'Mon profil',
         };
@@ -445,8 +515,8 @@ export default function ClientDashboard() {
                     
                     {/* Footer */}
                     <div className="p-3 border-t border-slate-700/50 space-y-2">
-                        {/* Theme Toggle Button */}
-                        <ThemeToggleButton sidebarOpen={sidebarOpen} />
+                        {/* Notifications Button */}
+                        <NotificationsButton sidebarOpen={sidebarOpen} />
                         
                         {/* Logout Button */}
                         <button
@@ -537,16 +607,87 @@ export default function ClientDashboard() {
                         {renderTabContent()}
                     </div>
                 </div>
+
+                {/* Modales */}
+                <PaymentModal 
+                    isOpen={showPaymentModal}
+                    onClose={() => {
+                        setShowPaymentModal(false);
+                        setSelectedFactureId(undefined);
+                    }}
+                    factureId={selectedFactureId}
+                    facture={selectedFacture}
+                />
+                
+                <EvaluationModal
+                    isOpen={showEvaluationModal}
+                    onClose={() => {
+                        setShowEvaluationModal(false);
+                        setSelectedInterventionId(undefined);
+                        setSelectedIntervention(undefined);
+                    }}
+                    interventionId={selectedInterventionId}
+                    intervention={selectedIntervention}
+                />
+                
+                <InterventionDetailsModal
+                    isOpen={showDetailsModal}
+                    onClose={() => {
+                        setShowDetailsModal(false);
+                        setSelectedInterventionId(undefined);
+                        setSelectedIntervention(undefined);
+                    }}
+                    interventionId={selectedInterventionId}
+                    intervention={selectedIntervention}
+                />
             </div>
         </AppHeaderLayout>
     );
 }
 
 // Tab: Accueil
-function HomeTab({ data, onRefresh }: { data: DashboardData; onRefresh?: () => void }) {
+function HomeTab({ data, onRefresh, onNavigate, onPayer, onEvaluer }: { data: DashboardData; onRefresh?: () => void; onNavigate?: (tab: TabType, filter?: string) => void; onPayer?: (factureId: number) => void; onEvaluer?: (item: InterventionHistoryItem) => void }) {
+    const handleCardClick = (type: string) => {
+        // Navigate to the appropriate tab based on the card type
+        switch (type) {
+            case 'all':
+            case 'en_cours':
+            case 'terminee':
+                // Navigate to 'demandes' tab with filter
+                onNavigate?.('demandes', type);
+                break;
+            case 'active':
+                // Already on home, scroll to the active demande section
+                break;
+            case 'depenses':
+                // Navigate to history to see expenses
+                onNavigate?.('history');
+                break;
+            default:
+                break;
+        }
+    };
+
+    // Handler pour l'évaluation depuis le tracker
+    const handleEvaluerFromTracker = () => {
+        if (data.stats.demande_active && onEvaluer && data.stats.demande_active.depanneur) {
+            const item: InterventionHistoryItem = {
+                id: data.stats.demande_active.id,
+                codeDemande: data.stats.demande_active.codeDemande,
+                date: new Date().toISOString(),
+                typePanne: data.stats.demande_active.typePanne,
+                status: data.stats.demande_active.status,
+                depanneur: data.stats.demande_active.depanneur,
+                montant: data.stats.demande_active.montant || 0,
+                duree: 0,
+            };
+            onEvaluer(item);
+        }
+    };
+
     return (
         <div className="space-y-6">
-            <ClientStatsCards stats={data.stats} />
+            <ClientStatsCards stats={data.stats} onCardClick={handleCardClick} />
             <div className="grid gap-6 lg:grid-cols-2">
                 <GMapComponent demandeActive={data.stats.demande_active} />
                 <InterventionTracker
@@ -592,53 +733,37 @@ function HomeTab({ data, onRefresh }: { data: DashboardData; onRefresh?: () => v
                         }
                     }}
                     onPayer={() => {
-                        if (data.stats.demande_active?.factureId) {
-                            router.visit(`/client/paiement/${data.stats.demande_active.factureId}`);
+                        // Ouvrir la modale de paiement au lieu de naviguer vers une page
+                        if (data.stats.demande_active?.factureId && onPayer) {
+                            onPayer(data.stats.demande_active.factureId);
+                        }
+                    }}
+                    onViewHistory={() => {
+                        onNavigate?.('history');
+                    }}
+                    onEvaluer={handleEvaluerFromTracker}
+                    onStepClick={(status: string) => {
+                        // Navigate to the appropriate filter based on status
+                        switch (status) {
+                            case 'en_attente':
+                            case 'acceptee':
+                                // Show in-progress demands
+                                onNavigate?.('demandes', 'en_cours');
+                                break;
+                            case 'en_cours':
+                                onNavigate?.('demandes', 'en_cours');
+                                break;
+                            case 'terminee':
+                                // Show completed interventions in history
+                                onNavigate?.('history');
+                                break;
+                            default:
+                                onNavigate?.('demandes', 'all');
+                                break;
                         }
                     }}
                 />
             </div>
-            <ClientNotifications 
-                notifications={data.notifications.slice(0, 3)}
-                onMarkAsRead={async (id) => {
-                    try {
-                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-                        const response = await fetch(`/api/client/notifications/${id}/read`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': csrfToken,
-                            },
-                            credentials: 'include',
-                        });
-                        
-                        if (response.ok && onRefresh) {
-                            onRefresh();
-                        }
-                    } catch (error) {
-                        console.error('Erreur lors du marquage de la notification:', error);
-                    }
-                }}
-                onMarkAllAsRead={async () => {
-                    try {
-                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-                        const response = await fetch('/api/client/notifications/read-all', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': csrfToken,
-                            },
-                            credentials: 'include',
-                        });
-                        
-                        if (response.ok && onRefresh) {
-                            onRefresh();
-                        }
-                    } catch (error) {
-                        console.error('Erreur lors du marquage de toutes les notifications:', error);
-                    }
-                }}
-            />
         </div>
     );
 }
@@ -653,8 +778,16 @@ function NewDemandeTab({ onSubmit }: { onSubmit?: (data: any) => void }) {
 }
 
 // Tab: Mes demandes
-function DemandesTab({ data }: { data: DashboardData }) {
-    const mockDemandes = data.history.map(h => ({
+function DemandesTab({ data, filter = 'all', onFilterChange }: { data: DashboardData; filter?: string; onFilterChange?: (filter: string) => void }) {
+    // Filter the demandes based on the filter prop
+    const filteredHistory = data.history.filter(item => {
+        if (filter === 'all') return true;
+        if (filter === 'en_cours') return item.status === 'en_cours';
+        if (filter === 'terminee') return item.status === 'terminee';
+        return true;
+    });
+
+    const mockDemandes = filteredHistory.map(h => ({
         id: h.id,
         codeDemande: h.codeDemande,
         typePanne: h.typePanne,
@@ -681,17 +814,15 @@ function HistoryTab({
     data,
     onViewDetails, 
     onDownloadFacture, 
-    onEvaluer 
+    onEvaluer,
+    onPayer
 }: { 
     data: DashboardData
     onViewDetails: (item: InterventionHistoryItem) => void
     onDownloadFacture: (id: number) => void
     onEvaluer: (item: InterventionHistoryItem) => void
+    onPayer?: (factureId: number) => void
 }) {
-    const handlePayer = (factureId: number) => {
-        router.visit(`/client/paiement/${factureId}`);
-    };
-    
     return (
         <div className="space-y-6">
             <InterventionHistory 
@@ -699,7 +830,7 @@ function HistoryTab({
                 onViewDetails={onViewDetails}
                 onDownloadFacture={onDownloadFacture}
                 onEvaluer={onEvaluer}
-                onPayer={handlePayer}
+                onPayer={onPayer}
             />
         </div>
     );
@@ -727,22 +858,550 @@ function ProfileTab({
     );
 }
 
-// Composant Theme Toggle (manquant)
-function ThemeToggleButton({ sidebarOpen }: { sidebarOpen: boolean }) {
-    const { appearance, updateAppearance } = useAppearance();
+// Tab: Notifications - Page dédiée agrandie
+function NotificationsTab() {
+    const [notifications, setNotifications] = useState<ClientNotification[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [filter, setFilter] = useState<'all' | 'unread' | 'demande' | 'paiement' | 'intervention'>('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
+    // Fetch notifications
+    useEffect(() => {
+        fetchNotifications();
+    }, []);
+
+    const fetchNotifications = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch('/api/client/notifications', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                credentials: 'include',
+            });
+            const result = await response.json();
+            if (result.success) {
+                setNotifications(result.notifications || []);
+            }
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
+            setNotifications(mockNotifications);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const markAsRead = async (id: number) => {
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            await fetch(`/api/client/notifications/${id}/read`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                credentials: 'include',
+            });
+            setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+        } catch (error) {
+            console.error('Error marking notification as read:', error);
+        }
+    };
+
+    const markAllAsRead = async () => {
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            await fetch('/api/client/notifications/read-all', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                credentials: 'include',
+            });
+            setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+        } catch (error) {
+            console.error('Error marking all notifications as read:', error);
+        }
+    };
+
+    const getTimeAgo = (dateString: string): string => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+        
+        if (diffInSeconds < 60) return 'À l\'instant';
+        if (diffInSeconds < 3600) return `Il y a ${Math.floor(diffInSeconds / 60)} min`;
+        if (diffInSeconds < 86400) return `Il y a ${Math.floor(diffInSeconds / 3600)}h`;
+        return `Il y a ${Math.floor(diffInSeconds / 86400)}j`;
+    };
+
+    const getNotificationType = (type: string): string => {
+        if (type.includes('demande') || type.includes('nouvelle')) return 'demande';
+        if (type.includes('paiement') || type.includes('paye')) return 'paiement';
+        if (type.includes('intervention') || type.includes('depannage') || type.includes('terminee')) return 'intervention';
+        return 'autre';
+    };
+
+    const getFilterLabel = (f: string): string => {
+        switch (f) {
+            case 'all': return 'Toutes';
+            case 'unread': return 'Non lues';
+            case 'demande': return 'Demandes';
+            case 'paiement': return 'Paiements';
+            case 'intervention': return 'Interventions';
+            default: return f;
+        }
+    };
+
+    const getNotificationIcon = (type: string) => {
+        const notificationType = getNotificationType(type);
+        switch (notificationType) {
+            case 'demande':
+                return <FileText className="h-5 w-5 text-blue-500" />;
+            case 'paiement':
+                return <div className="h-5 w-5 rounded-full bg-green-500 flex items-center justify-center text-white text-xs">€</div>;
+            case 'intervention':
+                return <div className="h-5 w-5 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs">⚡</div>;
+            default:
+                return <Bell className="h-5 w-5 text-gray-500" />;
+        }
+    };
+
+    const unreadCount = notifications.filter(n => !n.isRead).length;
     
+    // Apply filters
+    const applyFilters = () => {
+        let filtered = notifications;
+        
+        if (filter === 'unread') {
+            filtered = filtered.filter(n => !n.isRead);
+        } else if (filter === 'demande') {
+            filtered = filtered.filter(n => getNotificationType(n.type) === 'demande');
+        } else if (filter === 'paiement') {
+            filtered = filtered.filter(n => getNotificationType(n.type) === 'paiement');
+        } else if (filter === 'intervention') {
+            filtered = filtered.filter(n => getNotificationType(n.type) === 'intervention');
+        }
+        
+        return filtered;
+    };
+
+    const filteredNotifications = applyFilters();
+    const totalPages = Math.ceil(filteredNotifications.length / itemsPerPage);
+    const paginatedNotifications = filteredNotifications.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
+    // Reset page when filter changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filter]);
+
     return (
-        <button
-            onClick={() => updateAppearance(appearance === 'dark' ? 'light' : 'dark')}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-200 hover:text-gray-900 transition-all duration-200 group"
-        >
-            {appearance === 'dark' ? (
-                <Sun className="h-5 w-5 group-hover:rotate-180 transition-transform duration-500" />
-            ) : (
-                <Moon className="h-5 w-5 group-hover:-rotate-180 transition-transform duration-500" />
+        <div className="space-y-6">
+            {/* En-tête avec statistiques et actions */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h2 className="text-xl font-bold text-gray-900">Mes Notifications</h2>
+                        <p className="text-sm text-gray-500 mt-1">
+                            {unreadCount > 0 
+                                ? `Vous avez ${unreadCount} notification${unreadCount > 1 ? 's' : ''} non lue${unreadCount > 1 ? 's' : ''}`
+                                : 'Toutes vos notifications ont été lues'
+                            }
+                        </p>
+                    </div>
+                    {unreadCount > 0 && (
+                        <button
+                            onClick={markAllAsRead}
+                            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors flex items-center gap-2"
+                        >
+                            <Bell className="h-4 w-4" />
+                            Tout marquer comme lu
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            {/* Filtres */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                <div className="flex flex-wrap gap-2">
+                    {(['all', 'unread', 'demande', 'paiement', 'intervention'] as const).map((f) => (
+                        <button
+                            key={f}
+                            onClick={() => setFilter(f)}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                filter === f 
+                                    ? 'bg-blue-500 text-white' 
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                        >
+                            {getFilterLabel(f)}
+                            {f === 'unread' && unreadCount > 0 && (
+                                <span className="ml-2 px-1.5 py-0.5 bg-red-500 text-white text-xs rounded-full">
+                                    {unreadCount}
+                                </span>
+                            )}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Liste des notifications - Zone agrandie */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                {loading ? (
+                    <div className="p-12 text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+                        <p className="mt-4 text-gray-500">Chargement des notifications...</p>
+                    </div>
+                ) : filteredNotifications.length === 0 ? (
+                    <div className="p-12 text-center">
+                        <Bell className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune notification</h3>
+                        <p className="text-gray-500">
+                            {filter !== 'all' 
+                                ? `Vous n'avez pas de ${getFilterLabel(filter).toLowerCase()}`
+                                : 'Vous n\'avez pas encore de notifications'
+                            }
+                        </p>
+                    </div>
+                ) : (
+                    <div className="divide-y divide-gray-100">
+                        {paginatedNotifications.map((notification) => (
+                            <div
+                                key={notification.id}
+                                onClick={() => markAsRead(notification.id)}
+                                className={`p-4 sm:p-6 hover:bg-gray-50 transition-colors cursor-pointer ${
+                                    !notification.isRead ? 'bg-blue-50/50' : ''
+                                }`}
+                            >
+                                <div className="flex items-start gap-4">
+                                    {/* Icône */}
+                                    <div className={`p-2 rounded-full flex-shrink-0 ${
+                                        !notification.isRead ? 'bg-blue-100' : 'bg-gray-100'
+                                    }`}>
+                                        {getNotificationIcon(notification.type)}
+                                    </div>
+                                    
+                                    {/* Contenu */}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="flex-1">
+                                                <p className={`text-base font-medium ${
+                                                    !notification.isRead ? 'text-gray-900' : 'text-gray-700'
+                                                }`}>
+                                                    {notification.titre}
+                                                </p>
+                                                <p className="text-sm text-gray-500 mt-1">
+                                                    {notification.message}
+                                                </p>
+                                            </div>
+                                            {!notification.isRead && (
+                                                <div className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0 mt-2" />
+                                            )}
+                                        </div>
+                                        
+                                        <div className="flex items-center gap-3 mt-3">
+                                            <span className="text-xs text-gray-400">
+                                                {getTimeAgo(notification.createdAt)}
+                                            </span>
+                                            <span className={`px-2 py-1 text-xs rounded-full ${
+                                                getNotificationType(notification.type) === 'demande' ? 'bg-blue-100 text-blue-700' :
+                                                getNotificationType(notification.type) === 'paiement' ? 'bg-green-100 text-green-700' :
+                                                getNotificationType(notification.type) === 'intervention' ? 'bg-orange-100 text-orange-700' :
+                                                'bg-gray-100 text-gray-600'
+                                            }`}>
+                                                {getFilterLabel(getNotificationType(notification.type))}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <div className="p-4 border-t bg-gray-50 flex items-center justify-between">
+                        <span className="text-sm text-gray-500">
+                            Affichage de {(currentPage - 1) * itemsPerPage + 1} à {Math.min(currentPage * itemsPerPage, filteredNotifications.length)} sur {filteredNotifications.length} notifications
+                        </span>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                            >
+                                Précédent
+                            </button>
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                            >
+                                Suivant
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+function NotificationsButton({ sidebarOpen }: { sidebarOpen: boolean }) {
+    const [notifications, setNotifications] = useState<ClientNotification[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [filter, setFilter] = useState<'all' | 'unread' | 'demande' | 'paiement' | 'intervention'>('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
+
+    // Fetch notifications
+    useEffect(() => {
+        fetchNotifications();
+    }, []);
+
+    const fetchNotifications = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch('/api/client/notifications', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                credentials: 'include',
+            });
+            const result = await response.json();
+            if (result.success) {
+                setNotifications(result.notifications || []);
+            }
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
+            // Fallback to mock data
+            setNotifications(mockNotifications);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const markAsRead = async (id: number) => {
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            await fetch(`/api/client/notifications/${id}/read`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                credentials: 'include',
+            });
+            setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+        } catch (error) {
+            console.error('Error marking notification as read:', error);
+        }
+    };
+
+    const markAllAsRead = async () => {
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            await fetch('/api/client/notifications/read-all', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                credentials: 'include',
+            });
+            setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+        } catch (error) {
+            console.error('Error marking all notifications as read:', error);
+        }
+    };
+
+    const getTimeAgo = (dateString: string): string => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+        
+        if (diffInSeconds < 60) return 'À l\'instant';
+        if (diffInSeconds < 3600) return `Il y a ${Math.floor(diffInSeconds / 60)} min`;
+        if (diffInSeconds < 86400) return `Il y a ${Math.floor(diffInSeconds / 3600)}h`;
+        return `Il y a ${Math.floor(diffInSeconds / 86400)}j`;
+    };
+
+    const getNotificationType = (type: string): string => {
+        if (type.includes('demande') || type.includes('nouvelle')) return 'demande';
+        if (type.includes('paiement') || type.includes('paye')) return 'paiement';
+        if (type.includes('intervention') || type.includes('depannage') || type.includes('terminee')) return 'intervention';
+        return 'autre';
+    };
+
+    const getFilterLabel = (f: string): string => {
+        switch (f) {
+            case 'all': return 'Toutes';
+            case 'unread': return 'Non lues';
+            case 'demande': return 'Demandes';
+            case 'paiement': return 'Paiements';
+            case 'intervention': return 'Interventions';
+            default: return f;
+        }
+    };
+
+    const unreadCount = notifications.filter(n => !n.isRead).length;
+    
+    // Apply filters
+    const applyFilters = () => {
+        let filtered = notifications;
+        
+        if (filter === 'unread') {
+            filtered = filtered.filter(n => !n.isRead);
+        } else if (filter === 'demande') {
+            filtered = filtered.filter(n => getNotificationType(n.type) === 'demande');
+        } else if (filter === 'paiement') {
+            filtered = filtered.filter(n => getNotificationType(n.type) === 'paiement');
+        } else if (filter === 'intervention') {
+            filtered = filtered.filter(n => getNotificationType(n.type) === 'intervention');
+        }
+        
+        return filtered;
+    };
+
+    const filteredNotifications = applyFilters();
+    const totalPages = Math.ceil(filteredNotifications.length / itemsPerPage);
+    const paginatedNotifications = filteredNotifications.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
+    // Reset page when filter changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filter]);
+
+    return (
+        <div className="relative">
+            <button
+                onClick={() => setShowDropdown(!showDropdown)}
+                className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-200 hover:text-gray-900 transition-all duration-200 group"
+            >
+                <div className="relative">
+                    <Bell className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                    {unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-[10px] font-bold text-white flex items-center justify-center">
+                            {unreadCount}
+                        </span>
+                    )}
+                </div>
+                {sidebarOpen && <span className="text-sm">Notifications</span>}
+            </button>
+
+            {/* Dropdown */}
+            {showDropdown && (
+                <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50 max-h-[700px]">
+                    <div className="p-3 border-b bg-gray-50">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="font-semibold text-gray-900">Notifications</span>
+                            {unreadCount > 0 && (
+                                <button 
+                                    onClick={markAllAsRead}
+                                    className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                                >
+                                    Tout marquer lu
+                                </button>
+                            )}
+                        </div>
+                        {/* Filter tabs */}
+                        <div className="flex flex-wrap gap-1">
+                            {(['all', 'unread', 'demande', 'paiement', 'intervention'] as const).map((f) => (
+                                <button
+                                    key={f}
+                                    onClick={() => setFilter(f)}
+                                    className={`px-2 py-1 text-xs rounded-full ${
+                                        filter === f ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                                    }`}
+                                >
+                                    {getFilterLabel(f)}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    <div className="overflow-y-auto max-h-96">
+                        {loading ? (
+                            <div className="p-4 text-center text-gray-500">Chargement...</div>
+                        ) : filteredNotifications.length === 0 ? (
+                            <div className="p-4 text-center text-gray-500">
+                                Aucune notification {filter !== 'all' ? getFilterLabel(filter).toLowerCase() : ''}
+                            </div>
+                        ) : (
+                            paginatedNotifications.map((notification) => (
+                                <div
+                                    key={notification.id}
+                                    onClick={() => markAsRead(notification.id)}
+                                    className={`p-3 border-b last:border-b-0 cursor-pointer hover:bg-gray-50 ${
+                                        !notification.isRead ? 'bg-blue-50' : ''
+                                    }`}
+                                >
+                                    <div className="flex items-start gap-2">
+                                        <div className={`mt-1.5 h-2 w-2 rounded-full flex-shrink-0 ${
+                                            !notification.isRead ? 'bg-blue-500' : 'bg-gray-300'
+                                        }`} />
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-gray-900 truncate">
+                                                {notification.titre}
+                                            </p>
+                                            <p className="text-xs text-gray-500 truncate">
+                                                {notification.message}
+                                            </p>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <p className="text-xs text-gray-400">
+                                                    {getTimeAgo(notification.createdAt)}
+                                                </p>
+                                                <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
+                                                    {getFilterLabel(getNotificationType(notification.type))}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="p-2 border-t bg-gray-50 flex items-center justify-between">
+                            <span className="text-xs text-gray-500">
+                                Page {currentPage}/{totalPages}
+                            </span>
+                            <div className="flex gap-1">
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                    className="px-2 py-1 text-xs bg-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300"
+                                >
+                                    Préc
+                                </button>
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                    className="px-2 py-1 text-xs bg-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300"
+                                >
+                                    Suiv
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
             )}
-            {sidebarOpen && <span className="text-sm">{appearance === 'dark' ? 'Mode clair' : 'Mode sombre'}</span>}
-        </button>
+        </div>
     );
 }
 

@@ -451,8 +451,8 @@ class DemandeController extends Controller
                     'reviews' => $d->reviews_count ?? 0,
                     'distance' => round($d->distance, 1),
                     'estimated_time' => round(($d->distance ?? 0) / 40 * 60), // Estimation basée sur 40km/h
-                    'price_min' => $d->price_min ?? 50,
-                    'price_max' => $d->price_max ?? 80,
+                    'price_min' => $d->price_min ?? 0,
+                    'price_max' => $d->price_max ?? 0,
                     'specialities' => $d->specialites ?? '',
                     'phone' => $d->phone ?? '',
                     'avatar' => $d->avatar_url ?? null,

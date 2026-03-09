@@ -1,13 +1,41 @@
-import { AlertCircle, AlertTriangle, Info, CheckCircle, Bell, X } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Info, CheckCircle, Bell, X, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import type { AdminAlert } from '@/types';
+
+interface AlertItem {
+    id: number;
+    title: string;
+    subtitle?: string;
+    date?: string;
+    action?: string;
+}
 
 interface AlertsPanelProps {
     alerts: AdminAlert[];
     onDismiss?: (alertId: number) => void;
     onAction?: (action: string) => void;
+    // Props for pagination - when showing individual items
+    paginatedItems?: AlertItem[];
+    pagination?: {
+        current_page: number;
+        last_page: number;
+        total: number;
+        per_page: number;
+    };
+    onPageChange?: (page: number) => void;
+    isLoading?: boolean;
+    showPaginatedView?: boolean;
 }
 
-export function AlertsPanel({ alerts, onDismiss, onAction }: AlertsPanelProps) {
+export function AlertsPanel({ 
+    alerts, 
+    onDismiss, 
+    onAction,
+    paginatedItems,
+    pagination,
+    onPageChange,
+    isLoading,
+    showPaginatedView = false
+}: AlertsPanelProps) {
     const getAlertIcon = (type: AdminAlert['type']) => {
         switch (type) {
             case 'danger':
@@ -34,6 +62,117 @@ export function AlertsPanel({ alerts, onDismiss, onAction }: AlertsPanelProps) {
         }
     };
 
+    // Format date for display
+    const formatDate = (dateStr: string) => {
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'À l\'instant';
+        if (diffMins < 60) return `Il y a ${diffMins} min`;
+        if (diffHours < 24) return `Il y a ${diffHours}h`;
+        if (diffDays < 7) return `Il y a ${diffDays}j`;
+        return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    };
+
+    // Render paginated items view
+    if (showPaginatedView && paginatedItems && pagination) {
+        const { current_page, last_page, total, per_page } = pagination;
+
+        return (
+            <div className="bg-slate-800/60 border-slate-700/50 backdrop-blur-sm rounded-2xl p-6">
+                <div className="flex items-center gap-2 mb-4">
+                    <Bell className="h-5 w-5 text-slate-400" />
+                    <h3 className="text-lg font-semibold text-white">Alertes système</h3>
+                    <span className="ml-auto bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs px-3 py-1 rounded-full font-medium shadow-lg shadow-red-500/20">
+                        {total}
+                    </span>
+                </div>
+
+                {isLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-8 w-8 text-blue-400 animate-spin" />
+                    </div>
+                ) : paginatedItems.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8 text-slate-400">
+                        <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mb-3">
+                            <CheckCircle className="h-8 w-8 text-green-400" />
+                        </div>
+                        <p className="text-slate-300 font-medium">Aucune alerte</p>
+                        <p className="text-sm text-slate-500 mt-1">Tout est en ordre</p>
+                    </div>
+                ) : (
+                    <>
+                        <div className="space-y-2">
+                            {paginatedItems.map((item, index) => (
+                                <div
+                                    key={item.id || index}
+                                    className="p-3 rounded-lg border border-slate-700/50 bg-slate-700/20 hover:bg-slate-700/40 transition-colors"
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-medium text-white truncate">{item.title}</p>
+                                            {item.subtitle && (
+                                                <p className="text-sm text-slate-400 truncate">{item.subtitle}</p>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-2 ml-2">
+                                            {item.date && (
+                                                <span className="text-xs text-slate-500 whitespace-nowrap">
+                                                    {formatDate(item.date)}
+                                                </span>
+                                            )}
+                                            {item.action && (
+                                                <button
+                                                    onClick={() => onAction?.(item.action!)}
+                                                    className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                                                >
+                                                        →
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Pagination Controls */}
+                        {last_page > 1 && (
+                            <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-700/50">
+                                <span className="text-sm text-slate-400">
+                                    {(current_page - 1) * per_page + 1} - {Math.min(current_page * per_page, total)} sur {total}
+                                </span>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => onPageChange?.(current_page - 1)}
+                                        disabled={current_page === 1}
+                                        className="p-2 rounded-lg bg-slate-700/50 text-slate-300 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </button>
+                                    <span className="text-sm text-slate-300">
+                                        {current_page} / {last_page}
+                                    </span>
+                                    <button
+                                        onClick={() => onPageChange?.(current_page + 1)}
+                                        disabled={current_page === last_page}
+                                        className="p-2 rounded-lg bg-slate-700/50 text-slate-300 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        <ChevronRight className="h-4 w-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
+        );
+    }
+
+    // Render summary view (original)
     if (alerts.length === 0) {
         return (
             <div className="bg-slate-800/60 border-slate-700/50 backdrop-blur-sm rounded-2xl p-6">

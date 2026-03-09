@@ -24,6 +24,14 @@ class Facture extends Model
         'status',          // Statut de la facture
         'paidAt',          // Date de paiement
         'id_intervention', // FK vers intervention
+        // Mobile Money fields (MTN)
+        'momo_transaction_id',  // ID de transaction MoMo
+        'momo_phone',           // Numéro de téléphone utilisé pour le paiement
+        'momo_status',          // Statut de la transaction MoMo
+        'momo_failure_reason',  // Raison de l'échec si applicable
+        // FedaPay fields
+        'fedapay_transaction_id',  // ID de transaction FedaPay
+        'fedapay_status',         // Statut de la transaction FedaPay
     ];
 
   

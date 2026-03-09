@@ -201,14 +201,26 @@ export function InterventionHistory({
         return matchesSearch && matchesStatus;
     }) : displayHistory;
 
+    // Stats calculées dynamiquement basées sur les filtres
     const stats = {
         total: filteredHistory.length,
         terminees: filteredHistory.filter(i => i.status === 'terminee').length,
+        enCours: filteredHistory.filter(i => i.status === 'en_cours').length,
         annulees: filteredHistory.filter(i => i.status === 'annulee').length,
         montantTotal: filteredHistory
             .filter(i => i.status === 'terminee')
             .reduce((sum, i) => sum + i.montant, 0),
     };
+
+    // Effet pour recharger les stats quand les filtres changent
+    useEffect(() => {
+        if (fetchFromApi) {
+            // Les stats viendront de l'API
+        } else {
+            // Les stats sont calculées à partir des données locales filtrées
+            setPagination(prev => ({ ...prev, total: stats.total }));
+        }
+    }, [filteredHistory, fetchFromApi]);
 
     const getStatusColor = (status: string): string => {
         switch (status) {
@@ -242,6 +254,8 @@ export function InterventionHistory({
 
     return (
         <div className="space-y-6">
+            
+
             {/* Header avec stats */}
             <div className="grid gap-4 md:grid-cols-4">
                 <Card className="bg-white border-gray-200">
@@ -300,11 +314,20 @@ export function InterventionHistory({
                     </CardContent>
                 </Card>
             </div>
-
+{/* Titre principal */}
+            <Card className="bg-white border-gray-200">
+                <CardHeader className="pb-3">
+                    <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                        <FileText className="h-5 w-5 text-blue-600" />
+                        Liste des interventions
+                    </CardTitle>
+                </CardHeader>
+            </Card>
             {/* Filtres et recherche */}
             <Card className="bg-white border-gray-200">
                 <CardContent className="py-4">
-                    <div className="flex flex-col md:flex-row gap-4">
+                    <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center">
+                        {/* Recherche */}
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <Input
@@ -315,38 +338,42 @@ export function InterventionHistory({
                             />
                         </div>
                         
-                        <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
-                            <SelectTrigger className="w-full md:w-48 bg-white border-gray-300 text-gray-900">
-                                <SelectValue placeholder="Statut" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Tous les statuts</SelectItem>
-                                <SelectItem value="terminee">Terminée</SelectItem>
-                                <SelectItem value="en_cours">En cours</SelectItem>
-                                <SelectItem value="acceptee">Acceptée</SelectItem>
-                                <SelectItem value="annulee">Annulée</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        {/* Filtres compact */}
+                        <div className="flex gap-2">
+                            <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+                                <SelectTrigger className="w-36 bg-white border-gray-300 text-gray-900">
+                                    <SelectValue placeholder="Statut" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Tous</SelectItem>
+                                    <SelectItem value="terminee">Terminée</SelectItem>
+                                    <SelectItem value="en_cours">En cours</SelectItem>
+                                    <SelectItem value="acceptee">Acceptée</SelectItem>
+                                    <SelectItem value="annulee">Annulée</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            
+                            <Select value={dateFilter} onValueChange={handleDateFilterChange}>
+                                <SelectTrigger className="w-36 bg-white border-gray-300 text-gray-900">
+                                    <SelectValue placeholder="Période" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Toutes dates</SelectItem>
+                                    <SelectItem value="today">Aujourd'hui</SelectItem>
+                                    <SelectItem value="week">Cette semaine</SelectItem>
+                                    <SelectItem value="month">Ce mois</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                         
-                        <Select value={dateFilter} onValueChange={handleDateFilterChange}>
-                            <SelectTrigger className="w-full md:w-48 bg-white border-gray-300 text-gray-900">
-                                <SelectValue placeholder="Période" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Toutes les dates</SelectItem>
-                                <SelectItem value="today">Aujourd'hui</SelectItem>
-                                <SelectItem value="week">Cette semaine</SelectItem>
-                                <SelectItem value="month">Ce mois</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        
+                        {/* Boutons export */}
                         <div className="flex gap-2">
                             <Button
                                 variant="outline"
                                 onClick={() => onExport?.('excel')}
                                 className="border-green-500/30 text-green-600 hover:bg-green-50"
                             >
-                                <Download className="h-4 w-4 mr-2" />
+                                <Download className="h-4 w-4 mr-1" />
                                 Excel
                             </Button>
                             <Button
@@ -354,7 +381,7 @@ export function InterventionHistory({
                                 onClick={() => onExport?.('pdf')}
                                 className="border-red-500/30 text-red-600 hover:bg-red-50"
                             >
-                                <File className="h-4 w-4 mr-2" />
+                                <File className="h-4 w-4 mr-1" />
                                 PDF
                             </Button>
                         </div>

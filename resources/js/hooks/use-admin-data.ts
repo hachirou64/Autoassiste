@@ -46,6 +46,8 @@ export function useAdminData() {
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+    const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
     const fetchAdminData = useCallback(async () => {
         setLoading(true);
@@ -74,6 +76,7 @@ export function useAdminData() {
                 alerts: alertsData.alerts || alertsData,
                 recentActivities: activitiesData.activities || activitiesData,
             });
+            setLastRefresh(new Date());
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Une erreur est survenue');
         } finally {
@@ -81,14 +84,30 @@ export function useAdminData() {
         }
     }, []);
 
+    // Auto-refresh every 30 seconds for dynamic alerts
     useEffect(() => {
+        // Initial fetch
         fetchAdminData();
+
+        // Set up interval for auto-refresh (every 30 seconds)
+        refreshIntervalRef.current = setInterval(() => {
+            console.log('[useAdminData] Auto-refresh - fetching fresh data');
+            fetchAdminData();
+        }, 30000);
+
+        // Cleanup on unmount
+        return () => {
+            if (refreshIntervalRef.current) {
+                clearInterval(refreshIntervalRef.current);
+            }
+        };
     }, [fetchAdminData]);
 
     return {
         ...data,
         loading,
         error,
+        lastRefresh,
         refresh: fetchAdminData,
     };
 }
@@ -958,6 +977,185 @@ export function useAdminFactures(initialParams: Partial<PaginationParams> & { st
         refresh: () => fetchFactures(),
         onPageChange: handlePageChange,
         refetch: fetchFactures,
+    };
+}
+
+// Hook pour les alertes paginées
+export function useAdminAlertsPaginated(initialPerPage: number = 10) {
+    const [alertsData, setAlertsData] = useState<{
+        items: any[];
+        pagination: {
+            current_page: number;
+            last_page: number;
+            total: number;
+            per_page: number;
+        };
+    }>({
+        items: [],
+        pagination: {
+            current_page: 1,
+            last_page: 1,
+            total: 0,
+            per_page: initialPerPage,
+        },
+    });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+    const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+    const fetchAlertsPaginated = useCallback(async (page: number = 1, type: string = 'all', perPage: number = initialPerPage) => {
+        setLoading(true);
+        setError(null);
+
+        const queryParams = new URLSearchParams();
+        queryParams.set('page', String(page));
+        queryParams.set('per_page', String(perPage));
+        queryParams.set('type', type);
+
+        try {
+            const authOptions = getAuthOptions();
+            const response = await fetch(`/admin/api/alerts/paginated?${queryParams}`, authOptions);
+
+            if (!response.ok) {
+                throw new Error('Erreur lors du chargement des alertes');
+            }
+
+            const result = await response.json();
+            
+            setAlertsData({
+                items: result.items || [],
+                pagination: {
+                    current_page: result.pagination?.current_page || 1,
+                    last_page: result.pagination?.last_page || 1,
+                    total: result.pagination?.total || 0,
+                    per_page: result.pagination?.per_page || perPage,
+                },
+            });
+            setLastRefresh(new Date());
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    // Auto-refresh every 30 seconds
+    useEffect(() => {
+        fetchAlertsPaginated();
+        
+        refreshIntervalRef.current = setInterval(() => {
+            console.log('[useAdminAlertsPaginated] Auto-refresh');
+            fetchAlertsPaginated();
+        }, 30000);
+
+        return () => {
+            if (refreshIntervalRef.current) {
+                clearInterval(refreshIntervalRef.current);
+            }
+        };
+    }, [fetchAlertsPaginated]);
+
+    const handlePageChange = (page: number, type: string = 'all') => {
+        fetchAlertsPaginated(page, type);
+    };
+
+    return {
+        ...alertsData,
+        loading,
+        error,
+        lastRefresh,
+        refresh: () => fetchAlertsPaginated(),
+        onPageChange: handlePageChange,
+    };
+}
+
+// Hook pour les activités récentes paginées
+export function useAdminActivitiesPaginated(initialPerPage: number = 10) {
+    const [activitiesData, setActivitiesData] = useState<{
+        activities: RecentActivity[];
+        pagination: {
+            current_page: number;
+            last_page: number;
+            total: number;
+            per_page: number;
+        };
+    }>({
+        activities: [],
+        pagination: {
+            current_page: 1,
+            last_page: 1,
+            total: 0,
+            per_page: initialPerPage,
+        },
+    });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+    const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+    const fetchActivitiesPaginated = useCallback(async (page: number = 1, perPage: number = initialPerPage) => {
+        setLoading(true);
+        setError(null);
+
+        const queryParams = new URLSearchParams();
+        queryParams.set('page', String(page));
+        queryParams.set('per_page', String(perPage));
+
+        try {
+            const authOptions = getAuthOptions();
+            const response = await fetch(`/admin/api/recent-activities?${queryParams}`, authOptions);
+
+            if (!response.ok) {
+                throw new Error('Erreur lors du chargement des activités');
+            }
+
+            const result = await response.json();
+            
+            setActivitiesData({
+                activities: result.activities || [],
+                pagination: {
+                    current_page: result.pagination?.current_page || 1,
+                    last_page: result.pagination?.last_page || 1,
+                    total: result.pagination?.total || 0,
+                    per_page: result.pagination?.per_page || perPage,
+                },
+            });
+            setLastRefresh(new Date());
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    // Auto-refresh every 30 seconds
+    useEffect(() => {
+        fetchActivitiesPaginated();
+        
+        refreshIntervalRef.current = setInterval(() => {
+            console.log('[useAdminActivitiesPaginated] Auto-refresh');
+            fetchActivitiesPaginated();
+        }, 30000);
+
+        return () => {
+            if (refreshIntervalRef.current) {
+                clearInterval(refreshIntervalRef.current);
+            }
+        };
+    }, [fetchActivitiesPaginated]);
+
+    const handlePageChange = (page: number) => {
+        fetchActivitiesPaginated(page);
+    };
+
+    return {
+        ...activitiesData,
+        loading,
+        error,
+        lastRefresh,
+        refresh: () => fetchActivitiesPaginated(),
+        onPageChange: handlePageChange,
     };
 }
 

@@ -15,6 +15,8 @@ interface InterventionTrackerProps {
     onFacture?: () => void;
     onEvaluer?: () => void;
     onPayer?: () => void;
+    onViewHistory?: () => void;
+    onStepClick?: (status: string) => void;
     factureId?: number;
     montant?: number;
 }
@@ -33,6 +35,8 @@ export function InterventionTracker({
     onFacture,
     onEvaluer,
     onPayer,
+    onViewHistory,
+    onStepClick,
     factureId,
     montant,
 }: InterventionTrackerProps) {
@@ -51,9 +55,18 @@ export function InterventionTracker({
                             <Wrench className="h-8 w-8 text-gray-400" />
                         </div>
                         <h3 className="text-gray-900 font-medium mb-2">Aucune intervention en cours</h3>
-                        <p className="text-gray-500 text-sm">
+                        <p className="text-gray-500 text-sm mb-4">
                             Vous n'avez pas de demande d'assistance active.
                         </p>
+                        {onViewHistory && (
+                            <Button
+                                onClick={onViewHistory}
+                                className="bg-blue-500 hover:bg-blue-600 text-white"
+                            >
+                                <Clock className="h-4 w-4 mr-2" />
+                                Voir l'historique
+                            </Button>
+                        )}
                     </div>
                 </CardContent>
             </Card>
@@ -97,24 +110,31 @@ export function InterventionTracker({
                             const Icon = step.icon;
                             const isCompleted = index < currentStepIndex;
                             const isCurrent = index === currentStepIndex;
+                            // When intervention is completed, show the last step as green as well
+                            const isTerminated = demandeActive.status === 'terminee' && index === 3;
 
                             return (
-                                <div key={step.status} className="flex flex-col items-center">
+                                <div 
+                                    key={step.status} 
+                                    className="flex flex-col items-center"
+                                >
                                     <div
-                                        className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${
-                                            isCompleted
-                                                ? 'bg-green-500 text-white'
+                                        className={`w-8 h-8 rounded-full flex items-center justify-center z-10 cursor-pointer transition-all ${
+                                            isCompleted || isTerminated
+                                                ? 'bg-green-500 text-white hover:bg-green-600'
                                                 : isCurrent
                                                     ? 'bg-blue-500 text-white animate-pulse'
                                                     : 'bg-gray-200 text-gray-400'
                                         }`}
+                                        onClick={() => onStepClick?.(step.status)}
                                     >
                                         <Icon className="h-4 w-4" />
                                     </div>
                                     <p
-                                        className={`text-xs mt-2 text-center ${
-                                            isCompleted || isCurrent ? 'text-gray-900' : 'text-gray-400'
+                                        className={`text-xs mt-2 text-center cursor-pointer ${
+                                            isCompleted || isTerminated || isCurrent ? 'text-gray-900 hover:underline' : 'text-gray-400'
                                         }`}
+                                        onClick={() => onStepClick?.(step.status)}
                                     >
                                         {step.label}
                                     </p>

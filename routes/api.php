@@ -132,6 +132,7 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
     Route::get('/stats', [DashboardController::class, 'getGlobalStats'])->name('admin.api.stats');
     Route::get('/trends', [DashboardController::class, 'getTrendsData'])->name('admin.api.trends');
     Route::get('/alerts', [DashboardController::class, 'getAlerts'])->name('admin.api.alerts');
+    Route::get('/alerts/paginated', [DashboardController::class, 'getAlertsWithPagination'])->name('admin.api.alerts.paginated');
     Route::get('/recent-activities', [DashboardController::class, 'getRecentActivitiesApi'])->name('admin.api.recent-activities');
     
     // Clients API
@@ -189,4 +190,39 @@ Route::prefix('geocode')->group(function () {
 
 // API Route pour obtenir les dépanneurs disponibles proches
 Route::get('/depanneurs/nearby', [DemandeController::class, 'getNearbyDepanneurs'])->name('api.depanneurs.nearby');
+
+// ==================== MTN MOBILE MONEY ====================
+
+// Routes pour le paiement Mobile Money
+Route::prefix('momo')->middleware(['auth:web'])->group(function () {
+    // Initier un paiement
+    Route::post('/request-payment', [App\Http\Controllers\MoMoController::class, 'requestPayment'])->name('api.momo.request-payment');
+    // Vérifier le statut d'un paiement
+    Route::get('/check-status/{factureId}', [App\Http\Controllers\MoMoController::class, 'checkStatus'])->name('api.momo.check-status');
+});
+
+// Callback public pour MTN (pas d'authentification nécessaire)
+Route::post('/momo/callback', [App\Http\Controllers\MoMoController::class, 'callback'])->name('api.momo.callback');
+
+// Statut du service MoMo
+Route::get('/momo/status', [App\Http\Controllers\MoMoController::class, 'status'])->name('api.momo.status');
+
+// ==================== FEDAPAY PAYMENT GATEWAY ====================
+
+// Routes pour le paiement FedaPay
+Route::prefix('fedapay')->middleware(['auth:web'])->group(function () {
+    // Créer un paiement
+    Route::post('/create-payment', [App\Http\Controllers\FedaPayController::class, 'createPayment'])->name('api.fedapay.create-payment');
+    // Vérifier le statut d'un paiement
+    Route::get('/check-status/{factureId}', [App\Http\Controllers\FedaPayController::class, 'checkStatus'])->name('api.fedapay.check-status');
+});
+
+// Callback public pour FedaPay (Webhook)
+Route::post('/fedapay/callback', [App\Http\Controllers\FedaPayController::class, 'callback'])->name('api.fedapay.callback');
+
+// Page de retour depuis FedaPay
+Route::get('/fedapay/return', [App\Http\Controllers\FedaPayController::class, 'returnPage'])->name('api.fedapay.return');
+
+// Statut du service FedaPay
+Route::get('/fedapay/status', [App\Http\Controllers\FedaPayController::class, 'status'])->name('api.fedapay.status');
 

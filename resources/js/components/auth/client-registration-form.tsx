@@ -170,141 +170,153 @@ export default function ClientRegistrationForm() {
                             </div>
                         )}
 
-                        <div className="space-y-2">
-                            <Label htmlFor="fullName" className="text-slate-300">
-                                Nom complet
-                            </Label>
-                            <div className="relative">
-                                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                <Input
-                                    id="fullName"
-                                    name="fullName"
-                                    type="text"
-                                    placeholder="John Doe"
-                                    value={formData.fullName}
-                                    onChange={handleChange}
-                                    className={`pl-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-500 ${
-                                        errors.fullName ? 'border-red-500 focus:border-red-500' : ''
-                                    }`}
-                                />
+                        {/* Ligne 1: Nom complet + Email */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="fullName" className="text-slate-300">
+                                    Nom complet
+                                </Label>
+                                <div className="relative">
+                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                    <Input
+                                        id="fullName"
+                                        name="fullName"
+                                        type="text"
+                                        placeholder="John Doe"
+                                        value={formData.fullName}
+                                        onChange={handleChange}
+                                        className={`pl-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-500 ${
+                                            errors.fullName ? 'border-red-500 focus:border-red-500' : ''
+                                        }`}
+                                    />
+                                </div>
+                                {errors.fullName && (
+                                    <p className="text-sm text-red-400">{errors.fullName}</p>
+                                )}
                             </div>
-                            {errors.fullName && (
-                                <p className="text-sm text-red-400">{errors.fullName}</p>
-                            )}
+
+                            <div className="space-y-2">
+                                <Label htmlFor="email" className="text-slate-300">
+                                    Email
+                                </Label>
+                                <div className="relative">
+                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                    <Input
+                                        id="email"
+                                        name="email"
+                                        type="email"
+                                        placeholder="john@example.com"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        className={`pl-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-500 ${
+                                            errors.email ? 'border-red-500 focus:border-red-500' : ''
+                                        }`}
+                                    />
+                                </div>
+                                {errors.email && (
+                                    <p className="text-sm text-red-400">{errors.email}</p>
+                                )}
+                            </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="email" className="text-slate-300">
-                                Email
-                            </Label>
-                            <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                <Input
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    placeholder="john@example.com"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    className={`pl-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-500 ${
-                                        errors.email ? 'border-red-500 focus:border-red-500' : ''
-                                    }`}
-                                />
+                        {/* Ligne 2: Téléphone + (vide) */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="phone" className="text-slate-300">
+                                    Téléphone
+                                </Label>
+                                <div className="relative">
+                                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                    <Input
+                                        id="phone"
+                                        name="phone"
+                                        type="tel"
+                                        placeholder="+229 90 00 00 00"
+                                        value={formData.phone}
+                                        onChange={handleChange}
+                                        className={`pl-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-500 ${
+                                            errors.phone ? 'border-red-500 focus:border-red-500' : ''
+                                        }`}
+                                    />
+                                </div>
+                                {errors.phone && (
+                                    <p className="text-sm text-red-400">{errors.phone}</p>
+                                )}
                             </div>
-                            {errors.email && (
-                                <p className="text-sm text-red-400">{errors.email}</p>
-                            )}
+                            <div className="space-y-2">
+                                {/* Placeholder vide pour équilibrer */}
+                            </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="phone" className="text-slate-300">
-                                Téléphone
-                            </Label>
-                            <div className="relative">
-                                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                <Input
-                                    id="phone"
-                                    name="phone"
-                                    type="tel"
-                                    placeholder="+229 90 00 00 00"
-                                    value={formData.phone}
-                                    onChange={handleChange}
-                                    className={`pl-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-500 ${
-                                        errors.phone ? 'border-red-500 focus:border-red-500' : ''
-                                    }`}
-                                />
+                        {/* Ligne 3: Mot de passe + Confirmation */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="password" className="text-slate-300">
+                                    Mot de passe
+                                </Label>
+                                <div className="relative">
+                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                    <Input
+                                        id="password"
+                                        name="password"
+                                        type={showPassword ? 'text' : 'password'}
+                                        placeholder="••••••••"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        className={`pl-10 pr-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-500 ${
+                                            errors.password ? 'border-red-500 focus:border-red-500' : ''
+                                        }`}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                                    >
+                                        {showPassword ? (
+                                            <EyeOff className="h-4 w-4" />
+                                        ) : (
+                                            <Eye className="h-4 w-4" />
+                                        )}
+                                    </button>
+                                </div>
+                                {errors.password && (
+                                    <p className="text-sm text-red-400">{errors.password}</p>
+                                )}
                             </div>
-                            {errors.phone && (
-                                <p className="text-sm text-red-400">{errors.phone}</p>
-                            )}
-                        </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="password" className="text-slate-300">
-                                Mot de passe
-                            </Label>
-                            <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                <Input
-                                    id="password"
-                                    name="password"
-                                    type={showPassword ? 'text' : 'password'}
-                                    placeholder="••••••••"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    className={`pl-10 pr-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-500 ${
-                                        errors.password ? 'border-red-500 focus:border-red-500' : ''
-                                    }`}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
-                                >
-                                    {showPassword ? (
-                                        <EyeOff className="h-4 w-4" />
-                                    ) : (
-                                        <Eye className="h-4 w-4" />
-                                    )}
-                                </button>
+                            <div className="space-y-2">
+                                <Label htmlFor="password_confirmation" className="text-slate-300">
+                                    Confirmation
+                                </Label>
+                                <div className="relative">
+                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                    <Input
+                                        id="password_confirmation"
+                                        name="password_confirmation"
+                                        type={showPasswordConfirm ? 'text' : 'password'}
+                                        placeholder="••••••••"
+                                        value={formData.password_confirmation}
+                                        onChange={handleChange}
+                                        className={`pl-10 pr-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-500 ${
+                                            errors.password_confirmation ? 'border-red-500 focus:border-red-500' : ''
+                                        }`}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                                    >
+                                        {showPasswordConfirm ? (
+                                            <EyeOff className="h-4 w-4" />
+                                        ) : (
+                                            <Eye className="h-4 w-4" />
+                                        )}
+                                    </button>
+                                </div>
+                                {errors.password_confirmation && (
+                                    <p className="text-sm text-red-400">{errors.password_confirmation}</p>
+                                )}
                             </div>
-                            {errors.password && (
-                                <p className="text-sm text-red-400">{errors.password}</p>
-                            )}
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="password_confirmation" className="text-slate-300">
-                                Confirmer le mot de passe
-                            </Label>
-                            <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                <Input
-                                    id="password_confirmation"
-                                    name="password_confirmation"
-                                    type={showPasswordConfirm ? 'text' : 'password'}
-                                    placeholder="••••••••"
-                                    value={formData.password_confirmation}
-                                    onChange={handleChange}
-                                    className={`pl-10 pr-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-500 ${
-                                        errors.password_confirmation ? 'border-red-500 focus:border-red-500' : ''
-                                    }`}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
-                                >
-                                    {showPasswordConfirm ? (
-                                        <EyeOff className="h-4 w-4" />
-                                    ) : (
-                                        <Eye className="h-4 w-4" />
-                                    )}
-                                </button>
-                            </div>
-                            {errors.password_confirmation && (
-                                <p className="text-sm text-red-400">{errors.password_confirmation}</p>
-                            )}
                         </div>
                     </CardContent>
 

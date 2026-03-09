@@ -57,9 +57,9 @@ export function DemandeList({ demandes, demandeActive, onViewDetails, onCancel }
                 {/* Filtres */}
                 <Tabs defaultValue={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
                     <TabsList className="bg-gray-100">
-                        <TabsTrigger value="all" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">Toutes</TabsTrigger>
-                        <TabsTrigger value="en_cours" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">En cours</TabsTrigger>
-                        <TabsTrigger value="terminees" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">Terminées</TabsTrigger>
+                        <TabsTrigger value="all" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white hover:bg-blue-400 hover:text-white transition-colors">Toutes</TabsTrigger>
+                        <TabsTrigger value="en_cours" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white hover:bg-blue-400 hover:text-white transition-colors">En cours</TabsTrigger>
+                        <TabsTrigger value="terminees" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white hover:bg-blue-400 hover:text-white transition-colors">Terminées</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value={filter} className="mt-4">

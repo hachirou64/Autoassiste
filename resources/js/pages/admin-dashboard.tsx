@@ -23,7 +23,6 @@ import {
     Hammer,
     RefreshCw,
     LogOut,
-    Cog,
     Shield,
     MessageSquare,
 } from 'lucide-react';
@@ -51,7 +50,6 @@ const localNavItems: LocalNavItem[] = [
     { title: 'Interventions', href: '/admin/interventions', icon: Hammer },
     { title: 'Factures', href: '/admin/factures', icon: DollarSign },
     { title: 'Analytiques', href: '/admin/analytics', icon: BarChart3 },
-    { title: 'Paramètres', href: '/admin/settings', icon: Cog },
 ];
 
 const defaultStats: AdminStats = {
@@ -419,10 +417,8 @@ function ClientsTab({ clients, pagination, isLoading, onSearch, onPageChange }: 
                 credentials: 'include',
             });
             
-            // Check if response is JSON before parsing
             const contentType = response.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
-                // Server returned non-JSON response (probably an error page)
                 if (response.status === 403) {
                     alert('Accès refusé. Vous n\'êtes pas autorisé à supprimer ce client.');
                 } else if (response.status === 401) {
@@ -443,7 +439,6 @@ function ClientsTab({ clients, pagination, isLoading, onSearch, onPageChange }: 
             }
         } catch (error) {
             console.error('Erreur suppression:', error);
-            // Handle network errors or JSON parse errors
             if (error instanceof SyntaxError) {
                 alert('Erreur de réponse serveur. Veuillez réessayer plus tard.');
             } else {
@@ -498,7 +493,6 @@ function ClientsTab({ clients, pagination, isLoading, onSearch, onPageChange }: 
                 onDelete={handleDelete}
             />
             
-            {/* Modal View Client Details */}
             {showViewModal && selectedClient && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
                     <div className="bg-slate-800/90 backdrop-blur-xl rounded-2xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto border border-slate-700/50">
@@ -519,7 +513,6 @@ function ClientsTab({ clients, pagination, isLoading, onSearch, onPageChange }: 
                 </div>
             )}
 
-            {/* Modal Edit Client */}
             {showEditModal && selectedClient && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
                     <div className="bg-slate-800/90 backdrop-blur-xl rounded-2xl p-6 max-w-md w-full mx-4 border border-slate-700/50">
@@ -556,22 +549,22 @@ function ClientsTab({ clients, pagination, isLoading, onSearch, onPageChange }: 
                                         required
                                     />
                                 </div>
-                            </div>
-                            <div className="mt-6 flex justify-end gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowEditModal(false)}
-                                    className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600"
-                                >
-                                    Annuler
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={isLoadingAction}
-                                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
-                                >
-                                    {isLoadingAction ? 'Enregistrement...' : 'Enregistrer'}
-                                </button>
+                                <div className="mt-6 flex justify-end gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowEditModal(false)}
+                                        className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600"
+                                    >
+                                        Annuler
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={isLoadingAction}
+                                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+                                    >
+                                        {isLoadingAction ? 'Enregistrement...' : 'Enregistrer'}
+                                    </button>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -639,10 +632,8 @@ function DepanneursTab({ depanneurs, pagination, isLoading, setSearch }: { depan
                 credentials: 'include',
             });
             
-            // Check if response is JSON before parsing
             const contentType = response.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
-                // Server returned non-JSON response (probably an error page)
                 if (response.status === 403) {
                     alert('Accès refusé. Vous n\'êtes pas autorisé à supprimer ce depanneur.');
                 } else if (response.status === 401) {
@@ -663,7 +654,6 @@ function DepanneursTab({ depanneurs, pagination, isLoading, setSearch }: { depan
             }
         } catch (error) {
             console.error('Erreur suppression:', error);
-            // Handle network errors or JSON parse errors
             if (error instanceof SyntaxError) {
                 alert('Erreur de réponse serveur. Veuillez réessayer plus tard.');
             } else {
@@ -920,4 +910,3 @@ function MessagesTab({
         />
     );
 }
-

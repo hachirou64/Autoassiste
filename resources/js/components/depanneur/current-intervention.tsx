@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,9 +21,11 @@ import {
     User,
     Car,
     MessageSquare,
-    PlayCircle
+    PlayCircle,
+    Loader
 } from 'lucide-react';
 import type { InterventionEnCours, InterventionFormData } from '@/types/depanneur';
+import { useGeocoding, formatAddress } from '@/hooks/useGeocoding';
 
 interface CurrentInterventionProps {
     intervention?: InterventionEnCours;
@@ -76,8 +78,10 @@ const mockIntervention: InterventionEnCours = {
 // ==================== FONCTIONS UTILITAIRES ====================
 
 function formatDuree(minutes: number): string {
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
+    // Arrondir à la minute la plus proche
+    const roundedMinutes = Math.round(minutes);
+    const h = Math.floor(roundedMinutes / 60);
+    const m = roundedMinutes % 60;
     if (h > 0) {
         return `${h}h ${m}m`;
     }
@@ -215,13 +219,39 @@ function InterventionLocation({
     latitude: number;
     longitude: number;
 }) {
+    // Géocodage pour afficher l'adresse au lieu des coordonnées
+    const { getAddressFromCoordinates } = useGeocoding();
+    const [clientAddress, setClientAddress] = React.useState<string | null>(null);
+    const [loading, setLoading] = React.useState(false);
+
+    // Récupérer l'adresse à partir des coordonnées
+    React.useEffect(() => {
+        if (latitude && longitude) {
+            setLoading(true);
+            getAddressFromCoordinates(latitude, longitude)
+                .then((address) => {
+                    if (address) {
+                        setClientAddress(formatAddress(address));
+                    }
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
+        }
+    }, [latitude, longitude, getAddressFromCoordinates]);
+
     return (
         <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 text-blue-600 mt-0.5" />
                 <div>
                     <p className="text-sm text-gray-900 font-medium">
-                        {adresseClient}
+                        {loading ? (
+                            <span className="flex items-center gap-1">
+                                <Loader className="h-3 w-3 animate-spin" />
+                                Chargement de l'adresse...
+                            </span>
+                        ) : clientAddress || adresseClient}
                     </p>
                     <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
                         <span className="flex items-center gap-1">
@@ -354,6 +384,27 @@ function FullAddress({
     latitude: number;
     longitude: number;
 }) {
+    // Géocodage pour afficher l'adresse au lieu des coordonnées
+    const { getAddressFromCoordinates } = useGeocoding();
+    const [clientAddress, setClientAddress] = React.useState<string | null>(null);
+    const [loading, setLoading] = React.useState(false);
+
+    // Récupérer l'adresse à partir des coordonnées
+    React.useEffect(() => {
+        if (latitude && longitude) {
+            setLoading(true);
+            getAddressFromCoordinates(latitude, longitude)
+                .then((address) => {
+                    if (address) {
+                        setClientAddress(formatAddress(address));
+                    }
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
+        }
+    }, [latitude, longitude, getAddressFromCoordinates]);
+
     return (
         <div className="bg-gray-50 rounded-lg p-4 space-y-2">
             <h5 className="text-sm font-medium text-gray-700 flex items-center gap-2">
@@ -361,13 +412,21 @@ function FullAddress({
                 Adresse complète
             </h5>
             <p className="text-sm text-gray-600">
-                {adresseClient || localisation}
+                {clientAddress || adresseClient || localisation}
             </p>
-            <div className="flex items-center gap-2 mt-2">
-                <span className="text-xs text-gray-500">
-                    Coordonnées: {latitude}, {longitude}
-                </span>
-            </div>
+            {loading && (
+                <div className="flex items-center gap-1 text-xs text-gray-500">
+                    <Loader className="h-3 w-3 animate-spin" />
+                    Chargement de l'adresse...
+                </div>
+            )}
+            {!loading && !clientAddress && (
+                <div className="flex items-center gap-2 mt-2">
+                    <span className="text-xs text-gray-500">
+                        Coordonnées: {latitude}, {longitude}
+                    </span>
+                </div>
+            )}
         </div>
     );
 }
@@ -555,17 +614,30 @@ export function CurrentIntervention({
         coutMainOeuvre: 0,
         photos: [],
     });
-    const [elapsedTime, setElapsedTime] = useState(30);
+    const [elapsedTime, setElapsedTime] = useState(0);
 
-    // Timer pour le temps écoulé
+    // Timer pour le temps écoulé - calculer basé sur startedAt
     useEffect(() => {
-        if (status === 'en_cours') {
+        if (status === 'en_cours' && intervention?.startedAt) {
+            // Calculer le temps écoulé depuis le début de l'intervention
+            const startTime = new Date(intervention.startedAt).getTime();
+            const now = Date.now();
+            // Arrondir à la minute la plus proche
+            const elapsed = Math.round((now - startTime) / 60000);
+            
+            // Initialiser avec le temps réellement écoulé
+            setElapsedTime(elapsed > 0 ? elapsed : 0);
+            
+            // Mettre à jour chaque minute
             const interval = setInterval(() => {
                 setElapsedTime(prev => prev + 1);
             }, 60000);
             return () => clearInterval(interval);
+        } else {
+            // Réinitialiser si pas en cours
+            setElapsedTime(0);
         }
-    }, [status]);
+    }, [status, intervention?.startedAt]);
 
     const handleSubmit = () => {
         onEnd(formData);

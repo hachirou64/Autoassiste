@@ -81,11 +81,13 @@ function formatCurrency(amount: number): string {
 
 function formatDuree(minutes: number | null): string {
     if (!minutes) return '-';
-    if (minutes < 60) {
-        return `${minutes} min`;
+    // Arrondir à la minute la plus proche
+    const roundedMinutes = Math.round(minutes);
+    if (roundedMinutes < 60) {
+        return `${roundedMinutes} min`;
     }
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
+    const h = Math.floor(roundedMinutes / 60);
+    const m = roundedMinutes % 60;
     return `${h}h ${m}m`;
 }
 

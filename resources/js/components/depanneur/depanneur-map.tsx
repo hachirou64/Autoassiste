@@ -73,16 +73,16 @@ export function DepanneurMap({
     };
 
     return (
-        <Card className="bg-slate-800/50 border-slate-700 overflow-hidden">
+        <Card className="bg-white border-gray-200 overflow-hidden shadow-sm">
             <CardHeader className="pb-3">
-                <CardTitle className="text-white flex items-center gap-2">
-                    <MapPin className="h-5 w-5 text-blue-400" />
+                <CardTitle className="text-gray-900 flex items-center gap-2">
+                    <MapPin className="h-5 w-5 text-blue-600" />
                     Carte des interventions
                 </CardTitle>
             </CardHeader>
             
             <CardContent className="p-0">
-                <div ref={mapRef} className="relative h-96 w-full bg-slate-700">
+                <div ref={mapRef} className="relative h-96 w-full bg-gray-100">
                     <div className="absolute inset-0 opacity-10">
                         <svg className="w-full h-full">
                             <pattern id="map-grid" width="40" height="40" patternUnits="userSpaceOnUse">
@@ -111,11 +111,11 @@ export function DepanneurMap({
                         style={{ left: '50%', top: '50%' }}
                     >
                         <div className="relative">
-                            <div className="w-10 h-10 bg-blue-500 rounded-full border-4 border-white shadow-lg flex items-center justify-center animate-pulse">
+                            <div className="w-10 h-10 bg-blue-600 rounded-full border-4 border-white shadow-lg flex items-center justify-center animate-pulse">
                                 <Navigation className="h-5 w-5 text-white" />
                             </div>
-                            <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-blue-500 rotate-45" />
-                            <div className="absolute inset-0 w-10 h-10 bg-blue-500 rounded-full animate-ping opacity-25" />
+                            <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-blue-600 rotate-45" />
+                            <div className="absolute inset-0 w-10 h-10 bg-blue-600 rounded-full animate-ping opacity-25" />
                         </div>
                     </div>
                     
@@ -132,9 +132,9 @@ export function DepanneurMap({
                         >
                             <div className="relative">
                                 {hoveredMarker === demande.id && (
-                                    <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white text-xs px-3 py-2 rounded-lg shadow-xl whitespace-nowrap z-50">
+                                    <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-white text-gray-900 text-xs px-3 py-2 rounded-lg shadow-xl whitespace-nowrap z-50 border border-gray-200">
                                         <div className="font-medium">{demande.codeDemande}</div>
-                                        <div className="text-slate-400">{demande.distance.toFixed(1)} km</div>
+                                        <div className="text-gray-500">{demande.distance.toFixed(1)} km</div>
                                     </div>
                                 )}
                                 
@@ -146,7 +146,7 @@ export function DepanneurMap({
                                     {typePanneIcons[demande.typePanne] || '❓'}
                                 </div>
                                 
-                                <div className="absolute -top-1 -right-1 bg-slate-900 text-white text-xs px-1.5 py-0.5 rounded-full">
+                                <div className="absolute -top-1 -right-1 bg-white text-gray-900 text-xs px-1.5 py-0.5 rounded-full shadow">
                                     {demande.distance.toFixed(1)}km
                                 </div>
                             </div>
@@ -168,22 +168,22 @@ export function DepanneurMap({
                     )}
                     
                     <div className="absolute bottom-4 left-4 right-4">
-                        <div className="bg-slate-900/90 backdrop-blur rounded-lg p-3 flex items-center justify-between">
+                        <div className="bg-white/90 backdrop-blur rounded-lg p-3 flex items-center justify-between shadow-sm border border-gray-200">
                             <div className="flex items-center gap-4 text-sm">
                                 <div className="flex items-center gap-2">
-                                    <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse" />
-                                    <span className="text-white">Ma position</span>
+                                    <div className="w-3 h-3 bg-blue-600 rounded-full animate-pulse" />
+                                    <span className="text-gray-700">Ma position</span>
                                 </div>
                                 {demandes.length > 0 && (
                                     <div className="flex items-center gap-2">
                                         <div className="w-3 h-3 bg-green-500 rounded-full" />
-                                        <span className="text-white">{demandes.length} demande(s)</span>
+                                        <span className="text-gray-700">{demandes.length} demande(s)</span>
                                     </div>
                                 )}
                                 {interventionEnCours && (
                                     <div className="flex items-center gap-2">
                                         <div className="w-3 h-3 bg-orange-500 rounded-full animate-pulse" />
-                                        <span className="text-white">Intervention en cours</span>
+                                        <span className="text-gray-700">Intervention en cours</span>
                                     </div>
                                 )}
                             </div>

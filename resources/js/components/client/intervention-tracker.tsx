@@ -1,12 +1,14 @@
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
     Clock, MapPin, Phone, CheckCircle, Wrench, Navigation,
-    Star, MessageSquare, FileText, CreditCard
+    Star, MessageSquare, FileText, CreditCard, Loader
 } from 'lucide-react';
 import type { DemandeActive, AssignedDepanneur } from '@/types/client';
 import { DEMANDE_STATUS_LABELS, DEMANDE_STATUS_COLORS } from '@/types/client';
+import { useGeocoding, formatAddress } from '@/hooks/useGeocoding';
 
 interface InterventionTrackerProps {
     demandeActive?: DemandeActive;
@@ -40,6 +42,27 @@ export function InterventionTracker({
     factureId,
     montant,
 }: InterventionTrackerProps) {
+    // Géocodage pour afficher l'adresse au lieu des coordonnées
+    const { getAddressFromCoordinates } = useGeocoding();
+    const [clientAddress, setClientAddress] = useState<string | null>(null);
+    const [addressLoading, setAddressLoading] = useState(false);
+
+    // Récupérer l'adresse du client à partir des coordonnées
+    useEffect(() => {
+        if (demandeActive?.latitude && demandeActive?.longitude) {
+            setAddressLoading(true);
+            getAddressFromCoordinates(demandeActive.latitude, demandeActive.longitude)
+                .then((address) => {
+                    if (address) {
+                        setClientAddress(formatAddress(address));
+                    }
+                })
+                .finally(() => {
+                    setAddressLoading(false);
+                });
+        }
+    }, [demandeActive?.latitude, demandeActive?.longitude, getAddressFromCoordinates]);
+
     if (!demandeActive) {
         return (
             <Card className="bg-white border-gray-200 shadow-sm">
@@ -76,9 +99,11 @@ export function InterventionTracker({
     const currentStepIndex = STEPS.findIndex((s) => s.status === demandeActive.status);
 
     const formatDuration = (minutes: number) => {
-        if (minutes < 60) return `${minutes} min`;
-        const hours = Math.floor(minutes / 60);
-        const mins = minutes % 60;
+        // Arrondir à la minute la plus proche
+        const roundedMinutes = Math.round(minutes);
+        if (roundedMinutes < 60) return `${roundedMinutes} min`;
+        const hours = Math.floor(roundedMinutes / 60);
+        const mins = roundedMinutes % 60;
         return `${hours}h${mins > 0 ? ` ${mins}min` : ''}`;
     };
 
@@ -200,15 +225,22 @@ export function InterventionTracker({
                             </div>
                         )}
 
-                        {/* Distance */}
-                        {demandeActive.distance && (
-                            <div className="flex items-center gap-2 text-sm">
-                                <MapPin className="h-4 w-4 text-blue-600" />
-                                <span className="text-gray-600">
-                                    Distance: <span className="text-gray-900 font-medium">{demandeActive.distance} km</span>
+                        {/* Localisation avec adresse */}
+                        <div className="flex items-center gap-2 text-sm">
+                            <MapPin className="h-4 w-4 text-blue-600" />
+                            {addressLoading ? (
+                                <span className="text-gray-500 flex items-center gap-1">
+                                    <Loader className="h-3 w-3 animate-spin" />
+                                    Chargement de l'adresse...
                                 </span>
-                            </div>
-                        )}
+                            ) : clientAddress ? (
+                                <span className="text-gray-900 font-medium">{clientAddress}</span>
+                            ) : (
+                                <span className="text-gray-600">
+                                    Position: {demandeActive.latitude?.toFixed(4)}, {demandeActive.longitude?.toFixed(4)}
+                                </span>
+                            )}
+                        </div>
                     </div>
                 )}
 

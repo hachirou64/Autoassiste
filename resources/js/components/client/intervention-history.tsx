@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +28,13 @@ export function InterventionHistory({
     const [filter, setFilter] = useState<'all' | 'terminees' | 'annulees'>('all');
     const [expandedId, setExpandedId] = useState<number | null>(null);
 
+    // Afficher le premier élément déployé par défaut au montage
+    useEffect(() => {
+        if (history.length > 0) {
+            setExpandedId(history[0].id);
+        }
+    }, [history]);
+
     const filteredHistory = history.filter((item) => {
         if (filter === 'terminees') return item.status === 'terminee';
         if (filter === 'annulees') return item.status === 'annulee';
@@ -44,9 +51,11 @@ export function InterventionHistory({
     };
 
     const formatDuration = (minutes: number) => {
-        if (minutes < 60) return `${minutes} min`;
-        const hours = Math.floor(minutes / 60);
-        const mins = minutes % 60;
+        // Arrondir à la minute la plus proche
+        const roundedMinutes = Math.round(minutes);
+        if (roundedMinutes < 60) return `${roundedMinutes} min`;
+        const hours = Math.floor(roundedMinutes / 60);
+        const mins = roundedMinutes % 60;
         return `${hours}h${mins > 0 ? ` ${mins}min` : ''}`;
     };
 

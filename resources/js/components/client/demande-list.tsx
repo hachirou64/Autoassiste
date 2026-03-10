@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Clock, MapPin, Wrench, Eye, XCircle, FileText } from 'lucide-react';
+import { Clock, MapPin, Wrench, Eye, XCircle, FileText, Loader } from 'lucide-react';
 import { DEMANDE_STATUS_LABELS, DEMANDE_STATUS_COLORS } from '@/types/client';
 import type { DemandeActive } from '@/types/client';
+import { useGeocoding, formatAddress, parseCoordinates } from '@/hooks/useGeocoding';
 
 interface Demande {
     id: number;
@@ -29,6 +30,35 @@ interface DemandeListProps {
 
 export function DemandeList({ demandes, demandeActive, onViewDetails, onCancel }: DemandeListProps) {
     const [filter, setFilter] = useState<'all' | 'en_cours' | 'terminees'>('all');
+    
+    // Géocodage pour afficher les adresses au lieu des coordonnées
+    const { getAddressFromCoordinates } = useGeocoding();
+    const [addresses, setAddresses] = useState<Record<number, string>>({});
+    const [loadingAddresses, setLoadingAddresses] = useState<Record<number, boolean>>({});
+
+    // Charger les adresses pour chaque demande
+    useEffect(() => {
+        const loadAddresses = async () => {
+            for (const demande of demandes) {
+                const coords = parseCoordinates(demande.localisation);
+                if (coords && !addresses[demande.id] && !loadingAddresses[demande.id]) {
+                    setLoadingAddresses(prev => ({ ...prev, [demande.id]: true }));
+                    try {
+                        const address = await getAddressFromCoordinates(coords.lat, coords.lng);
+                        if (address) {
+                            setAddresses(prev => ({ ...prev, [demande.id]: formatAddress(address) }));
+                        }
+                    } finally {
+                        setLoadingAddresses(prev => ({ ...prev, [demande.id]: false }));
+                    }
+                }
+            }
+        };
+        
+        if (demandes.length > 0) {
+            loadAddresses();
+        }
+    }, [demandes, getAddressFromCoordinates]);
 
     const filteredDemandes = demandes.filter((d) => {
         if (filter === 'en_cours') return ['en_attente', 'acceptee', 'en_cours'].includes(d.status);
@@ -100,7 +130,12 @@ export function DemandeList({ demandes, demandeActive, onViewDetails, onCancel }
                                                 <p className="text-sm text-gray-600">{demande.typePanne}</p>
                                                 <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
                                                     <MapPin className="h-3 w-3" />
-                                                    {demande.localisation}
+                                                    {loadingAddresses[demande.id] ? (
+                                                        <span className="flex items-center gap-1">
+                                                            <Loader className="h-2 w-2 animate-spin" />
+                                                            Chargement...
+                                                        </span>
+                                                    ) : addresses[demande.id] || demande.localisation}
                                                 </div>
                                                 <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
                                                     <Clock className="h-3 w-3" />

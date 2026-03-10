@@ -11,11 +11,13 @@ import {
     Check, 
     Volume2,
     VolumeX,
-    RefreshCw
+    RefreshCw,
+    Loader
 } from 'lucide-react';
 import type { DemandeAvailable, DemandeFilters } from '@/types/depanneur';
 import { TYPES_PANNE_DEPANNAGE } from '@/types/depanneur';
 import { DEMANDE_STATUS_COLORS } from '@/types/client';
+import { useGeocoding, formatAddress } from '@/hooks/useGeocoding';
 
 interface DemandesStreamProps {
     demandes: DemandeAvailable[];
@@ -125,7 +127,9 @@ function formatTempsRestant(seconds: number): string {
 
 function NewDemandeAnimation({ onComplete }: { onComplete: () => void }) {
     useEffect(() => {
-        const timer = setTimeout(onComplete, 500);
+        const timer = setTimeout(() => {
+            onComplete();
+        }, 500);
         return () => clearTimeout(timer);
     }, [onComplete]);
 
@@ -148,6 +152,34 @@ export function DemandesStream({
     const [animatingNew, setAnimatingNew] = useState<number[]>([]);
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const prevCountRef = useRef(demandes.length);
+    
+    // Géocodage pour afficher les adresses au lieu des coordonnées
+    const { getAddressFromCoordinates } = useGeocoding();
+    const [addresses, setAddresses] = useState<Record<number, string>>({});
+    const [loadingAddresses, setLoadingAddresses] = useState<Record<number, boolean>>({});
+
+    // Charger les adresses pour chaque demande
+    useEffect(() => {
+        const loadAddresses = async () => {
+            for (const demande of demandes) {
+                if (demande.latitude && demande.longitude && !addresses[demande.id] && !loadingAddresses[demande.id]) {
+                    setLoadingAddresses(prev => ({ ...prev, [demande.id]: true }));
+                    try {
+                        const address = await getAddressFromCoordinates(demande.latitude, demande.longitude);
+                        if (address) {
+                            setAddresses(prev => ({ ...prev, [demande.id]: formatAddress(address) }));
+                        }
+                    } finally {
+                        setLoadingAddresses(prev => ({ ...prev, [demande.id]: false }));
+                    }
+                }
+            }
+        };
+        
+        if (demandes.length > 0) {
+            loadAddresses();
+        }
+    }, [demandes, getAddressFromCoordinates]);
 
     // Lecture son lors de nouvelle demande
     useEffect(() => {
@@ -288,7 +320,11 @@ export function DemandesStream({
                                             
                                             <div className="flex items-center gap-2 mt-1 text-sm text-gray-500">
                                                 <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
-                                                <span className="truncate">{demande.localisation}</span>
+                                                {loadingAddresses[demande.id] ? (
+                                                    <span className="flex items-center gap-1">
+                                                        <Loader className="h-3 w-3 animate-spin" />
+                                                    </span>
+                                                ) : addresses[demande.id] || demande.localisation}
                                             </div>
                                             
                                             <div className="flex items-center gap-2 mt-2">

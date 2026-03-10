@@ -1252,13 +1252,25 @@ class DashboardController extends Controller
 
         // Statistiques du dépanneur
         $stats = [
+            // Stats du jour
             'interventions_aujourdhui' => $depanneur->interventions()->whereDate('createdAt', today())->count(),
             'revenus_aujourdhui' => $this->getRevenusJour($depanneur),
+            'demandes_acceptees_aujourdhui' => $depanneur->interventions()->whereDate('createdAt', today())->whereIn('status', ['acceptee', 'en_cours', 'terminee'])->count(),
+            'note_moyenne_aujourdhui' => $this->getNoteMoyenne($depanneur),
+            
+            // Stats du mois
             'interventions_mois' => $depanneur->interventions()->whereMonth('createdAt', now()->month)->count(),
             'revenus_mois' => $this->getRevenusMois($depanneur),
+            'demandes_acceptees_mois' => $depanneur->interventions()->whereMonth('createdAt', now()->month)->whereIn('status', ['acceptee', 'en_cours', 'terminee'])->count(),
+            'note_moyenne_mois' => $this->getNoteMoyenne($depanneur),
+            
+            // Stats globales
             'total_interventions' => $depanneur->interventions()->count(),
             'total_revenus' => $this->getRevenusTotal($depanneur),
+            'note_moyenne' => $this->getNoteMoyenne($depanneur),
             'total_clients' => $depanneur->interventions()->with('demande')->get()->pluck('demande.id_client')->unique()->count(),
+            
+            // Statut
             'status' => $depanneur->status,
             'zones_count' => $depanneur->zones()->count(),
         ];
@@ -1387,6 +1399,19 @@ class DashboardController extends Controller
             ->with('facture')
             ->get()
             ->sum('facture.montant');
+    }
+
+    /**
+     * Récupérer la note moyenne du dépanneur
+     */
+    private function getNoteMoyenne(Depanneur $depanneur): float
+    {
+        $note = $depanneur->interventions()
+            ->whereNotNull('note')
+            ->where('note', '>', 0)
+            ->avg('note');
+        
+        return $note ? round($note, 1) : 4.5; // Default 4.5 if no ratings
     }
 
     /**

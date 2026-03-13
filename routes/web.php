@@ -378,9 +378,10 @@ Route::prefix('api/depanneur')->middleware(['auth'])->group(function () {
     Route::post('/interventions/{id}/start', [App\Http\Controllers\DashboardController::class, 'startIntervention'])->name('depanneur.api.interventions.start');
     Route::post('/interventions/{id}/end', [App\Http\Controllers\DashboardController::class, 'endIntervention'])->name('depanneur.api.interventions.end');
     
-    // Confirmation de démarrage d'intervention (pour le client)
-    Route::post('/interventions/{id}/confirm-start', [App\Http\Controllers\DashboardController::class, 'confirmInterventionStart'])->name('api.interventions.confirm-start');
-    Route::post('/interventions/{id}/refuse-start', [App\Http\Controllers\DashboardController::class, 'refuseInterventionStart'])->name('api.interventions.refuse-start');
+    // SUPPRIMÉ: Confirmation de démarrage d'intervention (démarrage direct)
+    // Route::post('/interventions/{id}/confirm-start', [App\Http\Controllers\DashboardController::class, 'confirmInterventionStart'])->name('api.interventions.confirm-start');
+    // SUPPRIMÉ: Refus de démarrage (démarrage direct)
+    // Route::post('/interventions/{id}/refuse-start', [App\Http\Controllers\DashboardController::class, 'refuseInterventionStart'])->name('api.interventions.refuse-start');
     
     // Localisation
     Route::post('/location', [App\Http\Controllers\DashboardController::class, 'updateLocation'])->name('depanneur.api.location');

@@ -1788,7 +1788,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Démarrer une intervention - Envoie demande de confirmation au client
+     * Démarrer une intervention DIRECTEMENT (plus de confirmation client)
      */
     public function startIntervention($id)
     {
@@ -1809,57 +1809,7 @@ class DashboardController extends Controller
             ->whereIn('status', ['planifiee', 'acceptee'])
             ->firstOrFail();
 
-        // Au lieu de démarrer directement, onmet en attente de confirmation
-        $intervention->update([
-            'status' => Intervention::STATUS_EN_ATTENTE_CONFIRMATION,
-        ]);
-
-        // NOTIFICATION CLIENT: Demander confirmation du démarrage
-        Notification::create([
-            'id_client' => $intervention->demande->id_client,
-            'id_depanneur' => $depanneur->id,
-            'id_demande' => $intervention->demande->id,
-            'type' => 'demande_confirmation',
-            'titre' => 'Confirmation de démarrage',
-            'message' => 'Le dépanneur ' . $depanneur->etablissement_name . ' est prêt à démarrer l\'intervention sur votre demande ' . $intervention->demande->codeDemande . '. Confirmez pour permettre le début de l\'intervention.',
-            'isRead' => false,
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Demande de confirmation envoyée au client',
-            'intervention' => [
-                'id' => $intervention->id,
-                'status' => $intervention->status,
-            ],
-        ]);
-    }
-
-    /**
-     * Confirmer le démarrage de l'intervention (API client)
-     */
-    public function confirmInterventionStart($id)
-    {
-        $utilisateur = Auth::user();
-        
-        if (!$utilisateur) {
-            return response()->json(['error' => 'Non authentifié'], 403);
-        }
-
-        $client = $utilisateur->client ?? null;
-        
-        if (!$client) {
-            return response()->json(['error' => 'Aucun compte client lié'], 403);
-        }
-
-        $intervention = Intervention::where('id', $id)
-            ->whereHas('demande', function($q) use ($client) {
-                $q->where('id_client', $client->id);
-            })
-            ->where('status', Intervention::STATUS_EN_ATTENTE_CONFIRMATION)
-            ->firstOrFail();
-
-        // Confirmer le démarrage - maintenant le temps commence
+        // Démarrer DIRECTEMENT l'intervention (SUPPRESSION confirmation client)
         $intervention->update([
             'status' => Intervention::STATUS_EN_COURS,
             'startedAt' => now(),
@@ -1867,72 +1817,50 @@ class DashboardController extends Controller
 
         $intervention->demande->update(['status' => 'en_cours']);
 
-        // Notifier le dépanneur que le client a confirmé
+        // Notification CLIENT: Intervention démarrée
         Notification::create([
-            'id_client' => $client->id,
-            'id_depanneur' => $intervention->id_depanneur,
+            'id_client' => $intervention->demande->id_client,
+            'id_depanneur' => $depanneur->id,
             'id_demande' => $intervention->demande->id,
-            'type' => 'confirmation_recue',
-            'titre' => 'Client a confirmé',
-            'message' => 'Le client a confirmé le démarrage de l\'intervention. Vous pouvez commencer le travail.',
+            'type' => 'intervention_demarree',
+            'titre' => 'Intervention démarrée',
+            'message' => 'Le dépanneur ' . $depanneur->etablissement_name . ' a démarré l\'intervention sur votre demande ' . $intervention->demande->codeDemande . '.',
             'isRead' => false,
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Intervention démarrée - Le temps commence àcompter',
+            'message' => 'Intervention démarrée avec succès',
             'intervention' => [
                 'id' => $intervention->id,
-                'startedAt' => $intervention->startedAt->toIsoString(),
                 'status' => $intervention->status,
+                'startedAt' => $intervention->startedAt->toIsoString(),
             ],
         ]);
     }
 
     /**
-     * Refuser le démarrage de l'intervention (API client)
+     * SUPPRIMÉ: confirmInterventionStart - Plus nécessaire (start direct)
+     * @deprecated
+     */
+    public function confirmInterventionStart($id)
+    {
+        return response()->json([
+            'success' => false,
+            'message' => 'Fonction supprimée: démarrage intervention direct sans confirmation client',
+        ], 410); // Gone
+    }
+
+    /**
+     * SUPPRIMÉ: refuseInterventionStart - Plus nécessaire (start direct)
+     * @deprecated
      */
     public function refuseInterventionStart($id)
     {
-        $utilisateur = Auth::user();
-        
-        if (!$utilisateur) {
-            return response()->json(['error' => 'Non authentifié'], 403);
-        }
-
-        $client = $utilisateur->client ?? null;
-        
-        if (!$client) {
-            return response()->json(['error' => 'Aucun compte client lié'], 403);
-        }
-
-        $intervention = Intervention::where('id', $id)
-            ->whereHas('demande', function($q) use ($client) {
-                $q->where('id_client', $client->id);
-            })
-            ->where('status', Intervention::STATUS_EN_ATTENTE_CONFIRMATION)
-            ->firstOrFail();
-
-        // Remettre en état planifié
-        $intervention->update([
-            'status' => Intervention::STATUS_PLANIFIEE,
-        ]);
-
-        // Notifier le dépanneur que le client a refusé
-        Notification::create([
-            'id_client' => $client->id,
-            'id_depanneur' => $intervention->id_depanneur,
-            'id_demande' => $intervention->demande->id,
-            'type' => 'confirmation_refusee',
-            'titre' => 'Démarrage refusé',
-            'message' => 'Le client a refusé le démarrage de l\'intervention. Veuillez contacter le client.',
-            'isRead' => false,
-        ]);
-
         return response()->json([
-            'success' => true,
-            'message' => 'Démarrage de l\'intervention refusé',
-        ]);
+            'success' => false,
+            'message' => 'Fonction supprimée: démarrage intervention direct sans confirmation client',
+        ], 410); // Gone
     }
 
     /**
@@ -1958,7 +1886,7 @@ class DashboardController extends Controller
         // On accepte 'en_cours' et 'en_attente_confirmation' car le client peut avoir confirmé
         $intervention = Intervention::where('id', $id)
             ->where('id_depanneur', $depanneur->id)
-            ->whereIn('status', ['en_cours', 'en_attente_confirmation', 'planifiee'])
+            ->whereIn('status', ['en_cours', 'planifiee']) // SUPPRIMÉ en_attente_confirmation
             ->first();
 
         // Si aucune intervention trouvée, retourne une erreur explicite
